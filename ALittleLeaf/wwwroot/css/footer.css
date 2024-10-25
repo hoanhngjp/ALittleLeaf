@@ -1,0 +1,100 @@
+footer {
+    border-top: 1px solid #e7e7e7;
+    background-color: #ffffff; /* Màu nền của footer */
+    padding: 20px 40px; /* Khoảng cách giữa các phần tử trong footer */
+    width: 100%; /* Chiều rộng 100% của footer */
+    bottom: 0; /* Footer được đặt ở dưới cùng của trang */
+    left: 0; /* Footer bắt đầu từ vị trí bên trái của trang */
+    position: relative;
+}
+
+.footerWrap {
+    max-width: 100%; /* Chiều rộng tối đa của footer */
+    margin: 0 auto; /* Canh giữa footer */
+}
+
+.mainFooter {
+    display: flex; /* Hiển thị các cột của footer theo hàng ngang */
+    flex-wrap: wrap; /* Cho phép các cột linh hoạt chuyển dòng khi không đủ không gian */
+    justify-content: space-between; /* Canh các cột đều nhau theo chiều ngang */
+}
+
+.col {
+    flex: 1; /* Cột chiếm 1 phần bằng nhau của toàn bộ chiều rộng của footer */
+    margin-right: 20px; /* Khoảng cách giữa các cột */
+}
+
+.col:first-child{
+    flex: 1.5;
+}
+
+.footerBottom {
+    padding: 10px 0; /* Khoảng cách giữa phần nội dung và viền của phần footerBottom */
+    padding-top: 30px;
+    text-align: center; /* Căn giữa nội dung của phần footerBottom */
+    border-top: 1px solid #e7e7e7;
+    color: #001812;
+}
+
+.footer-title {
+    color: #2a5f4b; /* Màu chữ cho tiêu đề của footer */
+}
+
+.footer-content {
+    margin-top: 10px; /* Khoảng cách giữa tiêu đề và nội dung của footer */
+}
+
+.footer-content ul{
+    list-style: none;
+}
+
+.footer-content{
+    line-height: 25px;
+}
+
+.footer-content a{
+    text-decoration: none;
+    color: #000;
+}
+
+.footer-content a:hover{
+    color: #518372;
+}
+
+.footer-title{
+    font-size: 20px;
+}
+
+.footerLogo img {
+    max-width: 120px; /* Đặt chiều rộng tối đa của hình ảnh trong phần footerLogo */
+    height: auto; /* Chiều cao tự động điều chỉnh để giữ tỷ lệ khung hình */
+}
+
+.items{
+    line-height: 40px;
+}
+
+.contact{
+    line-height: 40px;
+}
+
+.contact ion-icon{
+    font-size: 25px;
+}
+
+.footer-content:last-child{
+    display: flex;
+}
+
+.wrapSocial{
+    padding-top: 20px;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.wrapSocial ion-icon{
+    font-size: 32px;
+}

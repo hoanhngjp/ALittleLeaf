@@ -1,0 +1,365 @@
+.site-nav{
+    position: fixed;
+    width: 480px;
+    height: 100vh;
+    right: 0;
+    top: 0;
+    background: #fff;
+    z-index: 8888;
+    overflow: hidden;
+    -ms-transition: transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    -webkit-transition: transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    -ms-transform: translateX(100%);
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
+}
+
+.active{
+    -ms-transform: translateX(0);
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+}
+
+#site-cart{
+    display: none;
+}
+
+#site-search{
+    display: none;
+}
+
+.site-nav-container{
+    display: block;
+    width: calc(100% + 20px);
+    height: 100%;
+    overflow-y: scroll;
+}
+
+.site-nav-container-last{
+    padding-bottom: 100px;
+    width: calc(100% - 0px);
+    position: relative;
+    overflow: hidden;
+    padding: 60px 70px 250px;
+}
+
+.site-nav-container .title{
+    font-size: 14px;
+    text-transform: uppercase;
+    margin: 3px 0 0 0;
+    font-weight: 500;
+    line-height: 21px;
+}
+
+.searchForm{
+    width: auto;
+    position: relative;
+    padding: 0;
+    margin: 50px 0 8px 0;
+    border: 0;
+    box-shadow: none;
+}
+
+input.searchInput{
+    background: #f5f5f5;
+    color: #001812;
+    width: 100%;
+    border: none;
+    height: 55px;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0 55px 0 20px;
+    margin: 0;
+    display: inline-block;
+    border-radius: 0;
+    -webkit-appearance: none;
+    transition: all 150ms linear;
+    line-height: inherit;
+}
+
+.btn-search{
+    width: 55px;
+    height: 55px;
+    line-height: 64px;
+    position: absolute;
+    padding: 0;
+    top: 0px;
+    right: 0px;
+    background: transparent;
+    transition: opacity 150ms linear;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-search ion-icon{
+    font-size: 16px;
+    width: 25px;
+    height: 22px;
+    opacity: .12;
+}
+
+.result-wrap{
+    width: 100%;
+    background: #fff;
+    z-index: 100;
+    right: 80px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.08);
+}
+
+.item-ult{
+    padding: 10px 0;
+    border-bottom: 1px dotted #dfe0e1;
+    clear: both;
+    width: 100%;
+    float: left;
+}
+
+.item-ult .thumbs{
+    width: 40px;
+    display: inline-block;
+    text-align: right;
+}
+
+.thumbs a{
+    color: #001812;
+    text-decoration: none;
+}
+
+.thumbs img{
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+.item-ult .title{
+    font-size: 14px;
+    text-transform: uppercase;
+    margin: 3px 0 0 0;
+    font-weight: 500;
+    width: calc(100% - 40px);
+    padding-right: 5px;
+    float: left;
+    line-height: 20px;
+    position: relative;
+    margin-top: 0px !important;
+}
+
+.item-ult .title a{
+    font-size: 12px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: pre;
+    float: left;
+    width: 100%;
+    margin-bottom: 4px;
+    color: #001812;
+    text-decoration: none;
+}
+
+.item-ult .title p{
+    line-height: 15px;
+    font-size: 12px;
+    font-weight: 400;
+    float: left;
+    margin: 0;
+}
+
+.resultMore{
+    width: 100%;
+    float: left;
+}
+
+.resultMore a{
+    color: #001812;
+    text-decoration: none;
+    text-align: center;
+    display: block;
+    font-size: 14px;
+    padding: 10px 0;
+}
+
+.resultMore a:hover{
+    color: #2a5f4b;
+}
+
+.site-close-handle{
+    position: absolute;
+    top: 55px;
+    right: 60px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    z-index: 999;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.site-close-handle:hover{
+    background-color: rgba(72, 114, 100, 0.1);
+}
+
+.close{
+    width: 27px;
+    height: 19px;
+    cursor: pointer;
+    transition: all 150ms linear;
+}
+
+.close ion-icon{
+    font-size: 32px;
+}
+
+.cart-view{
+    margin-top: 50px;
+}
+
+.cart-view table{
+    width: 100%;
+}
+
+table{
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+table#cart-inside tr{
+    border-bottom: 1px dotted #bcbcbc;
+}
+
+table#cart-inside tr td{
+    border: none;
+}
+
+table td td:first-child{
+    padding-left: 0px;
+}
+
+table tr td{
+    padding: 10px;
+    text-align: left;
+}
+
+table#cart-inside tr:last-child{
+    border: none;
+}
+
+.cart-view table td.img img{
+    width: 70px;
+    border: 1px solid #ededed;
+    margin-right: 10px;
+    max-width: none;
+}
+
+#cart-inside tr td:not(.img){
+    padding: 25px 0;
+    position: relative;
+    padding-right: 20px;
+}
+
+.cart-view table td a.pro-title-cart{
+    color: #001812;
+    text-decoration: none;
+    float: left;
+    width: 100%;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+#cart-view .variant{
+    font-size: 12px;
+    float: left;
+    width: 100%;
+    margin: 5px 0 12px;
+    opacity: 0.66;
+    text-transform: uppercase;
+}
+
+span.pro-quantity-cart{
+    position: relative;
+    vertical-align: top;
+    display: inline-block;
+    width: auto;
+    background: #ededed;
+    text-align: center;
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1;
+    margin-right: 12px;
+}
+
+span.price-pro-cart{
+    display: block;
+    text-align: center;
+    float: left;
+    line-height: 26px;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.remove-in-cart{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.remove-in-cart a{
+    color: #001812;
+    text-decoration: none;
+}
+
+.remove-in-cart a ion-icon{
+    font-size: 16px;
+}
+
+.remove-in-cart a ion-icon:hover{
+    color: #518372;
+}
+
+.cart-view .line{
+    float: left;
+    width: 100%;
+    border-top: 2px solid #000000;
+    margin: 10px 0px;
+}
+
+.text-left{
+    text-align: left;
+}
+
+.text-right{
+    text-align: right;
+}
+
+table tr td:last-child{
+    padding-right: 0px;
+}
+
+table tr td button{
+    position: relative;
+    width: 100%;
+    height: 55px;
+    background-color: #487264;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    padding: 19px 30px;
+    white-space: nowrap;
+    margin-top: 10px;
+    margin-bottom: 25px;
+    -webkit-transition: ease-out 0.7s;
+    -moz-transition: ease-out 0.7s;
+    transition: ease-out 0.4s;
+}
+
+table tr td button:hover{
+    box-shadow: inset 400px 0 0 0 #fff;
+    border: 1px solid #487264;
+    color: #487264;
+}

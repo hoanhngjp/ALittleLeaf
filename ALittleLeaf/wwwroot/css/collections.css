@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+html, body{
+    height: 100%;
+    font-family: 'Quicksand', 'sans-serif';
+}
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/*-----------------------collections-wrap-------------------------------*/
+.collections-wrap{
+    padding-top: 70px;
+    width: 100%;
+    position: relative;
+}
+/*-----------------------Direct-------------------------------*/
+.direct{
+    width: 100%;
+    background-color: #f5f5f5; /* Màu nền xám */
+}
+.direct-items {
+    display: flex; /* Sử dụng flexbox */
+    flex-direction: row;
+    font-size: 13px;
+    padding-left: 2%;
+    padding-top: 1%;
+    padding-bottom: 1%;
+}
+
+.direct-items a{
+    text-decoration: none;
+    color: #001812;
+}
+
+.direct-items a:hover{
+    color: #518372;
+}
+
+.direct-items p{
+    color: #777777;
+}
+
+.direct-items > * {
+    margin-right: 5px;
+}
+/*-----------------------Collections-content-------------------------------*/
+.collections-content {
+    display: flex;
+}
+/*-----------------------Menu-------------------------------*/
+.menu-wrap{
+    flex: auto;
+    width: 30%;
+    padding-top: 50px;
+}
+.menu-wrap ul{
+    list-style: none;
+    width: 100%;
+    padding: 0px 0 0 20px;
+}
+
+.menu-wrap a{
+    padding: 5 5 5 5px;
+}
+
+.menu-item{
+    padding: 5px 0 5px 2%;
+}
+
+.menu-item a{
+    text-decoration: none;
+    color: #001812;
+    font-size: 14px;
+}
+
+.sub-menu{
+    padding: 5px 0 5px 25px;
+    overflow: hidden;
+    display: none;
+}
+
+.sub-menu.active{
+    display: block;
+    height: 100%;
+}
+
+.sub-menu-item{
+    padding: 5px 0 5px 0;
+}
+
+.sub-menu-item a{
+    color: #898989;
+}
+/*-----------------------Collections-Items-------------------------------*/
+.collections-item-wrap{
+    width: 100%;
+    padding-top: 50px;
+}
+
+.collections-heading-wrap{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.collections-title{
+    flex: 3;
+    color: #2a5f4b;
+}
+
+.selection-wrap{
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    padding-right: 2%;
+    color: #001812;
+    font-size: 14px;
+}
+
+.selection-wrap select{
+    font-size: 14px;
+    display: block;
+    height: 30px;
+    padding: 0 20px 0 0;
+    border-color: transparent;
+    border-bottom: 1px solid #000;
+    background-color: #fff;
+    outline: 0;
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    cursor: pointer;
+    text-indent: 1px;
+    background-color: #fff;
+    border: none;
+    border-bottom: 1px solid #001812;
+    text-align: left;
+    font-size: 15px;
+    padding: 0px 20px 0px 0px ;
+}
+
+.collections-item {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 cột mỗi hàng */
+    grid-auto-rows: auto; /* Chiều cao tự động */
+    gap: 20px; /* Khoảng cách giữa các phần tử */
+    padding: 50px 0 0 0;
+}
+
+.item-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-picture {
+    order: -1; /* Đưa item-picture lên trên */
+}
+
+.item-picture img{
+    width: 90%;
+    height: auto;
+    border-radius: 24px;
+}
+
+/* Tùy chỉnh kiểu văn bản nằm bên trái */
+.item-detail {
+    text-align: left;
+    font-size: 14px;
+    padding: 10px 0 0px 0;
+}
+
+.item-detail a{
+    font-size: 14px;
+    text-decoration: none;
+    color: #2a5f4b;
+}
+
+.item-detail a:hover{
+    color: #518372;
+}
+
+.item-detail p{
+    padding-top: 5px;
+}
+
+.collections-footer-wrap{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+.collections-footer-wrap > * {
+    margin: 0 5px;
+}
+
+.collections-footer-wrap a{
+    text-decoration: none;
+    font-size: 15px;
+    color: #001812;
+}
+
+.page-list{
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.page-list li{
+    display: flex;
+    justify-content: space-between;
+}
+
+a.current{
+    font-weight: bold;
+}

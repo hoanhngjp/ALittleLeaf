@@ -1,0 +1,125 @@
+﻿<div id="site-nav" class="site-nav">
+    <div id="site-cart" class="site-nav-container">
+        <div class="site-nav-container-last">
+            <p class="title" Giỏ hàng>Giỏ hàng</p>
+            <div class="cart-view">
+                <table id="cart-inside" class="">
+                    <tbody>
+                        <!--Nếu chưa có sản phẩm-->
+                        <tr>Hiện chưa có sản phẩm nào</tr>
+                        <!--Nếu có sản phẩm-->
+                        <tr class="item-in-cart">
+                            <td class="img">
+                                <a href="">
+                                    <img src="img/prdImg/' . $row['img_name'] . '" alt="' . $row['product_name'] . '">
+                                </a>
+                            </td>
+                            <td>
+                                <a class="pro-title-cart" href="./product.php?product_id='. $row['product_id'] .'">' . $row['product_name'] . '</a>';
+                                <span class="variant"></span>';
+                                <span class="pro-quantity-cart">' . $quantity . '</span>';
+                                <span class="pro-price-cart">' . number_format($row['product_price'], 0, ',', '.') . '₫</span>
+                                <span class="remove-in-cart">
+                                    <a href="#" class="remove-from-cart" data-product-id="'. $product_id .'">
+                                        <ion-icon name="close-outline"></ion-icon>
+                                    </a>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <span class="line"></span>
+                <table class="table-total">
+                    <tbody>
+                        <tr>
+                            <td class="text-left" style="font-size: 14px;">TỔNG TIỀN: </td>
+                            <td class="text-right" id="total-in-cart" style="font-size: 14px;"><?php echo number_format($total_price, 0, ',', '.').'₫'; ?></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a href="./cart.php">
+                                    <button>XEM GIỎ HÀNG</button>
+                                </a>
+                            </td>
+                            <td>
+                                <!--Nếu Login rồi thì chuyển sang Order, chưa Login chuyển sang Login-->
+                                <a href="./orderinfo.php">
+                                    <button>THANH TOÁN</button>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+                <script>
+                    $(document).ready(function(){
+                        // Xử lý sự kiện click cho nút "Xóa"
+                        $('.remove-from-cart').click(function(e){
+                            e.preventDefault(); // Ngăn chặn hành động mặc định của thẻ <a>
+
+                            var productId = $(this).data('product-id');
+
+                            // Gửi yêu cầu xóa sản phẩm thông qua Ajax
+                            $.ajax({
+                                url: 'function/remove_from_cart.php',
+                                type: 'post',
+                                data: {product_id: productId},
+                                success:function(response){
+                                    // Cập nhật lại tổng tiền sau khi xóa sản phẩm
+                                    $('#total-in-cart').html(response);
+                                    // Cập nhật lại giỏ hàng sau khi xóa sản phẩm
+                                    $('.cart-view').html(response);
+                                    location.reload();
+                                }
+                            });
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+    <div id="site-search" class="site-nav-container">
+        <div class="site-nav-container-last">
+            <p class="title">Tìm kiếm</p>
+            <div class="search-box-wrap">
+                <form class="searchForm" action="search.php?q='keyword'" method="GET">
+                    <div class="search-inner">
+                        <input type="text" class="searchInput" size="20" name="q" placeholder="Tìm kiếm sản phẩm">
+                    </div>
+                    <button class="btn-search">
+                        <ion-icon name="search-outline"></ion-icon>
+                    </button>
+                </form>
+                <div class="result-wrap">
+                    <div class="result-content">
+                        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+                        <script>
+                            $(document).ready(function(){
+                                $('.searchInput').keyup(function(){
+                                    var keyword = $(this).val();
+                                    if(keyword != ''){
+                                        $.ajax({
+                                        url: 'function/search_result.php',
+                                        type: 'post',
+                                        data: {keyword:keyword},
+                                        success:function(response){
+                                            $('.result-content').html(response);
+                                        }
+                                        });
+                                    } else {
+                                        $('.result-content').html('');
+                                    }
+                                });
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="site-close-handle" class="site-close-handle">
+        <span class="close">
+            <ion-icon name="close-outline"></ion-icon>
+    </button>
+</div>

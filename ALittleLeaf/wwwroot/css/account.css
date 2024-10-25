@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+html, body{
+    height: 100%;
+    font-family: 'Quicksand', 'sans-serif';
+}
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/*-----------------------LAYOUT-ACCOUNT-------------------------------*/
+.layout-account{
+    padding: 70px 0 50px 0;
+    width: 100%;
+    display: block;
+}
+/*-----------------------ACCOUNT-HEADER-------------------------------*/
+.account-header{
+    padding: 30px 15px;
+    border-bottom: 1px solid #ededed;
+    margin-bottom: 60px;
+    text-align: center;
+}
+
+.account-header h1{
+    color: #2a5f4b;
+    font-size: 45px;
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+}
+
+.account-header h1:after{
+    content: "";
+    display: block;
+    width: 60px;
+    height: 4px;
+    margin: 50px auto 0;
+    background: #252a2b;
+}
+/*-----------------------ACCOUNT-CONTENT-------------------------------*/
+.account-content{
+    width: 1170px;
+
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+/*-----------------------ROW-------------------------------*/
+.row{
+    display: flex;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.sidebar-account{
+    width: 25%;
+    float: left;
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.account-title{
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: relative;
+    color: #2a5f4b;
+    margin: 0 0 13px 0;
+    line-height: 1.2;
+}
+
+.account-list ul{
+    padding-left: 0;
+    list-style: none;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 10px;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+}
+
+.account-list ul > li > a{
+    display: block;
+    position: relative;
+    padding: 5px 0px;
+    color: #001812;
+    text-decoration: none;
+    outline: none;
+    font-size: 14px;
+}
+
+.account-list ul > li > a:hover{
+    color: #518372;
+}
+
+.account-list ul > li > a::before{
+    content: "\f192";
+    font-family: "FontAwesome";
+    font-size: 8px;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: 2px;
+    box-sizing: border-box;
+}
+
+.customer-sidebar-wrap{
+    min-width: 768px;
+    width: 75%;
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.customer-sidebar{
+    width: 100%;
+}
+
+.customer-sidebar p{
+    margin-bottom: 0;
+    font-size: 14px;
+    margin: 0 0 10px 0;
+    line-height: 21px;
+}
+
+.title-detail{
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: relative;
+    border-bottom: 1px solid #ededed;
+    padding-bottom: 8px;
+}
+
+.account-name{
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 21px;
+    margin: 10px 0 5px;
+    color: #2a5f4b;
+}
+
+a#view-address{
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.8;
+    color: #001812;
+    text-decoration: none;
+    outline: none;
+}
+
+a#view-address:hover{
+    color: #518372;
+}
+
+.customer-table-wrap{
+    margin-bottom: 30px;
+    margin-top: 30px;
+    background: #f7f7f7;
+    padding: 10px;
+    width: 100%;
+    position: relative;
+    min-height: 1px;
+}
+
+.customer-table-bg{
+    background-color: #fff;
+    padding: 10px;
+}
+
+.customer-table-bg p{
+    margin: 0;
+}
+
+.title-detail{
+    text-transform: uppercase;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: relative;
+    border-bottom: 1px solid #ededed;
+    padding-bottom: 8px;
+    line-height: 21px;
+}
+
+.table-wrap{
+    min-height: .01%;
+    overflow-x: auto;
+}
+
+.table{
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+    border-spacing: 0;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.table tr{
+    height: 25px;
+    line-height: 30px;
+}
+
+.table thead th{
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.table tr th:first-child{
+    padding-left: 0px;
+}
+
+.table > thead > tr > th{
+    vertical-align: bottom;
+    border-bottom: 2px solid #ddd;
+    padding: 8px;
+    line-height: 1.42857143;
+}
+
+.table > thead:first-child > tr:first-child > th{
+    border-top: 0;
+}
+
+.text-center{
+    text-align: center;
+}
+
+.table .oder{
+    background: #fff;
+}
+
+.table tr td{
+    vertical-align: middle;
+    border-top: none;
+    font-size: 14px;
+}
+
+.table tr td:first-child{
+    padding-left: 0px;
+}
+
+.table > tbody > tr > td{
+    padding: 8px;
+    line-height: 1.42857143;
+}
+
+.table tr a{
+    font-weight: 500;
+    float: left;
+    width: 85%;
+    margin-left: 3px;
+    line-height: 20px;
+    opacity: 0.66;
+    color: #001812;
+    text-decoration: none;
+    outline: none;
+}
+
+.table tr a:hover{
+    color: #518372;
+}
+
+.table tr td:last-child{
+    padding-right: 0px;
+}

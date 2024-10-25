@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+html, body{
+    height: 100%;
+    font-family: 'Quicksand', 'sans-serif';
+}
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/*-----------------------LAYOUT-ADDRESS-------------------------------*/
+.layout-address{
+    padding: 70px 0 50px 0;
+    width: 100%;
+    display: block;
+}
+/*-----------------------ADRESS-HEADER-------------------------------*/
+.address-header{
+    padding: 30px 15px;
+    border-bottom: 1px solid #ededed;
+    margin-bottom: 60px;
+    text-align: center;
+}
+
+.address-header h1{
+    color: #2a5f4b;
+    font-size: 45px;
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+}
+
+.address-header h1:after{
+    content: "";
+    display: block;
+    width: 60px;
+    height: 4px;
+    margin: 50px auto 0;
+    background: #252a2b;
+}
+/*-----------------------ADDRESS-CONTENT-------------------------------*/
+.address-content{
+    width: 1170px;
+
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+/*-----------------------ROW-------------------------------*/
+.row{
+    display: flex;
+    justify-content: center;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.row2{
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.content-page{
+    width: 100%;
+}
+
+.sidebar-account{
+    width: 25%;
+    float: left;
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.account-title{
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: relative;
+    color: #2a5f4b;
+    margin: 0 0 13px 0;
+    line-height: 1.2;
+}
+
+.account-list ul{
+    padding-left: 0;
+    list-style: none;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 10px;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+}
+
+.account-list ul > li > a{
+    display: block;
+    position: relative;
+    padding: 5px 0px;
+    color: #001812;
+    text-decoration: none;
+    outline: none;
+    font-size: 14px;
+}
+
+.account-list ul > li > a:hover{
+    color: #518372;
+}
+
+.account-list ul > li > a::before{
+    content: "\f192";
+    font-family: "FontAwesome";
+    font-size: 8px;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: 2px;
+    box-sizing: border-box;
+}
+
+.content-wrap{
+    width: 75%;
+}
+
+.address-title-wrap{
+    width: 100%;
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.address-title{
+    margin-bottom: 0;
+    font-size: 16px;
+    padding: 10px 0 10px 10px;
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+    position: relative;
+}
+
+.address-title h3{
+    color: #2a5f4b;
+    margin: 0;
+    font-size: 14px;
+}
+
+p.adrress_actions{
+    margin: 7px 5px 0px 0;
+    position: absolute;
+    z-index: 99;
+    top: 0;
+    right: 0;
+    text-align: right;
+}
+
+span.action_link {
+    padding: 5px;
+}
+
+.action_link a {
+    color: #001812;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 15px;
+}
+
+.action_link a:hover{
+    color: #518372;
+}
+
+.address_table{
+    width: 100%;
+    margin-bottom: 10px;
+    border-top: 0px solid #ddd;
+    background: #fafafa;
+    padding: 15px;
+}
+
+.view_address p {
+    margin: 5px 0;
+    line-height: 15px;
+    font-size: 14px;
+}
+
+.customer-infor-wrap{
+    display: flex;
+    justify-content: space-between;
+}
+
+.customer_name, .customer_phone, .customer_address{
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.customer_name_infor, .customer_phone_infor, .customer_address_infor{
+    width: 50%;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.input-group {
+    display: flex;
+    margin: 15px 0px;
+    position: relative;
+    border-collapse: separate;
+}
+
+.input-group .input-group-addon {
+    padding: 6px 10px;
+    border-radius: 0;
+    color: #DAD9D9;
+    background-color: #ebebeb;
+    border-color: #ebebeb;
+}
+
+.input-group-addon:first-child {
+    border-right: 0;
+}
+
+.input-group-addon ion-icon{
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.input-group .form-control:last-child{
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .form-control {
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    border-color: #ebebeb;
+    display: table-cell;
+    position: relative;
+    z-index: 2;
+    float: left;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.form-control{
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+}
+
+.action_bottom .btn {
+    height: 35px;
+    line-height: 35px;
+    outline: 0;
+    margin-right: 5px;
+    font-size: 14px;
+    text-transform: uppercase;
+    padding: 0 30px;
+    border: 0;
+    background: #487264;
+    color: #fff;
+    display: inline-block;
+    border-radius: 0;
+}
+
+.btn{
+    margin-bottom: 0;
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.action_bottom a{
+    color: #001812;
+    text-decoration: none;
+}
+
+.add-address-wrap{
+    width: 40%;
+    padding-left: 30px;
+}
+
+#add_address{
+    padding-left: 0px;
+}
+
+.action_bottom a:hover{
+    color: #487264;
+}
+
+.add-new-address{
+    padding-bottom: 10px;
+    display: inline-block;
+    padding: 10px;
+    background: #487264;
+    color: #fff !important;
+    text-transform: uppercase;
+    text-decoration: none;
+}

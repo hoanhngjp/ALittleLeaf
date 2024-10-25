@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/css/header.css">
+    <link rel="stylesheet" href="~/css/footer.css">
+    <link rel="stylesheet" href="~/css/cart-search.css">
+    <link rel="stylesheet" href="~/css/cart.css">
+    <title>Giỏ hàng</title>
+    <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
+    <script src="~/js/showCartSearch.js" defer></script>
+    <script src="~/js/cart_function.js" defer></script>
+</head>
+<body>
+    <div class="main-body">
+        <!--------------------------------------------HEADER----------------------------------------------------->
+        <?php
+        require_once "./template/header.php";
+        require_once "./function/db_connect.php";
+        $conn = connectDatabase();
+
+        $total_price = 0;
+
+        $count = 0;
+
+        if (!isset($_SESSION['cart']) || count($_SESSION['cart']) == 0 ) {
+        $count = 0;
+        }
+        else {
+        foreach ($_SESSION['cart'] as $product_id => $quantity) {
+        $count += $quantity;
+        }
+        }
+
+
+        ?>
+        <!--------------------------------------------LAYOUT-CART----------------------------------------------------->
+        <div class="layout-cart">
+            <div class="container-fluid">
+                <div class="nav-header-wrap">
+                    <div class="nav-header">
+                        <ol>
+                            <li>
+                                <a href="./home.php">
+                                    <span>Trang chủ</span>
+                                </a>
+                                <meta itemprop="position" content="1">
+                            </li>
+                            <li class="active">
+                                <span>
+                                    <span>Giỏ hàng (5)</span>
+                                </span>
+                                <meta itemprop="position" content="2">
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="cart-page">
+                    <div class="heading-page">
+                        <div class="header-page">
+                            <h1>Giỏ hàng của bạn</h1>
+                            <p class="count-cart">
+                                Có <span>5 sản phẩm</span> trong giỏ hàng
+                            </p>
+                        </div>
+                    </div>
+                    <div class="cart-content-wrap">
+                        <div class="notifications">
+                            Giỏ hàng của bạn đang trống
+                            <p class="link-continue">
+                                <a href="./collections.php" class="button dark">
+                                    <button>
+                                        <i class="fa fa-reply"></i>
+                                        TIẾP TỤC MUA HÀNG
+                                    </button>
+                                </a>
+                            </p>
+                        </div>
+                        <div class="cart-container">
+                            <div class="main-content-cart">
+                                <form action="./function/get_bill_note.php" id="cartformpage" method="POST">
+                                    <div class="display-items">
+                                        <table class="table-cart">
+                                            <tbody>
+                                                // Hiển thị thông tin sản phẩm trong giỏ hàng
+                                                <tr class="line-item-container">
+                                                    <td class="image">
+                                                        <div class="product-img">
+                                                            <a href="">
+                                                                <img src="~/img/prdImg/img_name" alt="product_name">
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="item">
+                                                        <a href="./product.php?product_id=product_id">Product Name</a>
+                                                        <p>
+                                                            <span>100.000₫</span>
+                                                        </p>
+                                                        <div class="qty-click">
+                                                            <button type="button" class="qtyminus qty-btn" data-product-id="product_id">-</button>';
+                                                            <input type="text" size="4" min="1" data-price="product_price" value="1" class="item-quantity" data-product-id="product_id">
+                                                            <button type="button" class="qtyplys qty-btn" data-product-id="product_id">+</button>';
+                                                        </div>
+                                                        <p class="price">
+                                                            <span class="text">Thành tiền</span>';
+                                                            <span class="line-iem-total">100.000₫</span>';
+                                                        </p>
+                                                    </td>
+                                                    <td class="remove">
+                                                        echo '<a href="#" class="remove-from-cart" data-product-id="product_id">
+                                                            echo '<ion-icon name="close-outline"></ion-icon>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="cart-others">
+                                        <div class="note-wrap">
+                                            <div class="checkout-note">
+                                                <textarea name="bill_note" id="note" cols="50" rows="8" placeholder="Ghi chú"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="order-actions-wrap">
+                                            <p class="order-infor">
+                                                Tổng tiền
+                                                <span class="total-price">
+                                                    <b id="total-cart">100.000₫</b>
+                                                </span>
+                                            </p>
+                                            <div class="cart-buttons">
+                                                <a href="./collections.php">
+                                                    <button>
+                                                        <i class="fa fa-reply"></i>
+                                                        TIẾP TỤC MUA HÀNG
+                                                    </button>
+                                                </a>
+                                                <button type="button" id="update-cart" class="btn-update" name="update">
+                                                    Cập nhật
+                                                </button>
+
+                                                <button type="submit" id="checkout" class="btn-checkout" name="checkout">
+                                                    Thanh toán
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                    </div
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--------------------------------------------FOOTER----------------------------------------------------->
+        <?php
+        require_once "./template/footer.php";
+        ?>
+    </div>
+    <?php
+    require_once "./template/site-nav.php";
+    ?>
+</body>
+</html>

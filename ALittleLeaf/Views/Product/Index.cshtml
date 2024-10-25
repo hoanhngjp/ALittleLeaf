@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/css/header.">
+    <link rel="stylesheet" href="~/css/footer.css">
+    <link rel="stylesheet" href="~/css/product.css">
+    <link rel="stylesheet" href="~/css/cart-search.css">
+    <title>Sản phẩm</title>
+    <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
+    <script src="~/js/showCartSearch.js" defer></script>
+    <script src="~/js/product_function.js" defer></script>
+</head>
+<body>
+
+    <div class="main-body">
+        <!--------------------------------------------HEADER----------------------------------------------------->
+        <?php
+        require_once "./template/header.php";
+        require_once "./function/db_connect.php";
+        $conn = connectDatabase();
+        ?>
+        <!--------------------------------------------PRODUCT----------------------------------------------------->
+        <div class="productDetail-page">
+            <div class="main-wrap">
+                <div class="nav-header-wrap">
+                    <div class="nav-header">
+                        <ol>
+                            <li>
+                                <a href="./home.php">
+                                    <span>Trang chủ</span>
+                                </a>
+                                <meta itemprop="position" content="1">
+                            </li>
+                            <li>
+                                <a href="./collections.php?category_id=category_id">
+                                    <span>category_name</span>
+                                </a>
+                                <meta itemprop="position" content="2">
+                            </li>
+                            <li class="active">
+                                <span>
+                                    <span>product_name</span>
+                                </span>
+                                <meta itemprop="position" content="3">
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="product-detail-wrap">
+                    <div class="product-detail-2-wrap">
+                        <div class="product-detail-main">
+                            <div class="product-content-img">
+                                <div class="product-gallery">
+                                    <div class="product-gallery-container">
+                                        <div class="product-gallery-thumbs">
+                                            <div class="product-gallery-thumb">
+                                                <a href="#" class="thumb-placeholder">
+                                                    <img src="img/prdImg/' . $row['img_name'] . '" alt=" ' . $result_product['product_name'] . '">';
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="product-image-detail">
+                                        <div class="product-image-wrap">
+                                            <img class="product-img-feature" src="img/prdImg/' . $result_img['img_name'] . '" alt="' . $result_product['product_name'] . '">';
+                                            ?>
+                                        </div>
+                                    </div>
+                                    <script src="~/js/changeProductPicture.js" defer></script>
+                                </div>
+                            </div>
+                            <div class="product-content-desc">
+                                <div class="product-title">
+                                    <h1>product_name</h1>
+                                    <span id="pro-sku">SKU: BPHTBGUHH-1</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="pro-price">100.000₫</span>
+                                </div>
+                                <form class="form-add-item" action="./function/add_to_cart.php" method="POST">
+                                    <input type="hidden" name="product_id" value="product_id">
+                                    <div class="selector-actions">
+                                        <div class="quantity-area">
+                                            <input id="minusBtn" class="qty-btn" type="button" value="-">
+                                            <input type="text" id="quantity" class="quantity-selector" name="quantity" value="1" min="1">
+                                            <input id="plusBtn" class="qty-btn" type="button" value="+">
+                                        </div>
+                                        <div class="wrap-addcart">
+                                            <button type="submit" id="add-to-cart" class="addToCartProduct">Thêm vào giỏ</button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div class="product-description">
+                                    <div class="title">
+                                        <h2>Mô tả</h2>
+                                    </div>
+                                    <div class="description-content">
+                                        <div class="description-productdetail">
+                                            product_description
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="listProduct-related">
+                            <div class="heading-title">
+                                <h2>Sản phẩm liên quan</h2>
+                            </div>
+                                <div class="pro-loop">
+                                    <div class="product-block">
+                                        <div class="product-img">
+                                            <div class="sold-out">
+                                                <span>Hết hàng</span>
+                                            </div
+                                            <a href="./product.php?product_id=' . $row['product_id'] . '">
+                                                <picture>
+                                                    <img src="~/img/prdImg/' . $result_relate_img['img_name'] . '" alt="">
+                                                </picture>
+                                            </a>
+                                        </div>
+                                        <div class="product-detail">
+                                            <div class="box-proDetail">
+                                                <h3 class="pro-name">
+                                                    <a href="./product.php?product_id=' . $row['product_id'] . '">' . $row['product_name'] . '</a>
+                                                </h3>
+                                            </div>
+                                            <div class="box-proPrice">
+                                                <p class="pro-pice">
+                                                    <span>' . number_format($row['product_price'], 0, ',', '.') . '₫</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--------------------------------------------FOOTER----------------------------------------------------->
+        <?php
+        require_once "./template/footer.php";
+        ?>
+    </div>
+    <?php
+    require_once "./template/site-nav.php";
+    ?>
+</body>
+</html>

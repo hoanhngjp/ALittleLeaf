@@ -1,0 +1,168 @@
+header{
+    width: 100%;
+    height: 70px;
+    padding: 12px 50px;
+    display: flex;
+    position: fixed;
+    justify-content: space-between;
+    align-items: center;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    background-color: #ffff;
+}
+
+header div{
+    flex: 1;
+}
+
+header ul{
+    list-style: none;
+}
+
+header a:hover{
+    color: #518372;
+}
+
+.homeLogo {
+    display: flex;
+    justify-content: center;
+}
+
+.homeLogo img{
+    max-width: 200px;
+    object-fit: contain;
+}
+
+.menu{
+    flex: 2;
+    text-align: center;
+    font-size: 15px;
+}
+
+.menu ul{
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+}
+
+.menu ul li:hover{
+    border-bottom: 1px solid #5c5c5c;
+}
+
+.menu ul li{
+    margin: 0 20px;
+    position: relative;
+}
+
+.menu a{
+    text-decoration: none;
+    color: #001812;
+}
+
+.menu ion-icon{
+    font-size: 12px;
+}
+
+ul.dropDown{
+    width: 10rem;
+    display: none;
+    position: absolute;
+    background-color: #fff; /* Màu nền của drop down */
+    padding: 10px;
+    white-space: nowrap;
+    border: 1px solid #fff;
+    transform: translateY(-2em);
+    transition: all 0.3s ease-in-out 0s, visibility 0s linear 0.3s, z-index 0s linear 0.01s;
+}
+
+ul.dropDown li{
+    margin: 10px 0;
+    font-size: 18px;
+    text-align: left;
+    width: 100%;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 15px;
+}
+
+.menu ul li:hover .dropDown{
+    display: block;
+    border-top: 2px solid #5c5c5c;
+    display: block;
+    opacity: 1;
+    z-index: 1;
+    transform: translateY(0%);
+    transition-delay: 0s, 0s, 0.3s; /* this removes the transition delay so the menu will be visible while the other styles transition */
+}
+
+ul.subMenu{
+    display: none;
+    position: absolute;
+    top: -20px;
+    left: 100%;
+    background-color: #fff; /* Màu nền của subMenu */
+    padding-left: 25px;
+    font-size: 15px;
+}
+
+.dropDown li:hover >.subMenu{
+    display: block;
+}
+
+ul.others{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+ul.others a{
+    text-decoration: none;
+    color: #001812;
+}
+
+ul.others li{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+}
+
+ul.others li:hover{
+    background-color: rgba(72, 114, 100, 0.1);
+}
+
+.others ion-icon{
+    font-size: 30px;
+}
+
+#open-site-cart{
+    position: relative;
+}
+
+#open-site-cart .count-holder{
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1;
+    font-weight: bold;
+    height: 17px;
+    overflow: hidden;
+}
+
+.count-holder .count{
+    position: relative;
+    top: 0px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1;
+    font-weight: bold;
+}

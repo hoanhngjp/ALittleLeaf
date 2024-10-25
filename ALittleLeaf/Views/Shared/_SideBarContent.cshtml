@@ -1,0 +1,61 @@
+﻿<div class="sidebar-content">
+    <div class="order-summary-sections">
+        <!--------------------------------------------LIST-PRODUCTS----------------------------------------------------->
+        <div class="order-summary-section order-summary-section-product-list">
+            <table class="product-table">
+                <tbody>
+                    <!--Nếu chưa có sản phẩm-->
+                    <tr>Hiện chưa có sản phẩm nào</tr>
+                    <!--Nếu có sản phẩm-->
+                        <!--Mỗi Product là 1 thẻ tr class product-->
+                    <tr class="product">
+                        <td class="product-image">
+                            <div class="product-thumbnail">
+                                <div class="product-thumbnail-wrapper">
+                                    <img src="img/prdImg/'. $row['img_name'] .'" alt="'. $row['product_name'] .'" class="product-thmbnial-image">
+                                </div>
+                            </div>
+                        </td>
+                        <td class="product-description">
+                            <span class="product-description-name order-summary-emphasis">'. $row['product_name'] .'</span>
+                        </td>
+                        <td class="product-quantity">'. $quantity .'</td>
+                        <td class="product-price">
+                            <span class="order-summary-emphasis">' . number_format($row['product_price'], 0, ',', '.') . '₫</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!--------------------------------------------TOTAL-LINES----------------------------------------------------->
+        <div class="order-summary-section order-summary-section-total-lines payment-line">
+            <table class="total-line-table">
+                <tbody>
+                    <tr class="total-line total-line-subtotal">
+                        <td class="total-line-name">Tạm tính</td>
+                        <td class="total-line-price">
+                            <span class="order-summary-emphasis"><?php echo number_format($total_price, 0, ',', '.').'₫'; ?></span>
+                        </td>
+                    </tr>
+                    <tr class="total-line total-line-shipping">
+                        <td class="total-line-name">Phí vận chuyển</td>
+                        <td class="total-line-price">
+                            <span class="order-summary-emphasis">Miễn phí</span>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot class="total-line-table-footer">
+                    <tr class="total-line">
+                        <td class="total-line-name payment-due-label">
+                            <span class="payment-due-label-total">Tổng cộng</span>
+                        </td>
+                        <td class="total-line-name payment-due">
+                            <span class="payment-due-currency">VND</span>
+                            <span class="payment-due-price"><?php echo number_format($total_price, 0, ',', '.').'₫'; ?></span>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

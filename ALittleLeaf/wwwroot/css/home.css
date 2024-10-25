@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+html, body{
+    height: 100%;
+    font-family: 'Quicksand', 'sans-serif';
+}
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/*-----------------------SLIDER-------------------------------*/
+.slider{
+    width: 1000px;
+    max-width: 100%;
+    height: 700px;
+    position: relative;
+    margin: auto;
+    overflow: hidden;
+}
+
+.list{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    display: flex;
+    width: max-content;
+    transition: 1s;
+}
+
+.list img{
+    width: 1000px;
+    max-width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.buttons{
+    position: absolute;
+    top: 45%;
+    left: 5%;
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.buttons button{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #fff5;
+    border: none;
+    font-size: 16px;
+    font-family: monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.dots{
+    position: absolute;
+    bottom: 10px;
+    color: #000;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.dots li{
+    list-style: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 20px;
+    margin: 20px;
+    background-color: #000;
+    transition: 1s;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.dots li.active{
+    width: 30px;
+}
+/*-----------------------CATEGORY-------------------------------*/
+.category-title{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+    padding-bottom: 2%;
+}
+
+.category-wrap{
+    width: 100%;
+    padding: 20px 100px;
+}
+
+.category {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px; /* Khoảng cách giữa các mục */
+}
+
+.category-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-item a {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Canh chỉnh các phần tử trong thẻ a ở giữa */
+    text-align: center; /* Canh chỉnh văn bản ở giữa */
+    text-decoration: none; /* Loại bỏ gạch chân mặc định */
+    color: black; /* Màu văn bản */
+}
+
+.category-item-img {
+    width: 100%; /* Chiều rộng của hình ảnh */
+    margin-bottom: 10px; /* Khoảng cách giữa hình ảnh và văn bản */
+}
+
+.category-item-img img {
+    width: 100%; /* Đảm bảo hình ảnh không vượt quá kích thước của phần tử cha */
+    border-radius: 24px;
+}
+
+.category-item-img img:hover{
+    border: 3px solid #518372;
+}
+
+.category-item span {
+    font-weight: bold; /* Định dạng văn bản in đậm */
+}

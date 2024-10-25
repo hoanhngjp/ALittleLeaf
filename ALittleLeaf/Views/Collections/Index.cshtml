@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/css/header.css">
+    <link rel="stylesheet" href="~/css/footer.css">
+    <link rel="stylesheet" href="~/css/collections.css">
+    <link rel="stylesheet" href="~/css/cart-search.css">
+    <title>Tất cả sản phẩm</title>
+    <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
+    <script src="~/js/showCartSearch.js" defer></script>
+    <script src="~/js/showSubMenu.js?v=<?php echo time();?>" defer></script>
+</head>
+<body>
+    <div class="main-body">
+        <!--------------------------------------------HEADER----------------------------------------------------->
+        <?php
+        require_once "./template/header.php";
+        require_once "./function/db_connect.php";
+        $conn = connectDatabase();
+        ?>
+        <!--------------------------------------------Collections----------------------------------------------------->
+        <div class="collections-wrap">
+            <!--------------------------------------------DIRECT----------------------------------------------------->
+            <div class="direct">
+                <div class="direct-items">
+                    <a href="./home.php">Trang chủ</a> <p> / </p> <a href="">Danh mục</a> <p> / </p>Tên danh mục</p>>
+                </div>
+            </div>
+            <!--------------------------------------------COLLECTIONS----------------------------------------------------->
+            <div class="collections-content">
+                <!--------------------------------------------Collections-MENU----------------------------------------------------->
+                <div class="menu-wrap">
+                    <ul class="menu-tree">
+                        <li class="menu-item">
+                            <a href="~/collections.php?category_id=category_id">category name</a>
+                            <ion-icon name="remove-outline"></ion-icon>
+                            <ul class="sub-menu">
+                                <li class="sub-menu-item">
+                                    <a href="~/collections.php?category_id=sub_category_id">Sub category name</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <!--------------------------------------------COLLECTIONS-ITEMS----------------------------------------------------->
+                <div class="collections-item-wrap">
+                    <div class="collections-heading-wrap">
+                        <div class="collections-title">
+                            <h1>Category Name / Tất cả sản phẩm</h1>
+                        </div>
+                    </div>
+                    <div class="collections-item">
+                        <div class="item-wrap">
+                            <div class="item-picture">
+                                <a href="./product.php?product_id=' . $row['product_id']. ' ">
+                                    <img src="~/img/prdImg/'.$row_img['img_name'].'" alt="' . $row['product_name'] . '">
+                                </a>
+                            </div>
+                            <div class="item-detail">
+                                <h3>
+                                    <a href="./product.php?product_id=' . $row['product_id']. ' ">' . $row['product_name'] . '</a>
+                                </h3>
+                                <p class="item-price">'. number_format($row['product_price'], 0, ',', '.') . '₫</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collections-footer-wrap">
+                        <a href="./collections.php?category_id=' . $category_id . '&page=' . ($current_page - 1) . '" class="prevPage"><i class="fa-solid fa-arrow-left-long"></i></a>';
+                        <ul class="page-list">
+                            <li><a href="./collections.php?category_id=' . $category_id . '&page=' . $i . '" style="font-weight: bold;">' . $i . '</a></li>';
+                            <li><a href="./collections.php?category_id=' . $category_id . '&page=' . $i . '">' . $i . '</a></li>';
+                        </ul>
+                        <a href="./collections.php?category_id=' . $category_id . '&page=' . ($current_page + 1) . '" class="nextPage"><i class="fa-solid fa-arrow-right-long"></i></a>';
+                        <a href="./collections.php?page=' . ($current_page - 1) . '" class="prevPage"><i class="fa-solid fa-arrow-left-long"></i></a>
+                        <ul class="page-list">
+                            <li><a href="./collections.php?page=' . $i . '" style="font-weight: bold;">' . $i . '</a></li>';
+                            <li><a href="./collections.php?page=' . $i . '">' . $i . '</a></li>
+                        </ul>
+                        <a href="./collections.php?page=' . ($current_page + 1) . '" class="nextPage"><i class="fa-solid fa-arrow-right-long"></i></a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!--------------------------------------------FOOTER----------------------------------------------------->
+        <?php
+        require_once "./template/footer.php";
+        ?>
+    </div>
+    <?php
+    require_once "./template/site-nav.php";
+    ?>
+</body>
+</html>

@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/css/header.css">
+    <link rel="stylesheet" href="~/css/footer.css">
+    <link rel="stylesheet" href="~/css/search.css">
+    <link rel="stylesheet" href="~/css/cart-search.css">
+    <title>Kết quả tìm kiếm</title>
+    <link rel="icon" type="image/x-icon" href="img/footerLogo.webp">
+    <script src="~/js/showCartSearch.js" defer></script>
+    <script src="~/js/showSubMenu.js" defer></script>
+</head>
+<body>
+    <div class="main-body">
+        <!--------------------------------------------HEADER----------------------------------------------------->
+        <?php
+        require_once "./template/header.php";
+        require_once "./function/db_connect.php";
+        require_once "./function/database_function.php";
+        $conn = connectDatabase();
+        ?>
+        <!--------------------------------------------SEARCH-PAGE----------------------------------------------------->
+        <div class="searchPage" id="layout-search">
+            <div class="container-fluid">
+                <div class="row pd-page">
+                    <div class="col-md-12 col-xs-12">
+                        <div class="heading-page">
+                            <h1>Tìm kiếm</h1>
+                            <p class="subtxt">
+                                Có <span>' . $totalProducts . ' sản phẩm</span> cho tìm kiếm
+                            </p>
+                        </div>
+                        <div class="wrapbox-content-page">
+                            <div class="content-page clearfix" id="search">
+                                <div class="expanded-message">
+                                    <div class="search-field">
+                                        <form action="" method="GET" class="search-page">
+                                            <input type="text" class="search_box" name="q" placeholder="Tìm kiếm">
+                                            <input type="submit" id="go">
+                                            <div id="filter-options">
+                                                <div class="category-type-wrap">
+                                                    <span class="fc-title">Danh mục</span>
+                                                    <ul class="fc-category-list">
+                                                        <li>
+                                                            <label>
+                                                                <input class="category-ids" type="checkbox" value="'. $row['category_id'] .'" name="categories[]">
+                                                                $row['category_name']
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div class="price-type-wrap">
+                                                    <span class="fc-title">Khoảng giá</span>
+                                                    <ul class="fc-price-list">
+                                                        <li>
+                                                            <label for="">
+                                                                <input class="price-id" name="price_range[]" value="under500k" type="checkbox">
+                                                                < 500.000₫
+                                                            </label>
+                                                        </li>
+                                                        <li>
+                                                            <label for="">
+                                                                <input class="price-id" name="price_range[]" type="checkbox" value="500k_to_1m">
+                                                                500.000₫ - 1.000.000₫
+                                                            </label>
+                                                        </li>
+                                                        <li>
+                                                            <label for="">
+                                                                <input class="price-id" name="price_range[]" type="checkbox" value="over1m">
+                                                                > 1.000.000₫
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="open-filter-wrap">
+                                                <div class="open-filter-block">
+                                                    <span id="close-filter-option"><ion-icon name="caret-up-outline"></ion-icon></span>
+                                                    <span class="open-filter-title">Nâng cao</span>
+                                                    <span id="show-filter-option"><ion-icon name="caret-down-outline"></ion-icon></span>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <script src="./js/showFilterOptions.js?v=<?php echo time(); ?>"></script>
+                                    </div>
+                                    <div class="message-txt clearfix">
+                                        <p>Rất tiếc, chúng tôi không tìm thấy kết quả cho từ khóa của bạn</p>
+                                        <p>Vui lòng kiểm tra chính tả, sử dụng các từ tổng quát hơn và thử lại!</p>
+                                    </div>
+                                </div>
+                                <p class="subtext-result">
+                                    Kết quả tìm kiếm cho <strong>' . htmlspecialchars($keyword) . '</strong>
+                                </p>
+                                <div class="results content-product-list ">
+                                    <div class="search-list-results">
+                                        <div class="item-wrap">
+                                            <div class="item-picture">
+                                                <a href="~/product.php?product_id=' . $row['product_id']. ' ">
+                                                    <img src="~/img/prdImg/'.$row_img['img_name'].'" alt="' . $row['product_name'] . '">
+                                                </a>
+                                            </div>
+                                            <div class="item-detail">
+                                                <h3>
+                                                    <a href="./product.php?product_id=' . $row['product_id']. ' ">' . $row['product_name'] . '</a>
+                                                </h3>
+                                                <p class="item-price">'. number_format($row['product_price'], 0, ',', '.') . '₫</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="search-footer-wrap">
+                                    <a href="?'.$search_params.'&page='.($page - 1).'" class="prevPage"><i class="fa-solid fa-arrow-left-long"></i></a>
+                                    <ul class="page-list">
+                                        <li>
+                                            <span style="font-weight: bold;">'.$i.'</span>
+                                            <a href="?'.$search_params.'&page='.$i.'">'.$i.'</a>
+                                        </li>
+                                    </ul>
+                                    <a href="?'.$search_params.'&page='.($page + 1).'" class="nextPage"><i class="fa-solid fa-arrow-right-long"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--------------------------------------------FOOTER----------------------------------------------------->
+        <?php
+        require_once "./template/footer.php";
+        ?>
+    </div>
+    <?php
+    require_once "./template/site-nav.php";
+    ?>
+</body>
+</html>
