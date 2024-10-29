@@ -1,0 +1,16 @@
+﻿@model IEnumerable<ALittleLeaf.ViewModels.HomeCategoryViewModel>
+<div class="category-wrap">
+    <div class="category">
+        @foreach (var category in Model)
+        {
+            <div class="category-item">
+                <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@category.CategoryId">
+                    <div class="category-item-img">
+                        <img src="~/img/homeCategory/@category.CategoryImg" alt="">
+                    </div>
+                    <span>@category.CategoryName</span>
+                </a>
+            </div>
+        }
+    </div>
+</div>

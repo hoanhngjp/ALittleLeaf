@@ -1,19 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
 
-namespace ALittleLeaf.Models
+namespace ALittleLeaf.Models;
+
+public partial class ProductImage
 {
-    public class ProductImage
-    {
-        [Key]
-        public int ImgId { get; set; }
-        public int ProductId { get; set; }
-        public string ImgName { get; set; }
-        public bool IsPrimary { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+    public int ImgId { get; set; }
 
-        // Navigation property
-        public ProductModel Product { get; set; }
-    }
+    public int IdProduct { get; set; }
 
+    public string ImgName { get; set; } = null!;
+
+    public bool IsPrimary { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public virtual Product IdProductNavigation { get; set; } = null!;
 }

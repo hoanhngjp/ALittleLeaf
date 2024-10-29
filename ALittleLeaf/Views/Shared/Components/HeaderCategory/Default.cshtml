@@ -1,0 +1,27 @@
+﻿@model IEnumerable<ALittleLeaf.ViewModels.HeaderCategoryViewModel>
+
+<ul class="dropDown">
+    @foreach (var category in Model)
+    {
+        <li>
+            <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@category.CategoryId">
+                @category.CategoryName
+                @if (category.SubCategories.Any())
+                {
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                }
+            </a>
+            @if (category.SubCategories.Any())
+            {
+                <ul class="subMenu">
+                    @foreach (var subCategory in category.SubCategories)
+                    {
+                        <li>
+                            <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@subCategory.CategoryId">@subCategory.CategoryName</a>
+                        </li>
+                    }
+                </ul>
+            }
+        </li>
+    }
+</ul>

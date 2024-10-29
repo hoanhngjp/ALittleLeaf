@@ -1,22 +1,13 @@
-﻿<?php
-<header>
+﻿<header>
     <div class="homeLogo">
-        <a href="./home.php"><img src="img/logo.webp" alt=""></a>
+        <a asp-controller="Home" asp.action="Index"><img src="~/img/logo.webp" alt=""></a>
     </div>
     <div class="menu">
         <ul>
-            <li><a href="./home.php">Trang chủ</a></li>
+            <li><a asp-controller="Home" asp.action="Index">Trang chủ</a></li>
             <li>
-                <a href="./collections.php">Sản phẩm <ion-icon name="chevron-down-outline"></ion-icon></a>
-                <ul class="dropDown">
-                    <li>
-                        <a href="./collections.php?category_id=' . $row['category_id'] . '">' . $row['category_name'] . ' <ion-icon name="chevron-forward-outline"></ion-icon></a>
-                        <a href="./collections.php?category_id=' . $row['category_id'] . '">' . $row['category_name'] . '</a>
-                        <ul class="subMenu">
-                            <li><a href="./collections.php?category_id=' . $subRow['category_id'] . '">' . $subRow['category_name'] . '</a></li>
-                        </ul>
-                    </li>
-                </ul>
+                <a href="~/collections">Sản phẩm <ion-icon name="chevron-down-outline"></ion-icon></a>
+                @await Component.InvokeAsync("HeaderCategory")
             </li>
             <li><a href="">Về A Little Leaf</a></li>
         </ul>

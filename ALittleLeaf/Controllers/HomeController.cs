@@ -18,6 +18,20 @@ namespace ALittleLeaf.Controllers
             return View();
         }
 
+        public IActionResult Collections()
+        {
+            return View();
+        }
+
+        public IActionResult Account()
+        {
+            return View();
+        }
+
+        public IActionResult Search()
+        {
+            return View();
+        }
         public IActionResult Privacy()
         {
             return View();

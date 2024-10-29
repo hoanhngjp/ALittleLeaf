@@ -12,7 +12,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true; // bat buoc session
 });
 
-builder.Services.AddDbContext<DataContext>(options =>
+builder.Services.AddDbContext<AlittleLeafDecorContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.

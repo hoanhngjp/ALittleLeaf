@@ -87,37 +87,38 @@
                             <th>Cập nhật thông tin</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <form action="./function/change_user_info.php" method="POST">
-                        <tr>
-                            <td>' . $row['user_id'] . '</td>
-                            <input type="hidden" name="user_id" value="' . $row['user_id'] . '">
-                            <td class="editable">
-                                <input type="text" name="user_email" value="' . $row['user_email'] . '">
-                            </td>
-                            <td class="editable">
-                                <input type="text" name="user_fullname" value="' . $row['user_fullname'] . '">
-                            </td>
-                            <td>
-                                <select name="user_sex">
-                                    <option value="Male" selected>Nam</option>
-                                    <option value="Female">Nữ</option>
-                                </select>
-                            </td>
-                            <td>
-                                <input type="text" name="user_birthday" value="' . date(" d /m/Y", strtotime($row["user_birthday"])) . '">
-                            </td>
-                            <td>
-                                <select name="user_isActive" >
-                                    <option value="1" selected>Hoạt động</option>
-                                    <option value="0">Khóa</option>
-                                </select>
-                            </td>
-                            <td>
-                                <button class="sign-in-btn" type="submit" value="login">Cập nhật</button>
-                            </td>
-                        </tr>
-                        </form>
+                    <tbody
+                        
+                        <!--<form action="./function/change_user_info.php" method="POST">-->
+                            <tr>
+                                <td>' . $row['user_id'] . '</td>
+                                <input type="hidden" name="user_id" value="' . $row['user_id'] . '">
+                                <td class="editable">
+                                    <input type="text" name="user_email" value="' . $row['user_email'] . '">
+                                </td>
+                                <td class="editable">
+                                    <input type="text" name="user_fullname" value="' . $row['user_fullname'] . '">
+                                </td>
+                                <td>
+                                    <select name="user_sex">
+                                        <option value="Male" selected>Nam</option>
+                                        <option value="Female">Nữ</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="user_birthday" value="' . date(" d /m/Y", strtotime($row["user_birthday"])) . '">
+                                </td>
+                                <td>
+                                    <select name="user_isActive" >
+                                        <option value="1" selected>Hoạt động</option>
+                                        <option value="0">Khóa</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button class="sign-in-btn" type="submit" value="login">Cập nhật</button>
+                                </td>
+                            </tr>
+                        <!--</form>-->
                                 <!-- Add more rows as needed -->
                     </tbody>
                 </table>
@@ -190,6 +191,7 @@
                 });
             }
         </script>
-</body>
+
+ </body>
 
 </html>
