@@ -1,0 +1,29 @@
+﻿@model IEnumerable<ALittleLeaf.ViewModels.CollectionsMenuViewModel>
+
+<div class="menu-wrap">
+    <ul class="menu-tree">
+        @foreach (var category in Model)
+        {
+            <li class="menu-item">
+                <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@category.CategoryId">
+                    @category.CategoryName
+                </a>
+                @if (category.SubCategories.Any())
+                {
+                    <ion-icon name="remove-outline"></ion-icon>
+                }
+                @if (category.SubCategories.Any())
+                {
+                    <ul class="sub-menu">
+                        @foreach (var subCategory in category.SubCategories)
+                        {
+                            <li class="sub-menu-item">
+                                <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@subCategory.CategoryId">@subCategory.CategoryName</a>
+                            </li>
+                        }                        
+                    </ul>
+                }
+            </li>
+        }
+    </ul>
+</div>

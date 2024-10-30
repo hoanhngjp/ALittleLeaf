@@ -13,19 +13,7 @@
     <!--------------------------------------------COLLECTIONS----------------------------------------------------->
     <div class="collections-content">
         <!--------------------------------------------Collections-MENU----------------------------------------------------->
-        <div class="menu-wrap">
-            <ul class="menu-tree">
-                <li class="menu-item">
-                    <a href="~/collections.php?category_id=category_id">category name</a>
-                        <ion-icon name="remove-outline"></ion-icon>
-                            <ul class="sub-menu">
-                                <li class="sub-menu-item">
-                                    <a href="~/collections.php?category_id=sub_category_id">Sub category name</a>
-                                </li>
-                            </ul>
-                </li>
-            </ul>
-        </div>
+        @await Component.InvokeAsync("CollectionsMenu")
         <!--------------------------------------------COLLECTIONS-ITEMS----------------------------------------------------->
         <div class="collections-item-wrap">
             <div class="collections-heading-wrap">
@@ -51,21 +39,64 @@
                     </div>
                 }
             </div>
-            
             <div class="collections-footer-wrap">
-                <a href="./collections.php?category_id=' . $category_id . '&page=' . ($current_page - 1) . '" class="prevPage"><i class="fa-solid fa-arrow-left-long"></i></a>';
-                    <ul class="page-list">
-                        <li><a href="./collections.php?category_id=' . $category_id . '&page=' . $i . '" style="font-weight: bold;">' . $i . '</a></li>';
-                        <li><a href="./collections.php?category_id=' . $category_id . '&page=' . $i . '">' . $i . '</a></li>';
-                    </ul>
-                    <a href="./collections.php?category_id=' . $category_id . '&page=' . ($current_page + 1) . '" class="nextPage"><i class="fa-solid fa-arrow-right-long"></i></a>';
-                    <a href="./collections.php?page=' . ($current_page - 1) . '" class="prevPage"><i class="fa-solid fa-arrow-left-long"></i></a>
-                    <ul class="page-list">
-                        <li><a href="./collections.php?page=' . $i . '" style="font-weight: bold;">' . $i . '</a></li>';
-                        <li><a href="./collections.php?page=' . $i . '">' . $i . '</a></li>
-                    </ul>
-                    <a href="./collections.php?page=' . ($current_page + 1) . '" class="nextPage"><i class="fa-solid fa-arrow-right-long"></i></a>
-                    </div>
+                <!-- Nút "Previous Page" -->
+                @if (ViewBag.Pagination.CurrentPage > 1)
+                {
+                    <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@(ViewBag.Pagination.CurrentPage - 1)" class="prevPage">
+                        <i class="fa-solid fa-arrow-left-long"></i>
+                    </a>
+                }
+
+                <ul class="page-list">
+                    <!-- Hiển thị 4 trang đầu tiên -->
+                    @for (int i = 1; i <= Math.Min(4, ViewBag.Pagination.TotalPages); i++)
+                    {
+                        <li >
+                            <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
+                        </li>
+                    }
+
+                    <!-- Nếu có nhiều hơn 8 trang, hiển thị dấu ba chấm -->
+                    @if (ViewBag.Pagination.TotalPages > 8 && ViewBag.Pagination.CurrentPage > 5)
+                    {
+                        <li><span>...</span></li>
+                    }
+
+                    <!-- Hiển thị trang hiện tại và các trang xung quanh nó nếu ở giữa -->
+                    @if (ViewBag.Pagination.TotalPages > 8)
+                    {
+                        @for (int i = Math.Max(5, ViewBag.Pagination.CurrentPage - 1); i <= Math.Min(ViewBag.Pagination.CurrentPage + 1, ViewBag.Pagination.TotalPages - 4); i++)
+                        {
+                            <li>
+                                <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
+                            </li>
+                        }
+                    }
+
+                    <!-- Hiển thị dấu ba chấm trước 4 trang cuối nếu cần -->
+                    @if (ViewBag.Pagination.TotalPages > 8 && ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages - 4)
+                    {
+                        <li><span>...</span></li>
+                    }
+
+                    <!-- Hiển thị 4 trang cuối -->
+                    @for (int i = Math.Max(ViewBag.Pagination.TotalPages - 3, 5); i <= ViewBag.Pagination.TotalPages; i++)
+                    {
+                        <li>
+                            <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
+                        </li>
+                    }
+                </ul>
+
+                <!-- Nút "Next Page" -->
+                @if (ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages)
+                {
+                    <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@(ViewBag.Pagination.CurrentPage + 1)" class="nextPage">
+                        <i class="fa-solid fa-arrow-right-long"></i>
+                    </a>
+                }
+            </div>
         </div>
     </div>
 </div>
