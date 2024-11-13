@@ -15,7 +15,6 @@ namespace ALittleLeaf.Controllers
         {
             _context = context;
         }
-
         public IActionResult Index(int productId, int idCategory)
         {
             // Sử dụng productId và idCategory trong phương thức

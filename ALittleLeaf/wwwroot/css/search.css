@@ -170,6 +170,10 @@ input#go {
     color: #001812;
 }
 
+.search-footer-wrap a.current {
+    font-weight: bold;
+}
+
 .page-list{
     list-style: none;
     display: flex;
@@ -279,3 +283,4 @@ input#go {
 #show-filter-option {
     cursor: pointer;
 }
+

@@ -82,32 +82,36 @@
         <div class="site-nav-container-last">
             <p class="title">Tìm kiếm</p>
             <div class="search-box-wrap">
-                <form class="searchForm" action="search.php?q='keyword'" method="GET">
+                <form asp-controller="Search" asp-action="Index" method="get" class="searchForm">
                     <div class="search-inner">
-                        <input type="text" class="searchInput" size="20" name="q" placeholder="Tìm kiếm sản phẩm">
+                        <input type="search" class="searchInput" size="20" name="q" placeholder="Tìm kiếm sản phẩm">
                     </div>
-                    <button class="btn-search">
+                    <button type="submit" class="btn-search">
                         <ion-icon name="search-outline"></ion-icon>
                     </button>
                 </form>
                 <div class="result-wrap">
                     <div class="result-content">
+
                         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
                         <script>
-                            $(document).ready(function(){
-                                $('.searchInput').keyup(function(){
+                            $(document).ready(function () {
+                                $('.searchInput').keyup(function () {
                                     var keyword = $(this).val();
-                                    if(keyword != ''){
+                                    if (keyword != '') {
                                         $.ajax({
-                                        url: 'function/search_result.php',
-                                        type: 'post',
-                                        data: {keyword:keyword},
-                                        success:function(response){
-                                            $('.result-content').html(response);
-                                        }
+                                            url: '/Search/Search', // Gọi action Search của SearchController
+                                            type: 'POST',
+                                            data: { q: keyword },
+                                            success: function (response) {
+                                                $('.result-content').html(response); // Hiển thị kết quả tìm kiếm
+                                            },
+                                            error: function (xhr, status, error) {
+                                                console.error('Error:', error);
+                                            }
                                         });
                                     } else {
-                                        $('.result-content').html('');
+                                        $('.result-content').html(''); // Xóa kết quả tìm kiếm nếu không có từ khóa
                                     }
                                 });
                             });

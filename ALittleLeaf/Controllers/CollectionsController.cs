@@ -52,6 +52,7 @@ namespace ALittleLeaf.Controllers
             products = products.Where(p => p.IsOnSale); // Chỉ lấy sản phẩm đang mở bán
 
             int totalItems = products.Count();
+
             var result = products
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

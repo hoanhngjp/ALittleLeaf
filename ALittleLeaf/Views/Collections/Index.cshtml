@@ -1,6 +1,9 @@
 ﻿@model IEnumerable<ALittleLeaf.ViewModels.ProductViewModel>
+@section CollectionsStyle {
+    <link rel="stylesheet" href="~/css/collections.css" />
+}
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Danh mục sản phẩm";
 }
 <!--------------------------------------------Collections----------------------------------------------------->
 <div class="collections-wrap">
@@ -32,7 +35,9 @@
                         </div>
                         <div class="item-detail">
                             <h3>
-                                <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId">@product.ProductName</a>
+                                <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId" asp-route-idCategory="@product.IdCategory">
+                                    @product.ProductName
+                                </a>
                             </h3>
                             <p class="item-price">@product.ProductPrice.ToString("N0")₫</p>
                         </div>

@@ -1,0 +1,40 @@
+﻿@model IEnumerable<ALittleLeaf.ViewModels.ProductViewModel>
+
+@{
+    string keyword = ViewBag.SearchKeyword; // Lấy từ khóa từ ViewBag
+}
+
+@if (Model.Any())
+{
+    var firstFiveProducts = Model.Take(5); // Lấy 5 sản phẩm đầu tiên
+    var remainingProductsCount = Model.Count() - 5; // Đếm số sản phẩm còn lại
+    foreach (var product in firstFiveProducts)
+    {
+        <div class="item-ult">
+            <div class="thumbs">
+                <a href="@Url.Action("Index", "Product", new { productId = product.ProductId, idCategory = product.IdCategory })">
+                    <img src="~/img/prdImg/@product.ProductImg" alt="@product.ProductName">
+                </a>
+            </div>
+            <div class="title">
+                <a href="@Url.Action("Index", "Product", new { productId = product.ProductId, idCategory = product.IdCategory })">
+                    @product.ProductName
+                </a>
+                <p class="f-initial">@product.ProductPrice.ToString("N0")₫</p>
+            </div>
+        </div>
+    }
+
+    @if (remainingProductsCount > 0)
+    {
+        <div class="resultMore">
+            <a href="@Url.Action("Search", "Product", new { q = keyword })">
+                Xem thêm <strong>@remainingProductsCount</strong> sản phẩm
+            </a>
+        </div>
+    }
+}
+else
+{
+    <p>Không tìm thấy sản phẩm nào.</p>
+}

@@ -1,5 +1,10 @@
 ﻿@model ALittleLeaf.ViewModels.ProductDetailViewModel
-
+@section ProductStyle {
+    <link rel="stylesheet" href="~/css/product.css" />
+}
+@{
+    ViewData["Title"] = @Model.ProductName;
+}
 <!--------------------------------------------PRODUCT----------------------------------------------------->
 <div class="productDetail-page">
     <div class="main-wrap">
