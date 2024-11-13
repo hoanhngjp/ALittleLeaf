@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="~/css/header.css">
     <link rel="stylesheet" href="~/css/footer.css">
     <link rel="stylesheet" href="~/css/home.css">
+    @RenderSection("LoginRegisterStyle", required: false)
     <link rel="stylesheet" href="~/css/cart-search.css">
     <link rel="stylesheet" href="~/css/product.css">
     <link rel="stylesheet" href="~/css/collections.css">
@@ -17,15 +18,14 @@
     <script src="~/js/showCartSearch.js" defer></script>
     <script src="~/js/showSubMenu.js" defer></script>
     <script src="~/js/product_function.js" defer></script>
+    <script src="~/js/validLoginAndRegistry.js" defer></script>
 </head>
 <body>
     <div id="main-body">
         <!--------------------------------------------HEADER----------------------------------------------------->
         @Html.Partial("_Header");
         <!--------------------------------------------CONTENT----------------------------------------------------->
-        <div>
-            @RenderBody()
-        </div>
+        @RenderBody()
         <!--------------------------------------------FOOTER----------------------------------------------------->
         <footer>
             <div class="footerWrap">

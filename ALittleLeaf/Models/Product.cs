@@ -25,7 +25,8 @@ public partial class Product
 
     public virtual ICollection<BillDetail> BillDetails { get; set; } = new List<BillDetail>();
 
-    public virtual Category IdCategoryNavigation { get; set; } = null!;
+    public virtual Category IdCategoryNavigation { get; set; }
 
     public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+
 }

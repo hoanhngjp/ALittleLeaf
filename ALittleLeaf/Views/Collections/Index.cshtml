@@ -26,15 +26,15 @@
                 {
                     <div class="item-wrap">
                         <div class="item-picture">
-                            <a href="./product.php?product_id=' . $row['product_id']. ' ">
+                            <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId" asp-route-idCategory="@product.IdCategory">
                                 <img src="~/img/prdImg/@product.ProductImg" alt="@product.ProductName">
                             </a>
                         </div>
                         <div class="item-detail">
                             <h3>
-                                <a href="./product.php?product_id=' . $row['product_id']. ' ">product.ProductName</a>
+                                <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId">@product.ProductName</a>
                             </h3>
-                            <p class="item-price">@product.ProductPrice ₫</p>
+                            <p class="item-price">@product.ProductPrice.ToString("N0")₫</p>
                         </div>
                     </div>
                 }

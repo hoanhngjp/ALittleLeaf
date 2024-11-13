@@ -1,76 +1,50 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="~/css/header.css>
-    <link rel="stylesheet" href="~/css/footer.css">
-    <link rel="stylesheet" href="~/css/login.css">
-    <link rel="stylesheet" href="~css/cart-search.css">
-    <title>Tài khoản</title>
-    <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
-    <script src="~/js/showCartSearch.js" defer></script>
-    <script src="~/js/validLoginAndRegistry.js" defer></script>
-</head>
-<body>
-    <div class="main-body">
-        <!--------------------------------------------HEADER----------------------------------------------------->
-        <?php
-        require_once "./template/header.php";
-        ?>
-        <!--------------------------------------------LOGIN----------------------------------------------------->
-        <div class="login-wrap">
-            <div class="login-title-wrap">
-                <div class="header">
-                    <h1>Đăng nhập</h1>
-                </div>
-            </div>
-            <div class="form-wrap">
-                <div class="form">
-                    <form action="./function/login_function.php" method="post" onsubmit="return checkLogin()">
-                        <div class="errors-wrap">
-                            <span class="show-error" id="error-all" style="display: block;">*Thông tin đăng nhập không hợp lệ<br>Mời bạn kiểm tra lại</span>
-                        </div>
-                        <div class="errors-wrap">
-                            <span class="show-error" id="error-all" style="display: block;">*Tài khoản của bạn đã bị khóa<br>Vui lòng liên hệ admin để được hỗ trợ</span>
-                        </div>
-                        <div class="input-wrap">
-                            <input type="email" name="email" id="email" placeholder="Email">
-                        </div>
-                        <div class="errors-wrap">
-                            <span class="show-error" id="error-email">*Vui lòng nhập Email của bạn</span>
-                        </div>
-                        <div class="input-wrap">
-                            <input type="password" name="password" id="password" placeholder="Mật khẩu">
-                        </div>
-                        <div class="errors-wrap">
-                            <span class="show-error" id="error-password">*Vui lòng nhập mật khẩu của bạn</span>
-                        </div>
-                        <div class="others-wrap">
-                            <div class="button-wrap">
-                                <button class="sign-in-btn" type="submit" value="login">ĐĂNG NHẬP</button>
-                            </div>
-                            <div class="reg-pass">
-                                <a href="#">Quên mật khẩu?</a>
-                                <br>
-                                hoặc
-                                <a href="register.php">Đăng ký</a>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+﻿@section LoginRegisterStyle {
+    <link rel="stylesheet" href="~/css/login.css" />
+}
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+<!--------------------------------------------LOGIN----------------------------------------------------->
+<div class="login-wrap">
+    <div class="login-title-wrap">
+        <div class="header">
+            <h1>Đăng nhập</h1>
         </div>
-        <!--------------------------------------------FOOTER----------------------------------------------------->
-        <?php
-        require_once "./template/footer.php";
-        ?>
     </div>
-    <?php
-    require_once "./template/site-nav.php";
-    ?>
-</body>
-</html>
+    <div class="form-wrap">
+        <div class="form">
+            <form action="./function/login_function.php" method="post" onsubmit="return checkLogin()">
+                <div class="errors-wrap">
+                    <span class="show-error" id="error-all" style="display: block;">*Thông tin đăng nhập không hợp lệ<br>Mời bạn kiểm tra lại</span>
+                </div>
+                <div class="errors-wrap">
+                    <span class="show-error" id="error-all" style="display: block;">*Tài khoản của bạn đã bị khóa<br>Vui lòng liên hệ admin để được hỗ trợ</span>
+                </div>
+                <div class="input-wrap">
+                    <input type="email" name="email" id="email" placeholder="Email">
+                </div>
+                <div class="errors-wrap">
+                    <span class="show-error" id="error-email">*Vui lòng nhập Email của bạn</span>
+                </div>
+                <div class="input-wrap">
+                    <input type="password" name="password" id="password" placeholder="Mật khẩu">
+                </div>
+                <div class="errors-wrap">
+                    <span class="show-error" id="error-password">*Vui lòng nhập mật khẩu của bạn</span>
+                </div>
+                <div class="others-wrap">
+                    <div class="button-wrap">
+                        <button class="sign-in-btn" type="submit" value="login">ĐĂNG NHẬP</button>
+                    </div>
+                    <div class="reg-pass">
+                        <a href="#">Quên mật khẩu?</a>
+                        <br>
+                        hoặc
+                        <a asp-controller="Register" asp.action="Index">Đăng ký</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+      

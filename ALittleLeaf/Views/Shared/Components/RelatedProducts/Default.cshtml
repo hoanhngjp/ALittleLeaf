@@ -1,0 +1,39 @@
+﻿@model IEnumerable<ALittleLeaf.ViewModels.ProductViewModel>
+<div class="listProduct-related">
+    <div class="heading-title">
+        <h2>Sản phẩm liên quan</h2>
+    </div>
+    <div class="content-product-list">
+    @foreach (var product in Model) 
+    {
+        <div class="pro-loop">
+            <div class="product-block">
+                <div class="product-img">
+                    <div class="sold-out">
+                        <span>Hết hàng</span>
+                    </div>
+                    <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId" asp-route-idCategory="@product.IdCategory">
+                        <picture>
+                                <img src="~/img/prdImg/@product.ProductImg" alt="@product.ProductName">
+                        </picture>
+                    </a>
+                </div>
+                <div class="product-detail">
+                    <div class="box-proDetail">
+                        <h3 class="pro-name">
+                            <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId" asp-route-idCategory="@product.IdCategory">
+                                @product.ProductName
+                            </a>
+                        </h3>
+                    </div>
+                    <div class="box-proPrice">
+                        <p class="pro-pice">
+                            <span>@product.ProductPrice.ToString("N0")₫</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    </div>  
+</div>

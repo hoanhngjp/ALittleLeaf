@@ -1,24 +1,26 @@
-﻿<!--------------------------------------------PRODUCT----------------------------------------------------->
+﻿@model ALittleLeaf.ViewModels.ProductDetailViewModel
+
+<!--------------------------------------------PRODUCT----------------------------------------------------->
 <div class="productDetail-page">
     <div class="main-wrap">
         <div class="nav-header-wrap">
             <div class="nav-header">
                 <ol>
                     <li>
-                        <a href="./home.php">
+                        <a asp-controller="Home" asp.action="Index">
                             <span>Trang chủ</span>
                         </a>
                         <meta itemprop="position" content="1">
                     </li>
                     <li>
-                        <a href="./collections.php?category_id=category_id">
-                            <span>category_name</span>
+                        <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@Model.IdCategory">
+                            <span>@Model.CategoryName</span>
                         </a>
                         <meta itemprop="position" content="2">
                     </li>
                     <li class="active">
                         <span>
-                            <span>product_name</span>
+                            <span>@Model.ProductName</span>
                         </span>
                         <meta itemprop="position" content="3">
                     </li>
@@ -32,16 +34,19 @@
                         <div class="product-gallery">
                             <div class="product-gallery-container">
                                 <div class="product-gallery-thumbs">
-                                    <div class="product-gallery-thumb">
-                                        <a href="#" class="thumb-placeholder">
-                                            <img src="img/prdImg/' . $row['img_name'] . '" alt=" ' . $result_product['product_name'] . '">';
-                                        </a>
-                                    </div>
+                                    @foreach(var image in Model.ProductImages)
+                                    {
+                                        <div class="product-gallery-thumb">
+                                            <a href="#" class="thumb-placeholder">
+                                                <img src="~/img/prdImg/@image" alt="@Model.ProductName">
+                                            </a>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                             <div class="product-image-detail">
                                 <div class="product-image-wrap">
-                                    <img class="product-img-feature" src="img/prdImg/' . $result_img['img_name'] . '" alt="' . $result_product['product_name'] . '">';
+                                    <img class="product-img-feature" src="img/prdImg/@Model.PrimaryImage" alt="@Model.ProductName">
                                 </div>
                             </div>
                             <script src="~/js/changeProductPicture.js" defer></script>
@@ -49,11 +54,11 @@
                     </div>
                     <div class="product-content-desc">
                         <div class="product-title">
-                            <h1>product_name</h1>
+                            <h1>@Model.ProductName</h1>
                                 <span id="pro-sku">SKU: BPHTBGUHH-1</span>
                         </div>
                         <div class="product-price">
-                            <span class="pro-price">100.000₫</span>
+                            <span class="pro-price">@Model.ProductPrice.ToString("N0")₫</span>
                         </div>
                         <form class="form-add-item" action="./function/add_to_cart.php" method="POST">
                             <input type="hidden" name="product_id" value="product_id">
@@ -74,44 +79,16 @@
                             </div>
                             <div class="description-content">
                                 <div class="description-productdetail">
-                                    product_description
+                                    @Html.Raw(Model.ProductDescription.Replace("\n", "<br>").Replace("\r", ""))
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="listProduct-related">
-                    <div class="heading-title">
-                        <h2>Sản phẩm liên quan</h2>
-                    </div>
-                    <div class="pro-loop">
-                        <div class="product-block">
-                            <div class="product-img">
-                                <div class="sold-out">
-                                    <span>Hết hàng</span>
-                                </div>
-                                <a href="./product.php?product_id=' . $row['product_id'] . '">
-                                    <picture>
-                                        <img src="~/img/prdImg/' . $result_relate_img['img_name'] . '" alt="">
-                                    </picture>
-                                </a>
-                            </div>
-                            <div class="product-detail">
-                                <div class="box-proDetail">
-                                    <h3 class="pro-name">
-                                        <a href="./product.php?product_id=' . $row['product_id'] . '">' . $row['product_name'] . '</a>
-                                    </h3>
-                                </div>
-                                <div class="box-proPrice">
-                                    <p class="pro-pice">
-                                        <span>' . number_format($row['product_price'], 0, ',', '.') . '₫</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @await Component.InvokeAsync("RelatedProducts", new { productId = Model.ProductId, idCategory = Model.IdCategory })
+
             </div>
         </div>
     </div>
 </div>
+
