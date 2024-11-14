@@ -20,44 +20,50 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public IActionResult Index(string? q, int page = 1)
         {
-            if (string.IsNullOrEmpty(q))
+            int pageSize = 15; // Số sản phẩm trên mỗi trang
+
+            // Lấy tất cả sản phẩm từ database
+            var products = _context.Products
+                .Include(p => p.ProductImages)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(q))
             {
+                // Nếu có từ khóa tìm kiếm, lọc sản phẩm theo tên
+                products = products.Where(p => p.ProductName.Contains(q));
+                ViewBag.KeyWords = q;
+            }
+
+            products = products.Where(p => p.IsOnSale);
+
+            int totalItems = products.Count();
+
+            if (totalItems == 0)
+            {
+                ViewBag.NoResults = true; // Đặt cờ khi không tìm thấy sản phẩm
                 return View(new List<ProductViewModel>());
             }
-            else
-            {
-                int pageSize = 15; // Số sản phẩm trên mỗi trang
 
-                var products = _context.Products
-                    .Where(p => p.ProductName.Contains(q))
-                    .Include(p => p.ProductImages)
-                    .AsQueryable();
+            // Phân trang sản phẩm
+            var searchResults = products
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductViewModel
+                {
+                    ProductId = p.ProductId,
+                    IdCategory = p.IdCategory,
+                    ProductName = p.ProductName,
+                    ProductPrice = p.ProductPrice,
+                    ProductImg = p.ProductImages.FirstOrDefault(i => i.IsPrimary).ImgName
+                })
+                .ToList();
 
-                products = products.Where(p => p.IsOnSale); // Chỉ lấy sản phẩm đang mở bán
+            var pagination = new Paginate(totalItems, page, pageSize);
 
-                int totalItems = products.Count();
+            ViewBag.TotalItems = totalItems;
+            ViewBag.Pagination = pagination;
 
-                var searchResults = products
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(p => new ProductViewModel
-                    {
-                        ProductId = p.ProductId,
-                        IdCategory = p.IdCategory,
-                        ProductName = p.ProductName,
-                        ProductPrice = p.ProductPrice,
-                        ProductImg = p.ProductImages.FirstOrDefault(i => i.IsPrimary).ImgName
-                    })
-                    .ToList();
-
-                var pagination = new Paginate(totalItems, page, pageSize);
-
-                ViewBag.KeyWords = q;
-                ViewBag.Pagination = pagination;
-                ViewBag.TotalItems = totalItems;
-                ViewBag.Pagination = pagination;
-                return View(searchResults);
-            } 
+            return View(searchResults);
         }
 
         [HttpPost]

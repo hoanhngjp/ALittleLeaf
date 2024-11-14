@@ -20,6 +20,12 @@
                             Có <span>@ViewBag.TotalItems sản phẩm</span> cho tìm kiếm
                         </p>
                     }
+                    @if (ViewBag.NoResults != null && ViewBag.NoResults == true)
+                    {
+                        <p class="subtxt">
+                            Có <span>0 sản phẩm</span> cho tìm kiếm
+                        </p>
+                    }
                 </div>
                 <div class="wrapbox-content-page">
                     <div class="content-page clearfix" id="search">
@@ -76,17 +82,11 @@
                                 </form>
                                 <!--<script src="~/js/showFilterOptions.js>"></script>-->
                             </div>
-                            @if(ViewBag.TotalItems == null && ViewBag.KeyWords == null)
+                            @if (ViewBag.NoResults != null && ViewBag.NoResults == true)
                             {
                                 <div class="message-txt clearfix">
                                     <p>Rất tiếc, chúng tôi không tìm thấy kết quả cho từ khóa của bạn</p>
                                     <p>Vui lòng kiểm tra chính tả, sử dụng các từ tổng quát hơn và thử lại!</p>
-                                </div>
-                            }
-                            @if (ViewBag.KeyWords == null)
-                            {
-                                <div class="message-txt clearfix">
-                                    <p>Hãy nhập tên sản phẩm!</p>
                                 </div>
                             }
                         </div>
