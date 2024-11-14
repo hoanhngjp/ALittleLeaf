@@ -1,6 +1,13 @@
-﻿@section LoginRegisterStyle {
-    <link rel="stylesheet" href="~/css/login.css" />
+﻿@model ALittleLeaf.ViewModels.UserLoggedViewModel
+
+@section LoginRegisterStyle {
+    <link rel="stylesheet" href="~/css/login.css">
 }
+
+@section LoginRegistryJs {
+    <script src="js/validLoginAndRegistry.js" defer></script>
+}
+
 @{
     ViewData["Title"] = "Đăng nhập";
 }
@@ -12,22 +19,35 @@
         </div>
     </div>
     <div class="form-wrap">
+        @if (ViewBag.Step != null)
+        {
+            <div class="alert alert-info">
+                @ViewBag.Step
+            </div>
+        }
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert alert-danger">
+                @ViewBag.ErrorMessage
+            </div>
+        }
         <div class="form">
-            <form action="./function/login_function.php" method="post" onsubmit="return checkLogin()">
+            <form action="~/Login/Login" method="post" onsubmit="return checkLogin()">
                 <div class="errors-wrap">
-                    <span class="show-error" id="error-all" style="display: block;">*Thông tin đăng nhập không hợp lệ<br>Mời bạn kiểm tra lại</span>
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <span class="show-error" id="error-all" style="display: block;">@ViewBag.ErrorMessage</span>
+                    }
                 </div>
-                <div class="errors-wrap">
-                    <span class="show-error" id="error-all" style="display: block;">*Tài khoản của bạn đã bị khóa<br>Vui lòng liên hệ admin để được hỗ trợ</span>
-                </div>
+                <input type="hidden" name="ReturnUrl" value="@ViewBag.ReturnUrl">
                 <div class="input-wrap">
-                    <input type="email" name="email" id="email" placeholder="Email">
+                    <input asp-for="UserEmail" type="email" name="UserEmail" id="email" placeholder="Email">
                 </div>
                 <div class="errors-wrap">
                     <span class="show-error" id="error-email">*Vui lòng nhập Email của bạn</span>
                 </div>
                 <div class="input-wrap">
-                    <input type="password" name="password" id="password" placeholder="Mật khẩu">
+                    <input asp-for="UserPassword" type="password" name="UserPassword" id="password" placeholder="Mật khẩu">
                 </div>
                 <div class="errors-wrap">
                     <span class="show-error" id="error-password">*Vui lòng nhập mật khẩu của bạn</span>
@@ -40,9 +60,10 @@
                         <a href="#">Quên mật khẩu?</a>
                         <br>
                         hoặc
-                        <a asp-controller="Register" asp.action="Index">Đăng ký</a>
+                        <a asp-controller="Register" asp-action="Index">Đăng ký</a>
                     </div>
                 </div>
+                <script></script>
             </form>
         </div>
     </div>

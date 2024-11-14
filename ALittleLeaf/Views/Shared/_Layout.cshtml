@@ -13,12 +13,15 @@
     @RenderSection("CollectionsStyle", required: false)
     @RenderSection("ProductStyle", required: false)
     @RenderSection("SearchStyle", required: false)    
+    @RenderSection("AccountStyle", required: false)
+
     <link rel="stylesheet" href="~/css/cart-search.css">
     <title>@ViewBag.Title</title>
     <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
     <script src="~/js/showCartSearch.js" defer></script>
     <script src="~/js/showSubMenu.js" defer></script>
-    <script src="~/js/product_function.js" defer></script>
+    @RenderSection("ProductJs", required: false)
+    @RenderSection("LoginRegistryJs" , required: false)
     <script src="~/js/validLoginAndRegistry.js" defer></script>
 </head>
 <body>

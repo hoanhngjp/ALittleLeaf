@@ -1,115 +1,66 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="css/header.css?v=<?php echo time();?>">
-    <link rel="stylesheet" href="css/footer.css?v=<?php echo time();?>">
-    <link rel="stylesheet" href="css/account.css?v=<?php echo time();?>">
-    <link rel="stylesheet" href="css/cart-search.css?v=<?php echo time();?>">
-    <title>Tài khoản</title>
-    <link rel="icon" type="image/x-icon" href="./img/footerLogo.webp">
-    <script src="js/showCartSearch.js?v=<?php echo time();?>" defer></script>
-</head>
-<body>
-    <div id="main-body" class="main-body">
-        <!--------------------------------------------HEADER----------------------------------------------------->
-        <?php
-        require_once "./template/header.php";
-        require_once "./function/db_connect.php";
-        $conn = connectDatabase();
-        $user_id = $_SESSION['user_id'];
+﻿@section AccountStyle {
+    <link rel="stylesheet" href="~/css/account.css">
+}
 
-        ?>
-        <!--------------------------------------------LAYOUT-ACCOUNT----------------------------------------------------->
-        <div class="layout-account">
-            <div class="account-header">
-                <h1>Tài khoản của bạn</h1>
-            </div>
-            <div class="account-content">
-                <div class="row">
-                    <div class="sidebar-account">
-                        <div class="AccountSidebar">
-                            <h3 class="account-title">Tài khoản</h3>
-                            <div class="account-content">
-                                <div class="account-list">
-                                    <ul>
-                                        <li>
-                                            <a href="./account.php">Thông tin tài khoản</a>
-                                        </li>
-                                        <li><a href="./address.php">Danh sách địa chỉ</a></li>
-                                        <li><a href="./function/log_out.php">Đăng xuất</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="customer-sidebar-wrap">
-                        <div class="row-inside">
-                            <div class="customer-sidebar">
-                                <p class="title-detail">Thông tin tài khoản</p>
-                                <h2 class="account-name"> FullName </h2>
-                                <p class="account-email"> Email</p>
-                                <div class="address">
-                                    <a id="view-address" href="./address.php">Xem địa chỉ</a>
-                                </div>
-                            </div>
-                            <div class="customer-table-wrap">
-                                <div class="customer-table-bg">
-                                    <p>Bạn chưa đặt mua sản phẩm</p
-                                    <p class="title-detail"> Danh sách các đơn hàng </p>
-                                    <div class="table-wrap">
-                                        <table class="table">
-                                            <thead>
-                                            <th class="order-number text-center">Mã đơn hàng</th>
-                                            <th class="date text-center">Ngày đặt</th>
-                                            <th class="total text-center">Thành tiền</th>
-                                            <th class="payment-status text-center">Trạng thái thanh toán</th>
-                                            <th class="fulfillment-status text-center">Vận chuyển</th>
-                                            <th class="order-detail text-center">Chi tiết đơn hàng</th>
-                                            </thead>
-                                            <tbody>
-                                                <tr class="order">
-                                                    <td class="text-center">
-                                                        <a href="">'. $row['bill_id'] .'</a>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span>'. date("d/m/Y", strtotime($row['date_created'])) .'</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="total-money">'.number_format($row['total_amount'], 0, ',', '.') .'₫</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="status-'.$row['payment_status'].'">'. $row['payment_status'] .'</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="status-'.$row['shipping_status'].'">'.$row['shipping_status'].'</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="detail-'.$row['shipping_status'].'"><a href="./order-detail.php?bill-id='. $row['bill_id'] .'">Chi tiết</a></span>
-                                                    </td>
-                                                </tr
-                                            </tbody>
-                                        </table>
-                                    </div
-                                </div>
-                            </div>
+@{
+    ViewData["Title"] = "Tài khoản";
+}
+<!--------------------------------------------LAYOUT-ACCOUNT----------------------------------------------------->
+<div class="layout-account">
+    <div class="account-header">
+        <h1>Tài khoản của bạn</h1>
+    </div>
+    <div class="account-content">
+        <div class="row">
+            <div class="sidebar-account">
+                <div class="AccountSidebar">
+                    <h3 class="account-title">Tài khoản</h3>
+                    <div class="account-content">
+                        <div class="account-list">
+                            <ul>
+                                <li>
+                                    <a asp-controller="Account" asp.action="Index">Thông tin tài khoản</a>
+                                </li>
+                                <li>
+                                    <a asp-controller="Address" asp.action="Index">Danh sách địa chỉ</a>
+                                </li>
+                                <li>
+                                    <a asp-controller="Login" asp.action="Logout">Đăng xuất</a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="customer-sidebar-wrap">
+                <div class="row-inside">
+                    <div class="customer-sidebar">
+                        <p class="title-detail">Thông tin tài khoản</p>
+                        @if (ViewContext.HttpContext.Session.GetString("UserFullname") != null)
+                        {
+                            <h2 class="account-name"> @ViewContext.HttpContext.Session.GetString("UserFullname") </h2>
+                        }
+                        @if (ViewContext.HttpContext.Session.GetString("UserEmail") != null)
+                        {
+                            <p class="account-email"> @ViewContext.HttpContext.Session.GetString("UserEmail") </p>
+                        }
+                        <div class="address">
+                            <a id="view-address" asp-controller="Address" asp.action="Index">Xem địa chỉ</a>
+                        </div>
+                    </div>
+                    @{
+                        var userIdString = ViewContext.HttpContext.Session.GetString("UserId");  // Lấy UserId từ Session
+                        long userId = 0;
+                        if (!string.IsNullOrEmpty(userIdString))
+                        {
+                            long.TryParse(userIdString, out userId);  // Chuyển từ string sang long
+                        }
+                    }
+                    <div class="customer-table-wrap">
+                        @await Component.InvokeAsync("CustomerBills", new { userId = userId })
+                    </div>
+                </div>
+            </div>
         </div>
-        <!--------------------------------------------FOOTER----------------------------------------------------->
-        <?php
-        require_once "./template/footer.php";
-        ?>
     </div>
-    <!--------------------------------------------SITE-NAV----------------------------------------------------->
-    <?php
-    require_once "./template/site-nav.php";
-    ?>
-</body>
-</html>
+</div>

@@ -14,10 +14,16 @@
     </div>
     <div class="headerOthers">
         <ul class="others">
-            <!--Nếu Login rồi-->
-            <li><a href="account.php"><ion-icon name="person-circle-outline"></ion-icon></a></li>
-            <!--Nếu chưa Login-->
-            <li><a href="login.php"><ion-icon name="person-circle-outline"></ion-icon></a></li>
+            @if (ViewContext.HttpContext.Session.GetString("UserEmail") != null)
+            {
+                <!-- Nếu Login rồi -->
+                <li><a asp-controller="Account" asp-action="Index"><ion-icon name="person-circle-outline"></ion-icon></a></li>
+            }
+            else
+            {
+                <!-- Nếu chưa Login -->
+                <li><a asp-controller="Login" asp-action="Index"><ion-icon name="person-circle-outline"></ion-icon></a></li>
+            }
             <li><a href="" id="open-site-search"><ion-icon name="search-outline"></ion-icon></a></li>
             <li>
                 <a href="" id="open-site-cart">
