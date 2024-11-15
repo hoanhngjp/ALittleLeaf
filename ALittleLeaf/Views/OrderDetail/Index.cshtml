@@ -1,109 +1,86 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="~/css/header.css">
-    <link rel="stylesheet" href="~/css/footer.css">
-    <link rel="stylesheet" href="~/css/cart-search.css">
+﻿@model List<ALittleLeaf.ViewModels.OrderDetailViewModel>
+@section OrderDetailStyle {
     <link rel="stylesheet" href="~/css/order-detail.css">
-    <title>Chi tiết đơn hàng</title>
-    <link rel="icon" type="image/x-icon" href="./img/footerLogo.webp">
-    <script src="~/js/showCartSearch.js" defer></script>
-    <script src="~/js/cart_function.js>" defer></script>
-</head>
-<body>
-    <div class="main-body">
-        <!--------------------------------------------HEADER----------------------------------------------------->
-        <?php
-        require_once "./template/header.php";
-        require_once "./function/db_connect.php";
-        $conn = connectDatabase();
-
-        <!--------------------------------------------LAYOUT-CART----------------------------------------------------->
-        <div class="layout-cart">
-            <div class="container-fluid">
-                <div class="nav-header-wrap">
-                    <div class="nav-header">
-                        <ol>
-                            <li>
-                                <a href="./home.php">
-                                    <span>Trang chủ</span>
-                                </a>
-                                <meta itemprop="position" content="1">
-                            </li>
-                            <li class="active">
-                                <span>
-                                    <span>Chi tiết đơn hàng (<?php echo $count; ?>)</span>
-                                </span>
-                                <meta itemprop="position" content="2">
-                            </li>
-                        </ol>
-                    </div>
+}
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+<!--------------------------------------------LAYOUT-CART----------------------------------------------------->
+<div class="layout-cart">
+    <div class="container-fluid">
+        <div class="nav-header-wrap">
+            <div class="nav-header">
+                <ol>
+                    <li>
+                        <a asp-controller="Home" asp.action="Index">
+                            <span>Trang chủ</span>
+                        </a>
+                        <meta itemprop="position" content="1">
+                    </li>
+                    <li class="active">
+                        <span>
+                            <span>Chi tiết đơn hàng (<?php echo $count; ?>)</span>
+                        </span>
+                        <meta itemprop="position" content="2">
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <div class="cart-page">
+            <div class="heading-page">
+                <div class="header-page">
+                    <h1>Chi tiết đơn hàng</h1>
                 </div>
-                <div class="cart-page">
-                    <div class="heading-page">
-                        <div class="header-page">
-                            <h1>Chi tiết đơn hàng</h1>
+            </div>
+            <div class="cart-content-wrap">
+                <div class="cart-container">
+                    <div class="main-content-cart">
+                        <div class="display-items">
+                            <table class="table-cart">
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr class="line-item-container">
+                                            <td class="image">
+                                                <div class="product-img">
+                                                    <a href="">
+                                                        <img src="~/img/prdImg/@item.ProductImg" alt="@item.ProductName">
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td class="item">
+                                                <a asp-controller="Collections" asp.action="Index" asp-route-categoryId="@item.IdCategory">
+                                                    @item.ProductName
+                                                </a>
+                                                <p>
+                                                    <span>@item.UnitPrice.ToString("N0")₫</span>
+                                                </p>
+                                                <div class="qty-click">
+                                                    <input type="text" size="4" min="1" data-price="@item.UnitPrice" value="@item.Quantity" class="item-quantity" disabled>
+                                                </div>';
+                                                <p class="price">
+                                                    <span class="text">Thành tiền</span>
+                                                    <span class="line-iem-total">@item.TotalPrice.ToString("N0")₫</span>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
-                    <div class="cart-content-wrap">
-                        <div class="cart-container">
-                            <div class="main-content-cart">
-                                <div class="display-items">
-                                    <table class="table-cart">
-                                        <tbody>
-                                            <tr class="line-item-container">
-                                                <td class="image">
-                                                    <div class="product-img">
-                                                        <a href="">
-                                                            <img src="img/prdImg/' . $row2['img_name'] . '" alt="' . $row2['product_name'] . '">
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td class="item">
-                                                    <a href="./product.php?product_id='. $row2['product_id'] .'">' . $row2['product_name'] . '</a>
-                                                    <p>
-                                                        <span>' . number_format($row2['product_price'], 0, ',', '.') . '₫</span>
-                                                    </p>
-                                                    <div class="qty-click">
-                                                        <input type="text" size="4" min="1" data-price="' . $row2['product_price'] . '" value="' . $row['quantity'] . '" class="item-quantity" disabled>
-                                                    </div>';
-                                                    <p class="price">
-                                                        <span class="text">Thành tiền</span>
-                                                        <span class="line-iem-total">' . number_format($row['total_price'], 0, ',', '.') . '₫</span>
-                                                    </p>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="cart-others">
-                                    <div class="order-actions-wrap">
-                                        <p class="order-infor">
-                                            Tổng tiền
-                                            <span class="total-price">
-                                                <b id="total-cart">'. number_format($total_price, 0, ',', '.').'₫</b>
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
+                        <div class="cart-others">
+                            <div class="order-actions-wrap">
+                                <p class="order-infor">
+                                    Tổng tiền
+                                    <span class="total-price">
+                                        <b id="total-cart">@Model.Sum(m => m.TotalPrice).ToString("N0")₫</b>
+                                    </span>
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!--------------------------------------------FOOTER----------------------------------------------------->
-        <?php
-        require_once "./template/footer.php";
-        ?>
     </div>
-    <?php
-    require_once "./template/site-nav.php";
-    ?>
-</body>
-</html>
+</div>
