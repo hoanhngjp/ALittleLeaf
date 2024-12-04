@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', function () {
             addressInput.value = '';
         } else {
             // Nếu người dùng chọn một địa chỉ trong cơ sở dữ liệu, gửi yêu cầu AJAX để lấy thông tin địa chỉ
-            let addressId = selectedOption.value;
+            let addressId = parseInt(selectedOption.value);
+            console.log("Address ID sent: ", addressId); // Kiểm tra giá trị này
             getAddressInfo(addressId);
         }
     });
@@ -22,9 +23,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Hàm để gửi yêu cầu AJAX để lấy thông tin địa chỉ từ máy chủ 
     function getAddressInfo(addressId) {
         let formData = new FormData();
-        formData.append('address_id', addressId);
+        formData.append('addressId', addressId);
 
-        fetch('./function/get_address_info.php', {
+        fetch('/OrderInfo/GetAddressInfo', {
             method: 'POST',
             body: formData
         })
@@ -35,16 +36,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                // Sau khi nhận được dữ liệu từ máy chủ, điền thông tin vào các trường input tương ứng
-                fullNameInput.value = data.adrs_fullname;
-                phoneInput.value = data.adrs_phone;
-                addressInput.value = data.adrs_address;
+                if (data.error) {
+                    console.error(data.error);
+                    alert(data.error);
+                    return;
+                }
+
+                fullNameInput.value = data.adrs_fullname || '';
+                phoneInput.value = data.adrs_phone || '';
+                addressInput.value = data.adrs_address || '';
             })
             .catch(error => {
                 console.error('There has been a problem with your fetch operation:', error);
             });
     }
-
 });
 
 function checkInput() {

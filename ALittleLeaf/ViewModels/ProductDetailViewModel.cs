@@ -4,7 +4,7 @@
     {
         public int ProductId { get; set; }
         public int IdCategory { get; set; }
-        public string ProductName { get; set; } = null!;
+        public string ProductName { get; set; }
         public int ProductPrice { get; set; }
         public string? ProductDescription { get; set; }
         public int QuantityInStock { get; set; }

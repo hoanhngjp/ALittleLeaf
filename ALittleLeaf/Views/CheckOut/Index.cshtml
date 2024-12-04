@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,10 +26,10 @@
                 </a>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item">
-                        <a href="./cart.php">Giỏ hàng</a>
+                        <a href="~/cart">Giỏ hàng</a>
                     </li>
                     <li class="breadcrumb-item">
-                        <a href="./orderInfo.php">Thông tin giao hàng</a>
+                        <a href="~/orderinfo">Thông tin giao hàng</a>
                     </li>
                     <li class="breadcrumb-item">
                         Phương thức thanh toán
@@ -69,7 +72,7 @@
                                                 <input name="checkoutMethod" type="radio" class="input-radio" value="online" checked>
                                             </div>
                                             <div class="radio-content-input">
-                                                <img src="img/other.svg" alt="" class="main-img">
+                                                <img src="~/img/other.svg" alt="" class="main-img">
                                                 <div class="content-wrapper">
                                                     <span class="radio-label-primary">Chuyển khoản qua ngân hàng</span>
                                                 </div>
@@ -122,11 +125,8 @@
             <div class="main-footer footer-powered-by">Powered by HoanhNgjp</div>
         </div>
         <div class="checkout-sidebar">
-            <?php
-            require_once './template/sidebar-content.php';
-            ?>
+            @Html.Partial("_SideBarContent");
         </div>
-
     </div>
 </body>
 </html>

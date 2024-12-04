@@ -15,6 +15,10 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index(int billId)
         {
+            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+            ViewData["Cart"] = cart;
+
             var billDetails = (from bd in _context.BillDetails
                                join p in _context.Products on bd.IdProduct equals p.ProductId
                                join pi in _context.ProductImages on p.ProductId equals pi.IdProduct

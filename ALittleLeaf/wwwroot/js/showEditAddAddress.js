@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+﻿document.addEventListener("DOMContentLoaded", function() {
     var showEditButtons = document.querySelectorAll(".showEdit");
 
     showEditButtons.forEach(function(button) {
@@ -32,3 +32,34 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     })
 })
+
+$(document).on('submit', '#address_form', function (e) {
+    e.preventDefault();
+
+    // Lấy trạng thái checkbox và giá trị
+    var isChecked = $('#address_default_address_new').is(':checked'); // true/false
+    var formData = $(this).serialize(); // Lấy dữ liệu từ form
+
+    console.log("Checkbox checked:", isChecked); // true nếu được chọn
+    console.log("Form Data:", formData); // Xem toàn bộ dữ liệu gửi đi
+
+    $.ajax({
+        url: '/Address/EditAddress',
+        method: 'POST',
+        data: formData,
+        success: function (response) {
+            if (response.success) {
+                alert(response.message);
+                location.reload();
+            } else {
+                alert(response.message);
+            }
+        },
+        error: function () {
+            alert('An error occurred. Please try again.');
+        }
+    });
+});
+
+
+

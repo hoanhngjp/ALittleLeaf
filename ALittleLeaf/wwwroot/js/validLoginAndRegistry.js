@@ -1,11 +1,11 @@
 // Biến để lưu trữ trường nhập liệu hiện đang chứa lỗi
 var currentErrorField = null; 
 
-function validateBirthday(birthday) {
-    var birthdayPattern = /^\d{2}\/\d{2}\/\d{4}$/;
+//function validateBirthday(birthday) {
+    //var birthdayPattern = /^\d{2}\/\d{2}\/\d{4}$/;
 
-    return birthdayPattern.test(birthday);
-}
+    //return birthdayPattern.test(birthday);
+//}
 
 function validateEmail(email) {
     var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,12 +71,12 @@ function validRegistry(fullname, birthday, email, password, address) {
     }
 
     //Kiểm tra định dạng ngày sinh của người dùng
-    if (!validateBirthday(birthday)) {
-        document.getElementById('birthday-error').innerHTML = "*Vui lòng nhập đúng định dạng Ngày sinh dd/mm/yyyy";
-        document.getElementById('birthday-error').style.display = "block";
-        currentErrorField = document.getElementById('birthday');
-        return false;
-    }
+    //if (!validateBirthday(birthday)) {
+        //document.getElementById('birthday-error').innerHTML = "*Vui lòng nhập đúng định dạng Ngày sinh dd/mm/yyyy";
+        //document.getElementById('birthday-error').style.display = "block";
+        //currentErrorField = document.getElementById('birthday');
+        //return false;
+    //}
     
     if (email == "") {
         document.getElementById('email-error').innerHTML = "*Vui lòng nhập Email của bạn";

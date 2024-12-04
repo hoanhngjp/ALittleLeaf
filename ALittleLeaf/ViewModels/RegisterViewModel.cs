@@ -4,8 +4,6 @@ namespace ALittleLeaf.ViewModels
 {
     public class RegisterViewModel
     {
-        [Required(ErrorMessage="*")]
-        public long UserId { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập email.")]
         [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ.")]
         public string UserEmail { get; set; } = null!;
@@ -20,13 +18,8 @@ namespace ALittleLeaf.ViewModels
         [Required(ErrorMessage = "Vui lòng nhập ngày sinh.")]
         [DataType(DataType.Date)]
         public DateOnly UserBirthday { get; set; }
-
         public bool UserIsActive { get; set; }
-
-        public DateTime CreatedAt { get; set; }
-
-        public DateTime UpdatedAt { get; set; }
-
-        public string UserRole { get; set; } = null!;
+        public string UserRole { get; set; }
+        public string Address { get; set; }
     }
 }

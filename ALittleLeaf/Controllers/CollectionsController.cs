@@ -72,6 +72,10 @@ namespace ALittleLeaf.Controllers
             ViewBag.CategoryId = CategoryId;
             ViewBag.CollectionName = collectionName;
 
+            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+            ViewData["Cart"] = cart;
+
             return View(result);
         }
 

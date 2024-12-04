@@ -16,10 +16,14 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+            ViewData["Cart"] = cart;
+
             return View();
         }
         [HttpPost]
-        public IActionResult Index(RegisterViewModel model)
+        public IActionResult Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -27,32 +31,69 @@ namespace ALittleLeaf.Controllers
                 if (_context.Users.Any(u => u.UserEmail == model.UserEmail))
                 {
                     ModelState.AddModelError("UserEmail", "Email đã tồn tại.");
-                    return View(model);
+                    if(string.IsNullOrEmpty(HttpContext.Session.GetString("Cart"))){
+                        var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+                        ViewData["Cart"] = cart;
+
+                        return View("Index");
+                    }
+                    return View("Index");
                 }
 
                 // Tạo một người dùng mới
                 var user = new User
                 {
                     UserEmail = model.UserEmail,
-                    UserPassword = model.UserPassword, // Đảm bảo mã hóa mật khẩu sau này
+                    UserPassword = model.UserPassword, 
                     UserFullname = model.UserFullname,
                     UserSex = model.UserSex,
                     UserBirthday = model.UserBirthday,
                     UserIsActive = true,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    UserRole = "customer" // Gán role mặc định là User
+                    UserRole = model.UserRole
                 };
-
                 // Thêm người dùng vào cơ sở dữ liệu
                 _context.Users.Add(user);
                 _context.SaveChanges();
 
-                // Chuyển hướng sau khi đăng ký thành công
-                return RedirectToAction("Index", "Home");
-            }
+                // Lưu thông tin người dùng vào Session
+                HttpContext.Session.SetString("UserEmail", user.UserEmail);
+                HttpContext.Session.SetString("UserFullname", user.UserFullname);
+                HttpContext.Session.SetString("UserId", user.UserId.ToString());
 
-            return View(model); // Nếu không hợp lệ, trả về view với lỗi
+                // Lưu địa chỉ mặc định vào AddressList
+                var address = new AddressList
+                {
+                    IdUser = user.UserId,
+                    AdrsFullname = user.UserFullname,
+                    AdrsAddress = model.Address, // Địa chỉ từ model đăng ký
+                    AdrsPhone = "N/A",
+                    AdrsIsDefault = true, // Đặt làm địa chỉ mặc định
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                _context.AddressLists.Add(address);
+                _context.SaveChanges();
+
+
+
+                // Chuyển hướng sau khi đăng ký thành công
+                return RedirectToAction("Index", "Account");
+            }
+            if (!ModelState.IsValid)
+            {
+                foreach (var modelStateKey in ModelState.Keys)
+                {
+                    var value = ModelState[modelStateKey];
+                    foreach (var error in value.Errors)
+                    {
+                        Console.WriteLine($"Key: {modelStateKey}, Error: {error.ErrorMessage}");
+                    }
+                }
+            }
+            return View("Index"); // Nếu không hợp lệ, trả về view với lỗi
         }
 
         // Trang thành công sau khi đăng ký

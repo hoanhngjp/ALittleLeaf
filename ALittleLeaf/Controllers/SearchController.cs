@@ -20,6 +20,10 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public IActionResult Index(string? q, int page = 1)
         {
+            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+            ViewData["Cart"] = cart;
+
             int pageSize = 15; // Số sản phẩm trên mỗi trang
 
             // Lấy tất cả sản phẩm từ database

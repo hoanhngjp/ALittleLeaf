@@ -1,29 +1,41 @@
-﻿<div class="sidebar-content">
+﻿@{
+    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+}
+<div class="sidebar-content">
     <div class="order-summary-sections">
         <!--------------------------------------------LIST-PRODUCTS----------------------------------------------------->
         <div class="order-summary-section order-summary-section-product-list">
             <table class="product-table">
                 <tbody>
-                    <!--Nếu chưa có sản phẩm-->
-                    <tr>Hiện chưa có sản phẩm nào</tr>
-                    <!--Nếu có sản phẩm-->
+                    @if (cart.Count == 0)
+                    {
+                        <!--Nếu chưa có sản phẩm-->
+                        <tr>Hiện chưa có sản phẩm nào</tr>
+                    }
+                    else
+                    {
+                        <!--Nếu có sản phẩm-->
                         <!--Mỗi Product là 1 thẻ tr class product-->
-                    <tr class="product">
-                        <td class="product-image">
-                            <div class="product-thumbnail">
-                                <div class="product-thumbnail-wrapper">
-                                    <img src="img/prdImg/'. $row['img_name'] .'" alt="'. $row['product_name'] .'" class="product-thmbnial-image">
-                                </div>
-                            </div>
-                        </td>
-                        <td class="product-description">
-                            <span class="product-description-name order-summary-emphasis">'. $row['product_name'] .'</span>
-                        </td>
-                        <td class="product-quantity">'. $quantity .'</td>
-                        <td class="product-price">
-                            <span class="order-summary-emphasis">' . number_format($row['product_price'], 0, ',', '.') . '₫</span>
-                        </td>
-                    </tr>
+                        foreach(var item in cart)
+                        {
+                            <tr class="product">
+                                <td class="product-image">
+                                    <div class="product-thumbnail">
+                                        <div class="product-thumbnail-wrapper">
+                                            <img src="~/img/prdImg/@item.ProductImg" alt="@item.ProductName" class="product-thmbnial-image">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="product-description">
+                                    <span class="product-description-name order-summary-emphasis">@item.ProductName</span>
+                                </td>
+                                <td class="product-quantity">@item.Quantity</td>
+                                <td class="product-price">
+                                    <span class="order-summary-emphasis">@String.Format("{0:N0}₫", item.ProductPrice * item.Quantity)</span>
+                                </td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
         </div>
@@ -34,7 +46,12 @@
                     <tr class="total-line total-line-subtotal">
                         <td class="total-line-name">Tạm tính</td>
                         <td class="total-line-price">
-                            <span class="order-summary-emphasis"><?php echo number_format($total_price, 0, ',', '.').'₫'; ?></span>
+                            <span class="order-summary-emphasis">
+                                @{
+                                    var totalPrice = cart.Sum(c => c.Quantity * c.ProductPrice);
+                                }
+                                @String.Format("{0:N0}₫", totalPrice)
+                            </span>
                         </td>
                     </tr>
                     <tr class="total-line total-line-shipping">
@@ -51,7 +68,9 @@
                         </td>
                         <td class="total-line-name payment-due">
                             <span class="payment-due-currency">VND</span>
-                            <span class="payment-due-price"><?php echo number_format($total_price, 0, ',', '.').'₫'; ?></span>
+                            <span class="payment-due-price">
+                                @String.Format("{0:N0}₫", totalPrice)
+                            </span>
                         </td>
                     </tr>
                 </tfoot>

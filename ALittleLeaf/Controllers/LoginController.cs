@@ -22,10 +22,14 @@ namespace ALittleLeaf.Controllers
         public IActionResult Index(string? ReturnUrl)
         {
             ViewBag.ReturnUrl = ReturnUrl;
+
+            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+            ViewData["Cart"] = cart;
+
             return View();
         }
 
-        [HttpPost]
         [HttpPost]
         public IActionResult Login(UserLoggedViewModel model, string? ReturnUrl)
         {
@@ -40,7 +44,6 @@ namespace ALittleLeaf.Controllers
                     {
                         HttpContext.Session.SetString("UserEmail", user.UserEmail);
                         HttpContext.Session.SetString("UserFullname", user.UserFullname);
-                        HttpContext.Session.SetString("UserRole", user.UserRole);
                         HttpContext.Session.SetString("UserId", user.UserId.ToString());
 
                         // Kiểm tra nếu ReturnUrl hợp lệ
@@ -63,6 +66,14 @@ namespace ALittleLeaf.Controllers
                     ViewBag.ErrorMessage = "Thông tin đăng nhập không hợp lệ.";
                 }
             }
+
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("Cart")))
+            {
+                var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+                ViewData["Cart"] = cart;
+            }
+
             return View("Index");
         }
 

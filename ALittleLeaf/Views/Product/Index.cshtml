@@ -1,4 +1,5 @@
 ﻿@model ALittleLeaf.ViewModels.ProductDetailViewModel
+
 @section ProductStyle {
     <link rel="stylesheet" href="~/css/product.css" />
 }
@@ -68,12 +69,12 @@
                         <div class="product-price">
                             <span class="pro-price">@Model.ProductPrice.ToString("N0")₫</span>
                         </div>
-                        <form class="form-add-item" action="./function/add_to_cart.php" method="POST">
-                            <input type="hidden" name="product_id" value="product_id">
+                        <form class="form-add-item" asp-action="AddToCart" asp-controller="Cart" method="post">
+                            <input type="hidden" name="ProductId" value="@Model.ProductId">
                             <div class="selector-actions">
                                 <div class="quantity-area">
                                     <input id="minusBtn" class="qty-btn" type="button" value="-">
-                                    <input type="text" id="quantity" class="quantity-selector" name="quantity" value="1" min="1">
+                                    <input type="text" id="quantity" class="quantity-selector" name="quantity" value="1" min="1" data-product-id="@Model.ProductId">
                                     <input id="plusBtn" class="qty-btn" type="button" value="+">
                                 </div>
                                 <div class="wrap-addcart">

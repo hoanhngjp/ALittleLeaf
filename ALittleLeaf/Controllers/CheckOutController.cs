@@ -1,9 +1,8 @@
-﻿using ALittleLeaf.ViewModels;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace ALittleLeaf.Controllers
 {
-    public class AccountController : Controller
+    public class CheckOutController : Controller
     {
         public IActionResult Index()
         {
@@ -11,10 +10,6 @@ namespace ALittleLeaf.Controllers
             {
                 return RedirectToAction("Index", "Login");
             }
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
-
             return View();
         }
     }

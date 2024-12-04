@@ -1,31 +1,45 @@
-﻿<div id="site-nav" class="site-nav">
+﻿@{
+    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+}
+<div id="site-nav" class="site-nav">
     <div id="site-cart" class="site-nav-container">
         <div class="site-nav-container-last">
             <p class="title" Giỏ hàng>Giỏ hàng</p>
             <div class="cart-view">
                 <table id="cart-inside" class="">
                     <tbody>
-                        <!--Nếu chưa có sản phẩm-->
-                        <tr>Hiện chưa có sản phẩm nào</tr>
-                        <!--Nếu có sản phẩm-->
-                        <tr class="item-in-cart">
-                            <td class="img">
-                                <a href="">
-                                    <img src="img/prdImg/' . $row['img_name'] . '" alt="' . $row['product_name'] . '">
-                                </a>
-                            </td>
-                            <td>
-                                <a class="pro-title-cart" href="./product.php?product_id='. $row['product_id'] .'">' . $row['product_name'] . '</a>';
-                                <span class="variant"></span>';
-                                <span class="pro-quantity-cart">' . $quantity . '</span>';
-                                <span class="pro-price-cart">' . number_format($row['product_price'], 0, ',', '.') . '₫</span>
-                                <span class="remove-in-cart">
-                                    <a href="#" class="remove-from-cart" data-product-id="'. $product_id .'">
-                                        <ion-icon name="close-outline"></ion-icon>
-                                    </a>
-                                </span>
-                            </td>
-                        </tr>
+                        @if (cart.Count == 0)
+                        {
+                            <!--Nếu chưa có sản phẩm-->
+                            <tr>Hiện chưa có sản phẩm nào</tr>
+                        }
+                        else
+                        {
+                            <!--Nếu có sản phẩm-->
+                            foreach (var item in cart)
+                            {
+                                <tr class="item-in-cart">
+                                    <td class="img">
+                                        <a href="">
+                                            <img src="~/img/prdImg/@item.ProductImg" alt="@item.ProductName">
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Product" asp.action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory" class="pro-title-cart">
+                                            @item.ProductName
+                                        </a>
+                                        <span class="variant"></span>
+                                        <span class="pro-quantity-cart">@item.Quantity</span>
+                                        <span class="pro-price-cart">@String.Format("{0:N0}₫", item.ProductPrice * item.Quantity)</span>
+                                        <span class="remove-in-cart">
+                                            <a href="#" class="remove-from-cart" data-product-id="@item.ProductId">
+                                                <ion-icon name="close-outline"></ion-icon>
+                                            </a>
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
                     </tbody>
                 </table>
                 <span class="line"></span>
@@ -33,11 +47,16 @@
                     <tbody>
                         <tr>
                             <td class="text-left" style="font-size: 14px;">TỔNG TIỀN: </td>
-                            <td class="text-right" id="total-in-cart" style="font-size: 14px;"><?php echo number_format($total_price, 0, ',', '.').'₫'; ?></td>
+                            <td class="text-right" id="total-in-cart" style="font-size: 14px;">
+                                @{
+                                    var totalPrice = cart.Sum(c => c.Quantity * c.ProductPrice);
+                                } 
+                                @String.Format("{0:N0}₫", totalPrice)
+                            </td>
                         </tr>
                         <tr>
                             <td>
-                                <a href="./cart.php">
+                                <a href="~/cart">
                                     <button>XEM GIỎ HÀNG</button>
                                 </a>
                             </td>
@@ -61,9 +80,9 @@
 
                             // Gửi yêu cầu xóa sản phẩm thông qua Ajax
                             $.ajax({
-                                url: 'function/remove_from_cart.php',
+                                url: '/Cart/RemoveFromCart',
                                 type: 'post',
-                                data: {product_id: productId},
+                                data: { productId: productId },
                                 success:function(response){
                                     // Cập nhật lại tổng tiền sau khi xóa sản phẩm
                                     $('#total-in-cart').html(response);
@@ -92,7 +111,6 @@
                 </form>
                 <div class="result-wrap">
                     <div class="result-content">
-
                         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
                         <script>
                             $(document).ready(function () {

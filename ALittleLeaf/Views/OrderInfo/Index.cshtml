@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,13 +25,13 @@
                 </a>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item">
-                        <a href="./cart.php">Giỏ hàng</a>
+                        <a href="~/cart">Giỏ hàng</a>
                     </li>
                     <li class="breadcrumb-item">
                         Thông tin giao hàng
                     </li>
                     <li class="breadcrumb-item">
-                        <a href="./checkout.php">Phương thức thanh toán</a>
+                        <a href="~/checkout">Phương thức thanh toán</a>
                     </li>
                 </ul>
             </div>
@@ -45,7 +48,7 @@
                                         <div class="logged-in-customer-information-avatar gravatar" style="background-image: url(//www.gravatar.com/avatar/0b5f1cba1f77d746ad0f059ff7061a5e.jpg?s=100&d=blank);filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//www.gravatar.com/avatar/0b5f1cba1f77d746ad0f059ff7061a5e.jpg?s=100&d=blank', sizingMethod='scale')"></div>
                                     </div>
                                     <p class="logged-in-customer-information-paragraph">
-                                        FullName (Email)
+                                        @ViewContext.HttpContext.Session.GetString("UserFullname") (@ViewContext.HttpContext.Session.GetString("UserEmail"))
                                         <br>
                                         <a href="">Đăng xuất</a>
                                     </p>
@@ -56,11 +59,17 @@
                                             <select id="stored_addresses" class="field-input">
                                                 <option value="add" selected>Thêm địa chỉ mới ...</option>
                                                 <option value="" disabled>Địa chỉ đã lưu trữ</option>
-                                                <option value="'. $row['adrs_id'] .'">'. $row['adrs_address'] .'</option>
+                                                @if (ViewData["Addresses"] is List<ALittleLeaf.Models.AddressList> addresses)
+                                                {
+                                                    foreach (var address in addresses)
+                                                    {
+                                                        <option value="@address.AdrsId">@address.AdrsAddress</option>
+                                                    }
+                                                }
                                             </select>
                                         </div>
                                     </div>
-                                    <form id="checkout_complete" action="./function/get_order_info.php" method="post" onsubmit="return checkInput()">
+                                    <form id="checkout_complete" action="~/OrderInfo/SaveAddressInfo" method="post" onsubmit="return checkInput()">
                                         <div class="field field-required  field-show-floating-label">
                                             <div class="field-input-wrapper">
                                                 <label for="billing_address_full_name" class="field-label">Họ và Tên</label>
@@ -87,7 +96,7 @@
                                                 <span class="btn-content">Tiếp tục đến phương thức thanh toán</span>
                                             </button>
 
-                                            <a href="./cart.php" class="step-footer-previous-link">Giỏ hàng</a>
+                                            <a href="~/cart" class="step-footer-previous-link">Giỏ hàng</a>
                                         </div>
                                     </form>
                                 </div>
@@ -100,9 +109,7 @@
             <div class="main-footer footer-powered-by">Powered by HoanhNgjp</div>
         </div>
         <div class="checkout-sidebar">
-            <?php
-            require_once './template/sidebar-content.php';
-            ?>
+            @Html.Partial("_SideBarContent");
         </div>
 
     </div>

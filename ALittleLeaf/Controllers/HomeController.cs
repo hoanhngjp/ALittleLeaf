@@ -1,4 +1,5 @@
 using ALittleLeaf.Models;
+using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -15,6 +16,10 @@ namespace ALittleLeaf.Controllers
 
         public IActionResult Index()
         {
+            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+
+            ViewData["Cart"] = cart;
+
             return View();
         }
 

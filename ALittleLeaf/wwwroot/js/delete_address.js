@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (confirm("Bạn có chắc chắn muốn xóa địa chỉ này không?")) {
                 var xhr = new XMLHttpRequest();
-                xhr.open('POST', './function/delete_address.php', true);
+                xhr.open('POST', '/Address/DeleteAddress', true);
                 xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                 xhr.onload = function() {
                     if (xhr.status == 200) {
@@ -17,13 +17,13 @@ document.addEventListener("DOMContentLoaded", function() {
                         button.closest('.address-table-wrap').remove();
                         
                         // Hiển thị thông báo thành công
-                        alert(xhr.responseText);
+                        alert("Đã xóa địa chỉ thành công!");
                     } else {
                         alert('Đã có lỗi xảy ra, vui lòng thử lại sau.');
                     }
                 };
                 
-                xhr.send('address_id=' + addressId);
+                xhr.send('AdrsId=' + addressId);
             }
         });
     });

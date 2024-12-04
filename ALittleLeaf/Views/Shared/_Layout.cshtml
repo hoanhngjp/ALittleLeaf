@@ -14,7 +14,9 @@
     @RenderSection("ProductStyle", required: false)
     @RenderSection("SearchStyle", required: false)    
     @RenderSection("AccountStyle", required: false)
+    @RenderSection("AddressStyle", required: false)
     @RenderSection("BillDetailStyle", required: false)
+    @RenderSection("CartStyle", required: false)
     <link rel="stylesheet" href="~/css/cart-search.css">
     <title>@ViewBag.Title</title>
     <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
@@ -22,7 +24,9 @@
     <script src="~/js/showSubMenu.js" defer></script>
     @RenderSection("ProductJs", required: false)
     @RenderSection("LoginRegistryJs" , required: false)
-    <script src="~/js/validLoginAndRegistry.js" defer></script>
+    @RenderSection("CartFunctionJs", required: false)
+    @RenderSection("ShowEditAddAddressJs", required: false)
+    @RenderSection("DeleteAddressJs", required: false)
 </head>
 <body>
     <div id="main-body">
@@ -35,5 +39,4 @@
     </div>
     @Html.Partial("_SideNav");
 </body>
-missing @RenderSection("scripts", required: false)
 </html>

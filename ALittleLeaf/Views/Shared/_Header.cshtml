@@ -1,4 +1,12 @@
-﻿<header>
+﻿@{
+    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+    var totalItems = 0;
+    foreach (var item in cart)
+    {
+        totalItems += item.Quantity;
+    }
+}
+<header>
     <div class="homeLogo">
         <a asp-controller="Home" asp.action="Index"><img src="~/img/logo.webp" alt=""></a>
     </div>
@@ -29,7 +37,7 @@
                 <a href="" id="open-site-cart">
                     <ion-icon name="bag-outline"></ion-icon>
                     <span class="count-holder">
-                        <span class="count">'. $count .'</span>
+                        <span class="count">@totalItems</span>
                     </span>
                 </a>
             </li>
