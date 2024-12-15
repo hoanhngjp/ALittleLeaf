@@ -77,8 +77,6 @@ namespace ALittleLeaf.Controllers
                 _context.AddressLists.Add(address);
                 _context.SaveChanges();
 
-
-
                 // Chuyển hướng sau khi đăng ký thành công
                 return RedirectToAction("Index", "Account");
             }

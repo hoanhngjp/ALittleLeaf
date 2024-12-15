@@ -1,181 +1,193 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>admin | Dashboard</title>
-
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
-    <!-- Ionicons -->
-    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-    <!-- Tempusdominus Bootstrap 4 -->
-    <link rel="stylesheet" href="~/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
-    <!-- iCheck -->
-    <link rel="stylesheet" href="~/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
-    <!-- JQVMap -->
-    <link rel="stylesheet" href="~/plugins/jqvmap/jqvmap.min.css">
-    <!-- Theme style -->
-    <link rel="stylesheet" href="~/dist/css/adminlte.min.css">
-    <!-- overlayScrollbars -->
-    <link rel="stylesheet" href="~/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
-    <!-- Daterange picker -->
-    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
-    <!-- summernote -->
-    <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
-    <link rel="stylesheet" href="~/admin/process.css">
-    <link rel="stylesheet" href="~/admin/style.css">
-    <link rel="stylesheet" href="~/css/changeUserInfo.css">
-</head>
-
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
-        <!-- Navbar -->
-        <?php
-        require_once "./template/main-header.php";
-        ?>
-        <!-- /.navbar -->
-        <!-- Main Sidebar Container -->
-        <?php
-        require_once "./template/main-sidebar.php";
-        ?>
-
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-            <div class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1 class="m-0">Đơn hàng</h1>
-                        </div><!-- /.col -->
-                        <div class="col-sm-6">
-                            <ol class="breadcrumb float-sm-right">
-                                <li class="breadcrumb-item"><a href="admin.html">Trang chủ</a></li>
-                                <li class="breadcrumb-item active">...</li>
-                            </ol>
-                        </div><!-- /.col -->
-                    </div><!-- /.row -->
-                </div><!-- /.container-fluid -->
-            </div>
-            <!-- /.content-header -->
-            <!-- Main content -->
-
-            <div class="table-content">
-            </div>
-
-
-            <div class="table-footer">
-                Từ ngày: <input type="date" id="fromDate">
-                Đến ngày: <input type="date" id="toDate">
-                <button onclick="timTheoNgay()"><i class="fa fa-search"></i>Tìm theo ngày</button>
-                <div>
-                    <select name="payment_status" id="payment_status" onchange="timKiemDonHangTheoTrangThaiThanhToan()">
-                        <option disabled selected>Trạng thái thanh toán</option>
-                        <option value="pending">Đang chờ</option>
-                        <option value="paid">Đã thanh toán</option>
-                    </select>
-
-                    <select name="is_confirmed" id="is_confirmed" onchange="timKiemDonHangTheoTinhTrangDon()">
-                        <option disabled selected>Tình trạng đơn hàng</option>
-                        <option value="1">Đã xác nhận</option>
-                        <option value="0">Chưa xác nhận</option>
-                    </select>
-
-                    <select name="shipping_status" id="shipping_status" onchange="timKiemDonHangTheoTrangThaiGiaoHang()">
-                        <option disabled selected>Trạng thái giao hàng</option>
-                        <option value="fulfilled">Đã giao hàng</option>
-                        <option value="not_fulfilled">Chưa giao hàng</option>
-                    </select>
-
-                </div>
-                <div>
-                    <select id="kieuTimDonHang" name="kieuTimDonHang">
-                        <option value="bill_id">Tìm theo Mã đơn</option>
-                        <option value="bill_fullname">Tìm theo Tên khách hàng</option>
-                    </select>
-                    <input id="tuKhoa" type="text" placeholder="Tìm kiếm..." onkeyup="timKiemDonHang(this)">
-                </div>
-            </div>
-            <!-- Đơn Hàng -->
-            <div class="wrap-table" id="resultBill">
-                <table id="userTable" class="table-header">
-                    <thead>
+﻿@model IEnumerable<ALittleLeaf.ViewModels.BillViewModel>
+@section ChangeUserInfoSection {
+    <link rel="stylesheet" href="~/admin/changeUserInfo.css">
+}
+@{
+    Layout = "_LayoutAdmin";
+}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Đơn hàng</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">...</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+    <!-- Main content -->
+    <div class="table-content"></div>
+    <div class="table-footer">
+        Từ ngày: <input type="date" id="fromDate">
+        Đến ngày: <input type="date" id="toDate">
+        <button onclick="timTheoNgay()"><i class="fa fa-search"></i>Tìm theo ngày</button>
+        <div>
+            <select name="payment_status" id="payment_status" onchange="timKiemDonHangTheoTrangThaiThanhToan()">
+                <option disabled selected>Trạng thái thanh toán</option>
+                <option value="pending">Đang chờ</option>
+                <option value="paid">Đã thanh toán</option>
+            </select>
+            <select name="is_confirmed" id="is_confirmed" onchange="timKiemDonHangTheoTinhTrangDon()">
+                <option disabled selected>Tình trạng đơn hàng</option>
+                <option value="1">Đã xác nhận</option>
+                <option value="0">Chưa xác nhận</option>
+            </select>
+            <select name="shipping_status" id="shipping_status" onchange="timKiemDonHangTheoTrangThaiGiaoHang()">
+                <option disabled selected>Trạng thái giao hàng</option>
+                <option value="fulfilled">Đã giao hàng</option>
+                <option value="not_fulfilled">Chưa giao hàng</option>
+            </select>
+        </div>
+        <div>
+            <select id="kieuTimDonHang" name="kieuTimDonHang">
+                <option value="bill_id">Tìm theo Mã đơn</option>
+                <option value="bill_fullname">Tìm theo Tên khách hàng</option>
+            </select>
+            <input id="tuKhoa" type="text" placeholder="Tìm kiếm..." onkeyup="timKiemDonHang(this)">
+        </div>
+    </div>
+    <!-- Đơn Hàng -->
+    <div class="wrap-table" id="resultBill">
+        <table id="userTable" class="table-header">
+            <thead>
+                <tr>
+                    <th>Bill ID</th>
+                    <th>Tên khách hàng</th>
+                    <th>Ngày tạo đơn</th>
+                    <th>Tổng giá trị đơn hàng</th>
+                    <th>Số điện thoại khách hàng</th>
+                    <th>Địa chỉ giao hàng</th>
+                    <th>Phương thức thanh toán</th>
+                    <th>Trạng thái thanh toán</th>
+                    <th>Tình trạng đơn hàng</th>
+                    <th>Trạng thái giao hàng</th>
+                    <th>Ghi chú đơn hàng</th>
+                    <th>Cập nhật đơn hàng</th>
+                    <th>Thông tin đơn hàng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var bill in Model)
+                {
+                    <form action="" method="post">
                         <tr>
-                            <th>Bill ID</th>
-                            <th>Tên khách hàng</th>
-                            <th>Ngày tạo đơn</th>
-                            <th>Tổng giá trị đơn hàng</th>
-                            <th>Số điện thoại khách hàng</th>
-                            <th>Địa chỉ giao hàng</th>
-                            <th>Phương thức thanh toán</th>
-                            <th>Trạng thái thanh toán</th>
-                            <th>Tình trạng đơn hàng</th>
-                            <th>Trạng thái giao hàng</th>
-                            <th>Ghi chú đơn hàng</th>
-                            <th>Cập nhật đơn hàng</th>
-                            <th>Thông tin đơn hàng</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!--Mỗi form bọc 1 tr-->
-                        <form action="./function/updateBill.php" method="POST">
-                        <tr>
-                            <td>' . $row['bill_id'] . '</td>';
-                            <input type="hidden" name="bill_id" value="' . $row['bill_id'] . '">
-                            <td>' . $row['user_fullname'] . '</td>';
-                            <td>' . date("d/m/Y", strtotime($row["date_created"])) . '</td>
-                            <td>' . number_format($row['total_amount'], 0, ',', '.') . '₫</td>
-                            <td>' . $row['phone'] . '</td>';
-                            <td>' . $row['shipping_address'] . '</td>
-                            <td>' . $row['checkout_method'] . '</td>
+                            <td>@bill.BillId</td>
+                            <input type="hidden" name="bill_id" value="@bill.BillId">
+                            <td>@bill.CustomerName</td>
+                            <td>@bill.DateCreated</td>
+                            <td>@bill.TotalAmount.ToString("N0")₫</td>
+                            <td>@bill.CustomerPhone</td>
+                            <td>@bill.ShippingAddress</td>
+                            <td>@bill.PaymentMethod</td>
                             <td>
-                                <select name="payment_status">
-                                    <option value="pending" selected>Đang chờ</option>
-                                    <option value="paid">Đã thanh toán</option>
+                                <select>
+                                    @if (bill.PaymentStatus == "pending")
+                                    {
+                                        <option value="pending" selected>Đang chờ</option>
+                                        <option value="paid">Đã thanh toán</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="pending">Đang chờ</option>
+                                        <option value="paid" selected>Đã thanh toán</option>
+                                    }
                                 </select>
                             </td>
                             <td>
-                                <select name="is_confirmed">
-                                    <option value="1" selected>Đã xác nhận</option>
-                                    <option value="0">Chưa xác nhận</option>
+                                <select>
+                                    @if (bill.IsConfirmed == true)
+                                    {
+                                        <option value="1" selected>Đã xác nhận</option>
+                                        <option value="0">Chưa xác nhận</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="1">Đã xác nhận</option>
+                                        <option value="0" selected>Chưa xác nhận</option>
+                                    }
                                 </select>
                             </td>
                             <td>
                                 <select name="shipping_status">
-                                    <option value="fulfilled" selected>Đã giao hàng</option>
-                                    <option value="not_fulfilled">Chưa giao hàng</option>
+                                    @if (bill.ShippingStatus == "fulfilled")
+                                    {
+                                        <option value="fulfilled" selected>Đã giao hàng</option>
+                                        <option value="not_fulfilled">Chưa giao hàng</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="fulfilled">Đã giao hàng</option>
+                                        <option value="not_fulfilled" selected>Chưa giao hàng</option>
+                                    }
                                 </select>
                             </td>
                             <td class="editable">
-                                <textarea name="note">' . $row['note'] . '</textarea>
+                                <textarea name="note">@bill.Note</textarea>
                             </td>
                             <td>
                                 <button class="sign-in-btn" type="submit" value="">Cập nhật</button>
                             </td>
                             <td>
-                                <a href="chitiet.php?bill_id=' . $row['bill_id'] . '" style="color: black;" i class="fa fa-eye"></i> Chi tiết</a>
+                            <a asp-controller="AdminDetail" asp-action="Index" asp-route-billId="@bill.BillId" style="color: black;"> <i class="fa fa-eye"></i>
+                                Chi tiết
+                                </a>
                             </td>
                         </tr>
-                        </form>
-                    </tbody>
-                </table>
-                <div class="pagination">
-                    <a href="./donhang.php?page=<?php echo ($page - 1); ?>" class="prev">&laquo; Trang trước</a>
-                    <a href="./donhang.php?page=<?php echo $i; ?>" class="<?php echo ($page == $i) ? 'active' : ''; ?>"><?php echo $i; ?></a>
-                    <span>...</span>
-                    <a href="./donhang.php?page=<?php echo ($page + 1); ?>" class="next">Trang tiếp theo &raquo;</a>
-                </div>
-            </div>
-            <!-- Control Sidebar -->
-            <aside class="control-sidebar control-sidebar-dark">
-                <!-- Control sidebar content goes here -->
-            </aside>
-            <!-- /.control-sidebar -->
+                    </form>
+                }
+            </tbody>
+        </table>
+        <<div class="pagination">
+            <!-- Nút "Previous Page" -->
+            @if (ViewBag.Pagination.CurrentPage > 1)
+            {
+                <a asp-controller="AdminDonHang" asp-action="Index" asp-route-page="@(ViewBag.Pagination.CurrentPage - 1)" class="prev">&laquo; Trang trước</a>
+            }
+            <!-- Hiển thị 4 trang đầu tiên -->
+            @for (int i = 1; i <= Math.Min(4, ViewBag.Pagination.TotalPages); i++)
+            {
+                <a asp-controller="AdminDonHang" asp-action="Index" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "active" : "")">@i</a>
+            }
+            <!-- Nếu có nhiều hơn 8 trang, hiển thị dấu ba chấm -->
+            @if (ViewBag.Pagination.TotalPages > 8 && ViewBag.Pagination.CurrentPage > 5)
+            {
+                <span>...</span>
+            }
+            <!-- Hiển thị trang hiện tại và các trang xung quanh nó nếu ở giữa -->
+            @if (ViewBag.Pagination.TotalPages > 8)
+            {
+                @for (int i = Math.Max(5, ViewBag.Pagination.CurrentPage - 1); i <= Math.Min(ViewBag.Pagination.CurrentPage + 1, ViewBag.Pagination.TotalPages - 4); i++)
+                {
+                    <a asp-controller="AdminDonHang" asp-action="Index" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "active" : "")">@i</a>
+                }
+            }
+            <!-- Hiển thị dấu ba chấm trước 4 trang cuối nếu cần -->
+            @if (ViewBag.Pagination.TotalPages > 8 && ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages - 4)
+            {
+                <span>...</span>
+            }
+            <!-- Hiển thị 4 trang cuối -->
+            @for (int i = Math.Max(ViewBag.Pagination.TotalPages - 3, 5); i <= ViewBag.Pagination.TotalPages; i++)
+            {
+                <a asp-controller="AdminDonHang" asp-action="Index" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "active" : "")">@i</a>
+            }
+            <!-- Nút "Next Page" -->
+            @if (ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages)
+            {
+                <a asp-controller="AdminDonHang" asp-action="Index" asp-route-page="@(ViewBag.Pagination.CurrentPage + 1)" class="next">Trang tiếp theo &raquo;</a>
+            }
         </div>
+    </div>
+</div>
         <!-- ./wrapper -->
         <!-- jQuery -->
         <script src="~/plugins/jquery/jquery.min.js"></script>
@@ -298,5 +310,3 @@
                 });
             }
         </script>
-</body>
-</html>

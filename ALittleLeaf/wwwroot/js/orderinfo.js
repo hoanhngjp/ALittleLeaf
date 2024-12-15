@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let fullNameInput = document.getElementById('billing_address_full_name');
     let phoneInput = document.getElementById('billing_address_phone');
     let addressInput = document.getElementById('billing_address_address');
+    let billAddressIdInput = document.getElementById('bill_addressId');
 
     // Lắng nghe sự kiện khi người dùng thay đổi giá trị của select box
     storedAddressesSelect.addEventListener('change', function () {
@@ -12,6 +13,12 @@ document.addEventListener('DOMContentLoaded', function () {
             fullNameInput.value = '';
             phoneInput.value = '';
             addressInput.value = '';
+            billAddressIdInput.value = 'new';
+
+            console.log(billAddressIdInput.value);
+            console.log(fullNameInput.value);
+            console.log(phoneInput.value);
+            console.log(addressInput.value);
         } else {
             // Nếu người dùng chọn một địa chỉ trong cơ sở dữ liệu, gửi yêu cầu AJAX để lấy thông tin địa chỉ
             let addressId = parseInt(selectedOption.value);
@@ -41,7 +48,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     alert(data.error);
                     return;
                 }
+                console.log(data.adrs_id);
+                console.log(data.adrs_fullname);
+                console.log(data.adrs_phone);
+                console.log(data.adrs_address);
 
+                billAddressIdInput.value = data.adrs_id || '';
                 fullNameInput.value = data.adrs_fullname || '';
                 phoneInput.value = data.adrs_phone || '';
                 addressInput.value = data.adrs_address || '';
@@ -93,6 +105,12 @@ function checkInput() {
     if (hasError) {
         return false;
     }
+
+    console.log(billAddressIdInput.value);
+    console.log(fullNameInput.value);
+    console.log(phoneInput.value);
+    console.log(addressInput.value);
+
     return true;
 }
 

@@ -1,124 +1,89 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>admin | Dashboard</title>
-
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
-    <!-- Ionicons -->
-    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-    <!-- Tempusdominus Bootstrap 4 -->
-    <link rel="stylesheet" href="~/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
-    <!-- iCheck -->
-    <link rel="stylesheet" href="~/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
-    <!-- JQVMap -->
-    <link rel="stylesheet" href="~/plugins/jqvmap/jqvmap.min.css">
-    <!-- Theme style -->
-    <link rel="stylesheet" href="~/dist/css/adminlte.min.css">
-    <!-- overlayScrollbars -->
-    <link rel="stylesheet" href="~/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
-    <!-- Daterange picker -->
-    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
-    <!-- summernote -->
-    <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
-    <link rel="stylesheet" href="~/admin/process.css">
-    <link rel="stylesheet" href="~/admin/style.css">
-</head>
-
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
-        <!-- Navbar -->
-        <?php
-        require_once "./template/main-header.php";
-        ?>
-        <!-- /.navbar -->
-        <!-- Main Sidebar Container -->
-        <?php
-        require_once "./template/main-sidebar.php";
-        ?>
-
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-            <div class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1 class="m-0">Thêm sản phẩm</h1>
-                        </div><!-- /.col -->
-                        <div class="col-sm-6">
-                            <ol class="breadcrumb float-sm-right">
-                                <li class="breadcrumb-item"><a href="admin.html">Trang chủ</a></li>
-                                <li class="breadcrumb-item active">Thêm sản phẩm</li>
-                            </ol>
-                        </div><!-- /.col -->
-                    </div><!-- /.row -->
-                </div><!-- /.container-fluid -->
-            </div><!-- /.content-header -->
-            <!-- Main content -->
-            <div class="content">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card card-primary">
-                                <div class="card-header">
-                                    <h3 class="card-title">Thông tin sản phẩm</h3>
-                                </div>
-                                <!-- /.card-header -->
-                                <div class="card-body">
-                                    <form action="./function/process_add_product.php" method="post" enctype="multipart/form-data" onsubmit="convertNewlines()">
-                                        <div class="form-group">
-                                            <label for="product_name">Tên sản phẩm</label>
-                                            <input type="text" class="form-control" id="product_name" name="product_name" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="id_category">Danh mục</label>
-                                            <select class="form-control" id="id_category" name="id_category">
-                                                <!--Option Category-->
-                                                <option value="' . $row['category_id'] . '">' . $row['category_name'] . '</option>
-                                                <option value="">Không có danh mục</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="product_price">Giá tiền</label>
-                                            <input type="text" class="form-control" id="product_price" name="product_price" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="product_description">Mô tả sản phẩm</label>
-                                            <textarea class="form-control" id="product_description" name="product_description" rows="3"></textarea>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="quantity_in_stock">Số lượng trong kho</label>
-                                            <input type="number" class="form-control" id="quantity_in_stock" name="quantity_in_stock" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="product_images">Hình ảnh sản phẩm</label>
-                                            <div id="image_inputs">
-                                                <div class="image-input">
-                                                </div>
-                                            </div>
-                                            <button type="button" id="add_image_input" class="btn btn-primary mt-2">Thêm ảnh</button>
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
-                                    </form>
-                                </div>
-                                <!-- /.card-body -->
-                            </div>
-                            <!-- /.card -->
+﻿@model ALittleLeaf.ViewModels.AddProductViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thêm sản phẩm";
+    var categories = ViewData["categories"] as List<ALittleLeaf.ViewModels.CollectionsMenuViewModel>;
+}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Thêm sản phẩm</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Thêm sản phẩm</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div><!-- /.content-header -->
+    <!-- Main content -->
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Thông tin sản phẩm</h3>
                         </div>
+                        <!-- /.card-header -->
+                        <div class="card-body">
+                            <form asp-action="AddProduct" asp-controller="AdminAddProduct" method="post" enctype="multipart/form-data" onsubmit="convertNewlines()">
+                                <div class="form-group">
+                                    <label for="product_name">Tên sản phẩm</label>
+                                    <input asp-for="ProductName" name="ProductName" type="text" class="form-control" id="product_name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_category">Danh mục</label>
+                                    <select asp-for="IdCategory" class="form-control" id="id_category" name="IdCategory">
+                                        @foreach (var category in categories)
+                                        {
+                                            <!--Option Category-->
+                                            <option value="@category.CategoryId">@category.CategoryName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="product_price">Giá tiền</label>
+                                    <input asp-for="ProductPrice" name="ProductPrice" type="text" class="form-control" id="product_price" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="product_description">Mô tả sản phẩm</label>
+                                    <textarea asp-for="ProductDescription" name="ProductDescription" class="form-control" id="product_description" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quantity_in_stock">Số lượng trong kho</label>
+                                    <input asp-for="QuantityInStock" name="QuantityInStock" type="number" class="form-control" id="quantity_in_stock" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="product_images">Hình ảnh sản phẩm</label>
+                                    <div id="image_inputs">
+                                        <div class="image-input">
+                                        
+                                        </div>
+                                    </div>
+                                    <button type="button" id="add_image_input" class="btn btn-primary mt-2">Thêm ảnh</button>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
+                            </form>
+                        </div>
+                    <!-- /.card-body -->
                     </div>
-                    <!-- /.row -->
-                </div><!-- /.container-fluid -->
+                <!-- /.card -->
+                </div>
             </div>
-            <!-- /.content -->
+        <!-- /.row -->
         </div>
-        <!-- /.content-wrapper -->
+    <!-- /.container-fluid -->
+    </div>
+<!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
         <!-- Control Sidebar -->
         <aside class="control-sidebar control-sidebar-dark">
             <!-- Control sidebar content goes here -->
@@ -126,16 +91,16 @@
         <!-- /.control-sidebar -->
     </div>
     <!-- ./wrapper -->
-    <!-- jQuery -->
-    <script src="~/plugins/jquery/jquery.min.js"></script>
-    <!-- jQuery UI 1.11.4 -->
-    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
-    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-    <script>
-        $.widget.bridge('uibutton', $.ui.button)
-    </script>
-    <!-- Bootstrap 4 -->
-    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery -->
+<script src="~/plugins/jquery/jquery.min.js"></script>
+<!-- jQuery UI 1.11.4 -->
+<script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+<script>
+    $.widget.bridge('uibutton', $.ui.button)
+</script>
+<!-- Bootstrap 4 -->
+<script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- ChartJS -->
     <script src="~/plugins/chart.js/Chart.min.js"></script>
     <!-- Sparkline -->
@@ -181,7 +146,7 @@
                 var imageInput = document.createElement('input');
                 imageInput.type = 'file';
                 imageInput.classList.add('form-control-file');
-                imageInput.name = 'product_images[]';
+                imageInput.name = 'ProductImages';
                 imageInput.accept = 'image/*';
                 imageInput.required = true;
 
@@ -213,17 +178,12 @@
             }
         });
     </script>
-
-    <script>
+<script>
         // Hàm này sẽ thực hiện chuyển đổi ký tự xuống dòng thành ký tự xuống dòng \n
         function convertNewlines() {
             var descriptionTextarea = document.getElementById('product_description');
             var description = descriptionTextarea.value;
             var descriptionWithNewlines = description.replace(/<br>/g, '\n');
-            descriptionTextarea.value = descriptionWithNewlines;
-        }
-    </script>
-
-</body>
-
-</html>
+        descriptionTextarea.value = descriptionWithNewlines;
+    }
+</script>

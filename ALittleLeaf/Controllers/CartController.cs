@@ -1,4 +1,5 @@
-﻿using ALittleLeaf.Repository;
+﻿using ALittleLeaf.Models;
+using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -138,6 +139,18 @@ namespace ALittleLeaf.Controllers
 
             return Json(new { success = true, total_price = totalPrice });
         }
-
+        [HttpPost]
+        public IActionResult GetCartNote(string? BillNote) 
+        {
+            if(BillNote == null)
+            {
+                return RedirectToAction("Index", "OrderInfo");
+            }
+            else
+            {
+                HttpContext.Session.SetString("BillNote", BillNote);
+                return RedirectToAction("Index", "OrderInfo");
+            }    
+        }
     }
 }

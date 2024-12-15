@@ -50,7 +50,7 @@
                                     <p class="logged-in-customer-information-paragraph">
                                         @ViewContext.HttpContext.Session.GetString("UserFullname") (@ViewContext.HttpContext.Session.GetString("UserEmail"))
                                         <br>
-                                        <a href="">Đăng xuất</a>
+                                        <a asp-controller="Login" asp.action="Logout">Đăng xuất</a>
                                     </p>
                                 </div>
                                 <div class="fieldset">
@@ -70,6 +70,7 @@
                                         </div>
                                     </div>
                                     <form id="checkout_complete" action="~/OrderInfo/SaveAddressInfo" method="post" onsubmit="return checkInput()">
+                                        <input type="hidden" id="bill_addressId" name="bill_addressId">
                                         <div class="field field-required  field-show-floating-label">
                                             <div class="field-input-wrapper">
                                                 <label for="billing_address_full_name" class="field-label">Họ và Tên</label>

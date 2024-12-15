@@ -88,7 +88,7 @@
                             </div>
                             <div class="description-content">
                                 <div class="description-productdetail">
-                                    @Html.Raw(Model.ProductDescription.Replace("\n", "<br>").Replace("\r", ""))
+                                    @Html.Raw(Model.ProductDescription?.Replace("\r", "").Replace("\n", "<br>"))
                                 </div>
                             </div>
                         </div>

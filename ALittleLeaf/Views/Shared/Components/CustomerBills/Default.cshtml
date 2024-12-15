@@ -42,7 +42,7 @@
                             </td>
                             <td class="text-center">
                                 <span class="detail-@bill.ShippingStatus">
-                                    <a href="@Url.Action("OrderDetail", "Order", new { billId = bill.BillId })">Chi tiết</a>
+                                    <a asp-controller="OrderDetail" asp-action="Index" asp-route-billId="@bill.BillId">Chi tiết</a>
                                 </span>
                             </td>
                         </tr>

@@ -96,7 +96,7 @@
                                                 <input name="checkoutMethod" type="radio" class="input-radio" value="cod">
                                             </div>
                                             <div class="radio-content-input">
-                                                <img src="img/cod.svg" alt="" class="main-img">
+                                                <img src="~/img/cod.svg" alt="" class="main-img">
                                                 <div class="content-wrapper">
                                                     <span class="radio-label-primary">Thanh toán khi giao hàng (COD)</span>
                                                 </div>
@@ -113,12 +113,12 @@
                         </div>
                     </div>
                     <div class="step-footer" id="step-footer-checkout">
-                        <form id="checkout_complete">
+                        <form id="checkout_complete" action="~/CheckOut/SaveCheckOutMethod" method="post">
                             <button type="submit" class="step-footer-continue-btn btn">
                                 <span class="btn-content">Hoàn tất đơn hàng</span>
                             </button>
                         </form>
-                        <a href="" class="step-footer-previous-link">Thông tin đặt hàng</a>
+                        <a href="~/orderinfo" class="step-footer-previous-link">Thông tin đặt hàng</a>
                     </div>
                 </div>
             </div>

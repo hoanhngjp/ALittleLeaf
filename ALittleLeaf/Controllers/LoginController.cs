@@ -76,19 +76,20 @@ namespace ALittleLeaf.Controllers
 
             return View("Index");
         }
-
-
-
         [HttpGet]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
-            // Xóa Session
+            // Xóa toàn bộ session
             HttpContext.Session.Clear();
 
-            // Đăng xuất khỏi Cookie Authentication
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            // Xóa cookies (nếu cần)
+            Response.Cookies.Delete(".AspNetCore.Session");
 
-            return RedirectToAction("Index", "Login");
+            Console.WriteLine(HttpContext.Session.GetString("UserId"));
+            Console.WriteLine(HttpContext.Session.GetString("UserEmail"));
+            Console.WriteLine(HttpContext.Session.GetString("UserFullname"));
+
+            return RedirectToAction("Index", "Account");
         }
 
     }
