@@ -1,8 +1,6 @@
 ﻿@model ALittleLeaf.ViewModels.AdminViewModel
 @{
     Layout = "_LayoutAdmin";
-}
-@{
     ViewData["Title"] = "Trang chủ";
 }
 <div class="content-wrapper">
@@ -33,7 +31,7 @@
                     <div class="small-box bg-info">
                         <div class="inner">
                             <!--Tổng đơn hàng-->
-                            <h3>@Model.TotalBills></h3>
+                            <h3>@Model.TotalBills</h3>
                             <p>Đơn hàng</p>
                         </div>
                         <div class="icon">
@@ -74,12 +72,8 @@
                         <a asp-controller="AdminChangeProductInfo" asp-action="Index" class="small-box-footer">Cập nhật <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
                 </div>
-                <!-- Control Sidebar -->
-                <aside class="control-sidebar control-sidebar-dark">
-                    <!-- Control sidebar content goes here -->
-                </aside>
-                <!-- /.control-sidebar -->
             </div>
+
             <!-- ./wrapper -->
             <!-- jQuery -->
             <script src="~/plugins/jquery/jquery.min.js"></script>

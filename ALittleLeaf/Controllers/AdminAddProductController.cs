@@ -1,6 +1,7 @@
 ﻿using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ALittleLeaf.Controllers
@@ -16,6 +17,10 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index()
         {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("AdminId")))
+            {
+                return RedirectToAction("Index", "AdminLogin");
+            }
             var categories = _context.Categories.Select(c => new CollectionsMenuViewModel
             {
                 CategoryId = c.CategoryId,
@@ -39,6 +44,8 @@ namespace ALittleLeaf.Controllers
                     ProductDescription = model.ProductDescription,
                     QuantityInStock = model.QuantityInStock,
                     ProductPrice = model.ProductPrice,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
                 };
 
                 // Lưu sản phẩm vào cơ sở dữ liệu
@@ -54,7 +61,8 @@ namespace ALittleLeaf.Controllers
                     Directory.CreateDirectory(uploadPath); // Tạo thư mục nếu chưa tồn tại
                 }
 
-                // Lưu ảnh sản phẩm
+                bool isFirstImage = true;
+
                 foreach (var image in model.ProductImages)
                 {
                     if (image != null && image.Length > 0)
@@ -79,15 +87,21 @@ namespace ALittleLeaf.Controllers
                         {
                             IdProduct = product.ProductId,
                             ImgName = fileName,
-                            IsPrimary = false,
+                            IsPrimary = isFirstImage, // Nếu là ảnh đầu tiên thì đặt IsPrimary = true
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
                         };
 
                         _context.ProductImages.Add(productImage);
+
+                        // Đặt isFirstImage = false sau khi lưu ảnh đầu tiên
+                        isFirstImage = false;
 
                         // Console log thông báo đã lưu ảnh
                         Console.WriteLine($"Ảnh '{fileName}' đã được lưu cho sản phẩm '{model.ProductName}'");
                     }
                 }
+
                 _context.SaveChanges();
 
                 // Console log khi đã hoàn tất thêm ảnh

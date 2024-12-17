@@ -26,6 +26,7 @@ namespace ALittleLeaf.ViewComponents
                     ProductId = p.ProductId,
                     IdCategory = p.IdCategory,
                     ProductName = p.ProductName,
+                    ProductQuantity = p.QuantityInStock,
                     ProductPrice = p.ProductPrice,
                     ProductImg = p.ProductImages.FirstOrDefault(i => i.IsPrimary).ImgName
                 })

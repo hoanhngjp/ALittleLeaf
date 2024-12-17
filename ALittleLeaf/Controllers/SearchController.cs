@@ -75,7 +75,7 @@ namespace ALittleLeaf.Controllers
         {
             // Tìm sản phẩm theo từ khóa
             var products = _context.Products
-                .Where(p => p.ProductName.Contains(q))
+                .Where(p => p.ProductName.Contains(q) && p.IsOnSale)
                 .Select(p => new ProductViewModel
                 {
                     ProductId = p.ProductId,

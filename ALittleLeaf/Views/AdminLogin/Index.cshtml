@@ -1,4 +1,5 @@
-﻿@{
+﻿@model ALittleLeaf.ViewModels.UserLoggedViewModel
+@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -8,21 +9,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Login & Registration Form</title>
-    <link rel="stylesheet" href="~/loginregister.css">
-    <script src="~/js/login.js" defer></script>
+    <link rel="stylesheet" href="~/css/login.css">
+    <script src="~/js/validLoginAndRegistry.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <input type="checkbox" id="check">
-        <div class="login form">
-            <header>Login Admin</header>
-            <form action="./function/loginAdminFunc.php" method="POST" onsubmit="return checkLogin()">
-                <p id="error-username" class="show-error" style="display: none; color: red;">Vui lòng nhập Username</p>
-                <input id="email" type="text" name="admin_username" placeholder="Enter your username">
-                <p id="error-password" class="show-error" style="display: none; color: red;">Vui lòng nhập Mật khẩu</p>
-                <input id="password" type="password" name="admin_password" placeholder="Enter your password">
-                <input type="submit" class="button" value="Login">
-            </form>
+    <div class="login-wrap">
+        <div class="login-title-wrap">
+            <div class="header">
+                <h1>
+                    Đăng nhập
+                    <br>
+                    Admin
+                </h1>
+            </div>
+        </div>
+        <div class="form-wrap">
+            <div class="form">
+                <form asp-controller="AdminLogin" asp-action="LoginAdmin" method="post" onsubmit="return checkLogin()">
+                    <div class="errors-wrap">
+                        @if (ViewBag.ErrorMessage != null)
+                        {
+                            <span class="show-error" id="error-all" style="display: block;">@ViewBag.ErrorMessage</span>
+                        }
+                    </div>
+                    <input type="hidden" name="ReturnUrl" value="@ViewBag.ReturnUrl">
+                    <div class="input-wrap">
+                        <input asp-for="UserEmail" type="email" name="UserEmail" id="email" placeholder="Email">
+                    </div>
+                    <div class="errors-wrap">
+                        <span class="show-error" id="error-email">*Vui lòng nhập Email của bạn</span>
+                    </div>
+                    <div class="input-wrap">
+                        <input asp-for="UserPassword" type="password" name="UserPassword" id="password" placeholder="Mật khẩu">
+                    </div>
+                    <div class="errors-wrap">
+                        <span class="show-error" id="error-password">*Vui lòng nhập mật khẩu của bạn</span>
+                    </div>
+                    <div class="others-wrap">
+                        <div class="button-wrap">
+                            <button class="sign-in-btn" type="submit" value="login">ĐĂNG NHẬP</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </body>

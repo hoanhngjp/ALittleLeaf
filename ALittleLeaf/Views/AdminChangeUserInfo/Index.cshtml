@@ -1,8 +1,9 @@
 ﻿@model IEnumerable<ALittleLeaf.Models.User>
 @{
     Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Sửa thông tin người dùng";
 }
-@section ChangeUserInfoSection{
+@section ChangeUserInfoSection {
     <link rel="stylesheet" href="~/admin/changeUserInfo.css">
 }
 <!-- Content Wrapper. Contains page content -->
@@ -21,28 +22,27 @@
                     </ol>
                 </div><!-- /.col -->
             </div><!-- /.row -->
-       </div><!-- /.container-fluid -->
+        </div><!-- /.container-fluid -->
     </div>
     <!-- /.content-header -->
     <!-- Khách hàng -->
     <div class="khachhang">
         <div class="table-footer">
-            <select id="kieuTimKhachHang" name="kieuTimKhachHang">
-                <option value="id">Tìm theo ID</option>
-                <option value="email">Tìm theo Email</option>
-                <option value="ten">Tìm theo Họ tên</option>
+            <select id="searchType" name="searchType">
+                <option value="findByID">Tìm theo ID</option>
+                <option value="findByEmail">Tìm theo Email</option>
+                <option value="findByName">Tìm theo Họ tên</option>
             </select>
-            <input id="tukhoa" type="text" placeholder="Tìm kiếm..." onkeyup="timKiemNguoiDung(this)">
-            <button onclick="timKiemNguoiDung()"><i class="fa fa-search"></i> Tìm</button>
+            <input id="searchKey" type="text" placeholder="Tìm kiếm..." onkeyup="loadPage()">
+            <button onclick="loadPage()"><i class="fa fa-search"></i> Tìm</button>
         </div>
     </div> <!-- // khach hang -->
     <div class="wrap-table" id="resultUser">
-        <table id="userTable">
-            <thead>
+        <table id="userTable" class="table table-hover text-center">
+            <thead class="table-dark">
                 <tr>
                     <th>User ID</th>
                     <th>Email</th>
-                    <th>Mật khẩu</th>
                     <th>Họ và Tên</th>
                     <th>Giới tính</th>
                     <th>Ngày sinh</th>
@@ -56,64 +56,57 @@
             <tbody>
                 @foreach (var user in Model)
                 {
-                    <form action="" method="post">
+                    <!-- <form asp-controller="AdminChangeUserInfo" asp-action="ChangeUserInfo" method="get"> -->
                     <tr>
                         <td>@user.UserId</td>
                         <input type="hidden" name="UserId" value="@user.UserId">
                         <td class="editable">
-                            <input type="text" name="UserEmail" value="@user.UserEmail">
+                            @user.UserEmail
                         </td>
                         <td class="editable">
-                            <input type="text" name="UserPassword" value="@user.UserPassword">
-                        </td>
-                        <td class="editable">
-                            <input type="text" name="UserFullname" value="@user.UserFullname">
+                            @user.UserFullname
                         </td>
                         <td>
-                            <select name="UserSex">
-                                @if(user.UserSex == true)
-                                {
-                                    <option value="Male" selected>Nam</option>
-                                    <option value="Female">Nữ</option>
-                                }
-                                else
-                                {
-                                    <option value="Male">Nam</option>
-                                    <option value="Female" selected>Nữ</option>
-                                }
-                            </select>
+                            @if (user.UserSex == true)
+                            {
+                                <p>Nữ</p>
+                            }
+                            else
+                            {
+                                <p>Nam</p>
+                            }
                         </td>
                         <td class="editable">
-                            <input type="text" name="UserBirthday" value="@user.UserBirthday">
+                            @user.UserBirthday
                         </td>
                         <td>
-                             <select name="user_isActive" >
-                                @if(user.UserIsActive == true)
-                                {
-                                    <option value="1" selected>Hoạt động</option>
-                                    <option value="0">Khóa</option>
-                                }
-                                else
-                                {
-                                    <option value="1">Hoạt động</option>
-                                    <option value="0" selected>Khóa</option>
-                                }
-                            </select>
-                        </td>
-                        <td class="editable">
-                            <input type="text" name="UserRole" value="@user.UserRole">
-                        </td>
-                        <td class="editable">
-                            <input type="text" name="CreatedAt" value="@user.CreatedAt">
-                        </td>
-                        <td class="editable">
-                            <input type="text" name="UpdatedAt" value="@user.UpdatedAt">
+                            @if (user.UserIsActive == true)
+                            {
+                                <p>Đang hoạt động</p>
+                            }
+                            else
+                            {
+                                <p>Đang bị khóa</p>
+                            }
                         </td>
                         <td>
-                            <button class="sign-in-btn" type="submit" value="login">Cập nhật</button>
+                            @if (user.UserRole == "customer")
+                            {
+                                <p>Khách hàng</p>
+                            }
+                            else
+                            {
+                                <p>Admin</p>
+                            }
+                        </td>
+                        <td>@user.CreatedAt</td>
+                        <td>@user.UpdatedAt</td>
+                        <td>
+                            <a class="btn btn-outline-primary" asp-controller="AdminUserInfo" asp-action="Index" asp-route-userId="@user.UserId">Cập nhật thông tin</a>
+                            <!-- <button class="sign-in-btn" type="submit">Cập nhật</button> -->
                         </td>
                     </tr>
-                </form>
+                    <!-- </form> -->
                 }
             </tbody>
         </table>
@@ -159,59 +152,58 @@
         </div>
     </div>
 </div>
-        <!-- ./wrapper -->
-        <!-- jQuery -->
-        <script src="plugins/jquery/jquery.min.js"></script>
-        <!-- jQuery UI 1.11.4 -->
-        <script src="plugins/jquery-ui/jquery-ui.min.js"></script>
-        <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-        <script>
-            $.widget.bridge('uibutton', $.ui.button)
-        </script>
-        <!-- Bootstrap 4 -->
-        <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <!-- ChartJS -->
-        <script src="plugins/chart.js/Chart.min.js"></script>
-        <!-- Sparkline -->
-        <script src="plugins/sparklines/sparkline.js"></script>
-        <!-- JQVMap -->
-        <script src="plugins/jqvmap/jquery.vmap.min.js"></script>
-        <script src="plugins/jqvmap/maps/jquery.vmap.usa.js"></script>
-        <!-- jQuery Knob Chart -->
-        <script src="plugins/jquery-knob/jquery.knob.min.js"></script>
-        <!-- daterangepicker -->
-        <script src="plugins/moment/moment.min.js"></script>
-        <script src="plugins/daterangepicker/daterangepicker.js"></script>
-        <!-- Tempusdominus Bootstrap 4 -->
-        <script src="plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
-        <!-- Summernote -->
-        <script src="plugins/summernote/summernote-bs4.min.js"></script>
-        <!-- overlayScrollbars -->
-        <script src="plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
-        <!-- AdminLTE App -->
-        <script src="dist/js/adminlte.js"></script>
-        <!-- AdminLTE for demo purposes -->
-        <script src="dist/js/demo.js"></script>
-        <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-        <script src="dist/js/pages/dashboard.js"></script>
-        <script src="js/admin.js"></script>
-        <script>
-            function timKiemNguoiDung() {
-                var tuKhoa = document.getElementById("tukhoa").value;
-                var kieuTimKhachHang = document.getElementById("kieuTimKhachHang").value;
+<!-- ./wrapper -->
+<!-- jQuery -->
+<script src="plugins/jquery/jquery.min.js"></script>
+<!-- jQuery UI 1.11.4 -->
+<script src="plugins/jquery-ui/jquery-ui.min.js"></script>
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+<script>
+    $.widget.bridge('uibutton', $.ui.button)
+</script>
+<!-- Bootstrap 4 -->
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- ChartJS -->
+<script src="plugins/chart.js/Chart.min.js"></script>
+<!-- Sparkline -->
+<script src="plugins/sparklines/sparkline.js"></script>
+<!-- JQVMap -->
+<script src="plugins/jqvmap/jquery.vmap.min.js"></script>
+<script src="plugins/jqvmap/maps/jquery.vmap.usa.js"></script>
+<!-- jQuery Knob Chart -->
+<script src="plugins/jquery-knob/jquery.knob.min.js"></script>
+<!-- daterangepicker -->
+<script src="plugins/moment/moment.min.js"></script>
+<script src="plugins/daterangepicker/daterangepicker.js"></script>
+<!-- Tempusdominus Bootstrap 4 -->
+<script src="plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+<!-- Summernote -->
+<script src="plugins/summernote/summernote-bs4.min.js"></script>
+<!-- overlayScrollbars -->
+<script src="plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.js"></script>
+<!-- AdminLTE for demo purposes -->
+<script src="dist/js/demo.js"></script>
+<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+<script src="dist/js/pages/dashboard.js"></script>
+<script src="js/admin.js"></script>
+<script>
+    function loadPage(page) {
+        var searchKey = document.getElementById("searchKey").value;
+        var searchType = document.getElementById("searchType").value;
 
-                // Gửi dữ liệu tìm kiếm lên máy chủ bằng Ajax
-                $.ajax({
-                    type: "POST",
-                    url: "./function/timkiemnguoidung.php", // Thay đổi đường dẫn đến tập tin PHP xử lý tìm kiếm
-                    data: {
-                        tuKhoa: tuKhoa,
-                        kieuTimKhachHang: kieuTimKhachHang
-                    },
-                    success: function (response) {
-                        // Hiển thị kết quả tìm kiếm trả về từ máy chủ
-                        $("#resultUser").html(response);
-                    }
-                });
+        $.ajax({
+            type: "GET",
+            url: "/AdminChangeUserInfo/SearchUser",
+            data: {
+                searchKey: searchKey,
+                searchType: searchType,
+                page: page
+            },
+            success: function (response) {
+                $("#resultUser").html(response); // Cập nhật bảng và phân trang
             }
-        </script>
+        });
+    }
+</script>

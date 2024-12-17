@@ -28,7 +28,7 @@
     @if (remainingProductsCount > 0)
     {
         <div class="resultMore">
-            <a href="@Url.Action("Search", "Product", new { q = keyword })">
+            <a href="@Url.Action("Index", "Search", new { q = keyword })">
                 Xem thêm <strong>@remainingProductsCount</strong> sản phẩm
             </a>
         </div>

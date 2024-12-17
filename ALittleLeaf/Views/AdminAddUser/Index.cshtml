@@ -1,6 +1,12 @@
-﻿@section AddUserSection{
+﻿@model ALittleLeaf.ViewModels.RegisterViewModel
+
+@section AddUserSection{
     <link rel="stylesheet" href="~/admin/add_user.css">
-    <script src="~/js/checkAddUser.js" defer></script>
+    <script src="~/js/validLoginAndRegistry.js" defer></script>
+}
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thêm người dùng";
 }
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -9,11 +15,11 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Thêm thông tin người dùng</h1>
+                    <h1 class="m-0">Thêm người dùng</h1>
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="admin.html">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Trang chủ</a></li>
                         <li class="breadcrumb-item active">...</li>
                     </ol>
                 </div><!-- /.col -->
@@ -24,18 +30,17 @@
     <!-- Main content -->
     <div class="form-wrap">
         <div class="form">
-            <form action="./function/addUserFunc.php" method="post" onsubmit="return checkRegistry()">
-                <!--Nếu có lỗi hiển thị-->
+            <form asp-controller="AdminAddUser" asp-action="AddUser" method="post" onsubmit="return checkRegistry()">
                 <div class="errors-wrap">
-                    <span class="show-error" id="isExist-error" style="display: block;">Email đã tồn tại.</span>
+                    <span class="show-error" id="isExist-error" style="display:none;">Email đã tồn tại.</span>
                 </div>
                 <div class="input-wrap">
                     <div class="label-wrap">
                         <label for="fullname">Họ và tên*</label>
                     </div>
-                    <input type="text" name="fullname" id="fullname" placeholder="Họ và tên">
+                    <input asp-for="UserFullname" name="UserFullname" type="text" id="fullname" placeholder="Họ và tên">
                     <div class="errors-wrap">
-                        <span class="show-error" id="fullname-error">*Vui lòng nhập Họ tên của bạn</span
+                        <span class="show-error" id="fullname-error" style="display:none;">*Vui lòng nhập Họ tên của bạn</span>
                     </div>
                 </div>
                 <div class="gender-wrap">
@@ -43,54 +48,69 @@
                         <label for="gender">Giới tính*</label>
                     </div>
                     <div class="radio-wrap">
-                        <input type="radio" id="radio1" name="gender" value="Nữ" checked>
+                        <input asp-for="UserSex" type="radio" id="radio1" name="UserSex" value="true" checked>
                         <label for="radio1">Nữ</label>
-                        <input type="radio" id="radio2" name="gender" value="Nam">
+                        <input asp-for="UserSex" type="radio" id="radio2" name="UserSex" value="false">
                         <label for="radio2">Nam</label>
                     </div>
                     <div class="errors-wrap">
-                        <span class="show-error" id="gender-error">*Vui lòng chọn Giới tính của bạn</span>
+                        <span class="show-error" id="gender-error" style="display:none;">*Vui lòng chọn Giới tính của bạn</span>
                     </div>
                 </div>
                 <div class="input-wrap">
                     <div class="label-wrap">
                         <label for="birthday">Ngày sinh*</label>
                     </div>
-                    <input type="text" name="birthday" id="birthday" placeholder="dd/mm/yyyy">
+                    <input asp-for="UserBirthday" name="UserBirthday" id="birthday" placeholder="mm/đd/yyyy">
                     <div class="errors-wrap">
-                        <span class="show-error" id="birthday-error"></span>
+                        <span class="show-error" id="birthday-error" style="display:none;"></span>
                     </div>
                 </div>
                 <div class="input-wrap">
                     <div class="label-wrap">
                         <label for="email">Email*</label>
                     </div>
-                    <input type="text" name="email" id="email" placeholder="Email">
+                    <input asp-for="UserEmail" name="UserEmail" type="text" id="email" placeholder="Email">
                     <div class="errors-wrap">
-                        <span class="show-error" id="email-error"></span>
+                        <span asp-validation-for="UserEmail" class="text-danger"></span>
+                        <span class="show-error" id="email-error" style="display:none;"></span>
                     </div>
                 </div>
                 <div class="input-wrap">
                     <div class="label-wrap">
                         <label for="password">Mật khẩu*</label>
                     </div>
-                    <input type="password" name="password" id="password" placeholder="Mật khẩu">
+                    <input asp-for="UserPassword" name="UserPassword" type="password" id="password" placeholder="Mật khẩu">
                     <div class="errors-wrap">
-                        <span class="show-error" id="password-error">*Vui lòng nhập Mật khẩu của bạn</span>
+                        <span class="show-error" id="password-error" style="display:none;"></span>
+                    </div>
+                </div>
+                <div class="gender-wrap">
+                    <div class="label-wrap">
+                        <label for="gender">Loại tài khoản*</label>
+                    </div>
+                    <div class="radio-wrap">
+                        <input asp-for="UserRole" type="radio" id="radio1" name="UserRole" value="customer" checked>
+                        <label for="radio1">Customer</label>
+                        <input asp-for="UserRole" type="radio" id="radio2" name="UserRole" value="admin">
+                        <label for="radio2">Admin</label>
+                    </div>
+                    <div class="errors-wrap">
+                        <span class="show-error" id="gender-error" style="display:none;">*Vui lòng chọn Giới tính của bạn</span>
                     </div>
                 </div>
                 <div class="input-wrap">
                     <div class="label-wrap">
                         <label for="address">Địa chỉ*</label>
                     </div>
-                    <input type="text" name="address" id="address" placeholder="Địa chỉ">
+                    <input asp-for="Address" name="Address" type="text" id="address" placeholder="Địa chỉ">
                     <div class="errors-wrap">
-                        <span class="show-error" id="address-error">*Vui lòng nhập Địa chỉ của bạn</span>
+                        <span class="show-error" id="address-error" style="display:none;">*Vui lòng nhập Địa chỉ của bạn</span>
                     </div>
                 </div>
                 <div class="others-wrap">
                     <div class="button-wrap">
-                        <button class="sign-in-btn" type="submit" value="login">Tạo tài khoản</button>
+                        <button class="sign-in-btn" type="submit">TẠO TÀI KHOẢN</button>
                     </div>
                 </div>
             </form>

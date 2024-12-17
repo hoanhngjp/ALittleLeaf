@@ -14,6 +14,10 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index()
         {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("AdminId")))
+            {
+                return RedirectToAction("Index", "AdminLogin");
+            }
             int totalUsers = _context.Users.Count();
             int totalProducts = _context.Products.Count();
             int totalBills = _context.Bills.Count();

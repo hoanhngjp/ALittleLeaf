@@ -1,0 +1,76 @@
+﻿@model ALittleLeaf.ViewModels.ProductSearchViewModel
+
+<div class="wrap-table" id="resultUser">
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-warning">@ViewBag.Message</div>
+    }
+    else
+    {
+        <table id="userTable" class="table table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Product ID</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Giá sản phẩm</th>
+                    <th>Số lượng trong kho</th>
+                    <th>Trạng thái bán</th>
+                    <th>Hình ảnh sản phẩm</th>
+                    <th>Ngày tạo sản phẩm</th>
+                    <th>Ngày cập nhật thông tin</th>
+                    <th>Sửa thông tin</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model.Products)
+                {
+                    <tr>
+                        <td>@product.ProductId</td>
+                        <input type="hidden" name="product_id" value="@product.ProductId">
+                        <td>@product.ProductName</td>
+                        <td>@product.ProductPrice.ToString("N0")₫</td>
+                        <td>@product.QuantityInStock</td>
+                        <td>
+                            @if (product.IsOnSale)
+                            {
+                                <p>Đang mở bán</p>
+                            }
+                            else
+                            {
+                                <p>Đã ẩn sản phẩm</p>
+                            }
+                        </td>
+                        <td class="image-container">
+                            <img src="~/img/prdImg/@product.PrimaryImage" alt="@product.ProductName">
+                        </td>
+                        <td class="editable">
+                            @product.CreatedDate
+                        </td>
+                        <td class="editable">
+                            @product.UpdatedDate
+                        </td>
+                        <td>
+                            <a class="btn btn-outline-primary" asp-controller="AdminProductInfo" asp-action="Index" asp-route-productId="@product.ProductId">Sửa thông tin sản phẩm</a>
+                        </td>
+                    </tr>
+                }
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table>
+        <div class="pagination">
+            @if (Model.Pagination.CurrentPage > 1)
+            {
+                <a href="#" onclick="loadPage(@(Model.Pagination.CurrentPage - 1))" class="prev">&laquo; Trang trước</a>
+            }
+            @for (int i = Model.Pagination.StartPage; i <= Model.Pagination.EndPage; i++)
+            {
+                <a href="#" onclick="loadPage(@i)" class="@(i == Model.Pagination.CurrentPage ? "active" : "")">@i</a>
+            }
+
+            @if (Model.Pagination.CurrentPage < Model.Pagination.TotalPages)
+            {
+                <a href="#" onclick="loadPage(@(Model.Pagination.CurrentPage + 1))" class="next">Trang tiếp theo &raquo;</a>
+            }
+        </div>
+    }
+</div>

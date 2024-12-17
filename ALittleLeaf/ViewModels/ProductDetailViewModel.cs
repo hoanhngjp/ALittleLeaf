@@ -12,5 +12,7 @@
         public string[] ProductImages { get; set; }
         public string? PrimaryImage { get; set; }
         public string CategoryName { get; set; } = null!;
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
     }
 }

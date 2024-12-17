@@ -1,12 +1,33 @@
 // Biến để lưu trữ trường nhập liệu hiện đang chứa lỗi
 var currentErrorField = null; 
+function convertDateFormat(isoDate) {
+    // Tách chuỗi yyyy-MM-dd
+    var parts = isoDate.split("-");
+    return parts[1] + "/" + parts[2] + "/" + parts[0]; // Trả về định dạng mm/dd/yyyy
+}
 
-//function validateBirthday(birthday) {
-    //var birthdayPattern = /^\d{2}\/\d{2}\/\d{4}$/;
+function validateBirthday(birthday) {
+    // Kiểm tra định dạng mm/dd/yyyy
+    var birthdayPattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
 
-    //return birthdayPattern.test(birthday);
-//}
+    if (!birthdayPattern.test(birthday)) {
+        return birthdayPattern.test(birthday);
+    }
 
+    // Tách ngày, tháng, năm từ chuỗi
+    var parts = birthday.split("/");
+    var month = parseInt(parts[0], 10);
+    var day = parseInt(parts[1], 10);
+    var year = parseInt(parts[2], 10);
+
+    // Kiểm tra tính hợp lệ của ngày
+    var date = new Date(year, month - 1, day); // Tháng trong JavaScript bắt đầu từ 0
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+    );
+}
 function validateEmail(email) {
     var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -70,13 +91,15 @@ function validRegistry(fullname, birthday, email, password, address) {
         return false;
     }
 
+    birthday = convertDateFormat(birthday);
+
     //Kiểm tra định dạng ngày sinh của người dùng
-    //if (!validateBirthday(birthday)) {
-        //document.getElementById('birthday-error').innerHTML = "*Vui lòng nhập đúng định dạng Ngày sinh dd/mm/yyyy";
-        //document.getElementById('birthday-error').style.display = "block";
-        //currentErrorField = document.getElementById('birthday');
-        //return false;
-    //}
+    if (!validateBirthday(birthday)) {
+        document.getElementById('birthday-error').innerHTML = "*Vui lòng nhập đúng định dạng Ngày sinh mm/dd/yyyy";
+        document.getElementById('birthday-error').style.display = "block";
+        currentErrorField = document.getElementById('birthday');
+        return false;
+    }
     
     if (email == "") {
         document.getElementById('email-error').innerHTML = "*Vui lòng nhập Email của bạn";

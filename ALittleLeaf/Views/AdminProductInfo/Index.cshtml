@@ -1,4 +1,10 @@
-﻿<!-- Content Wrapper. Contains page content -->
+﻿@model ALittleLeaf.ViewModels.EditProductViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thông tin sản phẩm";
+    var categories = ViewData["categories"] as List<ALittleLeaf.ViewModels.CollectionsMenuViewModel>;
+}
+<!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <div class="content-header">
@@ -9,7 +15,7 @@
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="admin.html">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Trang chủ</a></li>
                         <li class="breadcrumb-item active">Sửa thông tin sản phẩm</li>
                     </ol>
                 </div><!-- /.col -->
@@ -27,78 +33,96 @@
                         </div>
                         <!-- /.card-header -->
                         <div class="card-body">
-                            <form action="./function/changeProductInfoFunc.php" method="post" enctype="multipart/form-data" onsubmit="convertNewlines()">
+                            <form asp-action="EditProduct" asp-controller="AdminProductInfo" method="post" enctype="multipart/form-data" onsubmit="convertNewlines()">
                                 <div class="form-group">
                                     <label for="product_name">Tên sản phẩm</label>
-                                    <input type="text" class="form-control" id="product_name" name="product_name" value="<?php echo $row_product['product_name']; ?>" required>
+                                    <input type="text" class="form-control" id="product_name" name="ProductName" value="@Model.ProductName" required>
                                 </div>
-                                <input type="hidden" name="product_id" value="<?php echo $row_product['product_id']; ?>">
+                                <input type="hidden" name="ProductId" value="@Model.ProductId">
                                 <div class="form-group">
                                     <label for="id_category">Danh mục</label>
-                                    <select class="form-control" id="id_category" name="id_category">
-                                        <!--Danh mục sản phẩm thì có selected-->
-                                        <option selected value="' . $row['category_id'] . '">' . $row['category_name'] . '</option>
-                                        <option value="' . $row['category_id'] . '">' . $row['category_name'] . '</option>
-                                        <option value="">Không có danh mục</option>
+                                    <select class="form-control" id="id_category" name="IdCategory">
+                                        @foreach(var category in categories)
+                                        {
+                                            if(category.CategoryId == Model.IdCategory)
+                                            {
+                                                <option selected value="@category.CategoryId">@category.CategoryName</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@category.CategoryId">@category.CategoryName</option>
+                                            }
+                                        }
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="product_price">Giá tiền</label>
-                                    <input type="text" class="form-control" id="product_price" name="product_price" value="<?php echo $row_product['product_price']; ?>" required>
+                                    <input type="text" class="form-control" id="product_price" name="ProductPrice" value="@Model.ProductPrice" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="product_description">Mô tả sản phẩm</label>
-                                    <textarea class="form-control" id="product_description" name="product_description" rows="3">
-                                                $row_product['product_description']
-                                            </textarea>
+                                    <textarea class="form-control" id="product_description" name="ProductDescription" rows="10">
+                                                @Model.ProductDescription
+                                    </textarea>
                                 </div>
                                 <div class="form-group">
                                     <label for="quantity_in_stock">Số lượng trong kho</label>
-                                    <input type="number" class="form-control" id="quantity_in_stock" name="quantity_in_stock" min="0" value="<?php echo $row_product['quantity_in_stock']; ?>" required>
+                                    <input type="number" class="form-control" id="quantity_in_stock" name="QuantityInStock" min="0" value="@Model.QuantityInStock" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="is_onSale">Danh mục</label>
-                                    <select class="form-control" id="is_onSale" name="is_onSale">
-                                        <option selected value="1">Đang bán</option>';
-                                        <option value="0">Ẩn</option>';
+                                    <select class="form-control" id="is_onSale" name="IsOnSale">
+                                        @if(Model.IsOnSale == true)
+                                        {
+                                            <option selected value="true">Đang mở bán</option>
+                                            <option value="false">Ẩn</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="true">Mở bán</option>
+                                            <option selected value="false">Đang ẩn sản phẩm</option>
+                                        }
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="product_images">Hình ảnh sản phẩm</label>
                                     <div id="image_inputs">
                                         <div class="image-input">
-                                            <!--Mỗi hình ảnh 1 thẻ div class image-input->
-                                                                <div class="image-input">
-                                                                    <img src="' . $img_path . '" class="img-thumbnail mr-2 mb-2">
-                                                                    <button type="button" class="btn btn-danger btn-sm delete-image" data-img-id="' . $row_image['img_id'] . '">Xóa ảnh</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <button type="button" id="add_image_input" class="btn btn-primary mt-2">Thêm ảnh</button>
-                                                    </div>
-
-                                                    <button type="submit" class="btn btn-primary">Sửa thông tin sản phẩm</button>
-                                                </form>
-                                            </div>
-                                            <!-- /.card-body -->
+                                            @foreach(var image in Model.ExistingProductImages)
+                                            {
+                                                <div class="image-input">
+                                                    <img src="~/img/prdImg/@image.ImgName" class="img-thumbnail mr-2 mb-2">
+                                                    <button type="button" class="btn btn-danger btn-sm delete-image" data-img-id="@image.ImgId">Xóa ảnh</button>
+                                                    <label>
+                                                        @if (image.IsPrimary)
+                                                        {
+                                                            <input type="radio" name="IsPrimaryImg" value="@image.ImgId" checked>
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="radio" name="IsPrimaryImg" value="@image.ImgId">
+                                                        }
+                                                        Đặt làm ảnh chính
+                                                    </label>
+                                                </div>
+                                            }
                                         </div>
-                                        <!-- /.card -->
                                     </div>
+                                    <button type="button" id="add_image_input" class="btn btn-primary mt-2">Thêm ảnh</button>
                                 </div>
-                                <!-- /.row -->
-                        </div><!-- /.container-fluid -->
+                                <button type="submit" class="btn btn-primary">Sửa thông tin sản phẩm</button>
+                                <a class="btn btn-danger btn-sm" asp-controller="AdminChangeProductInfo" asp-action="DeleteProduct" asp-route-productId="@Model.ProductId">Xóa sản phẩm</a>
+                            </form>
+                        </div>
+                        <!-- /.card-body -->
                     </div>
-                    <!-- /.content -->
+                <!-- /.card -->
                 </div>
-                <!-- /.content-wrapper -->
-                <!-- Control Sidebar -->
-                <aside class="control-sidebar control-sidebar-dark">
-                    <!-- Control sidebar content goes here -->
-                </aside>
-                <!-- /.control-sidebar -->
             </div>
-        </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
     </div>
+<!-- /.content -->
 </div>
     <!-- ./wrapper -->
     <!-- jQuery -->
@@ -156,7 +180,7 @@
                     // Thêm input hidden để ghi nhận ID của hình ảnh cần xóa
                     var deleteInput = document.createElement('input');
                     deleteInput.type = 'hidden';
-                    deleteInput.name = 'delete_images[]';
+                    deleteInput.name = 'delete_images';
                     deleteInput.value = imageId;
                     document.getElementById('image_inputs').appendChild(deleteInput);
                 }
@@ -170,7 +194,7 @@
                 var imageInput = document.createElement('input');
                 imageInput.type = 'file';
                 imageInput.classList.add('form-control-file');
-                imageInput.name = 'product_images[]';
+                imageInput.name = 'product_images';
                 imageInput.accept = 'image/*';
                 imageInput.required = true;
 

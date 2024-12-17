@@ -35,31 +35,43 @@ namespace ALittleLeaf.Controllers
         {
             if (ModelState.IsValid)
             {
+                var hashPass = new HashPasswordController();
+
                 var user = _context.Users
-                    .FirstOrDefault(u => u.UserEmail == model.UserEmail && u.UserPassword == model.UserPassword);
+                    .FirstOrDefault(u => u.UserEmail == model.UserEmail);
 
                 if (user != null)
                 {
-                    if (user.UserIsActive)
-                    {
-                        HttpContext.Session.SetString("UserEmail", user.UserEmail);
-                        HttpContext.Session.SetString("UserFullname", user.UserFullname);
-                        HttpContext.Session.SetString("UserId", user.UserId.ToString());
+                    // Kiểm tra mật khẩu đã nhập với mật khẩu đã hash trong DB
+                    bool isPasswordCorrect = hashPass.VerifyPassword(user.UserPassword, model.UserPassword);
 
-                        // Kiểm tra nếu ReturnUrl hợp lệ
-                        if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                    if (isPasswordCorrect)
+                    {
+                        if (user.UserIsActive)
                         {
-                            return Redirect(ReturnUrl); // Chuyển hướng đến ReturnUrl
+                            HttpContext.Session.SetString("UserEmail", user.UserEmail);
+                            HttpContext.Session.SetString("UserFullname", user.UserFullname);
+                            HttpContext.Session.SetString("UserId", user.UserId.ToString());
+
+                            // Kiểm tra nếu ReturnUrl hợp lệ
+                            if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                            {
+                                return Redirect(ReturnUrl); // Chuyển hướng đến ReturnUrl
+                            }
+                            else
+                            {
+                                return RedirectToAction("Index", "Account"); // Nếu không có ReturnUrl, chuyển về trang chủ
+                            }
                         }
                         else
                         {
-                            return RedirectToAction("Index", "Account"); // Nếu không có ReturnUrl, chuyển về trang chủ
+                            ViewBag.ErrorMessage = "Tài khoản của bạn đã bị khóa.";
                         }
-                    }
+                    }  
                     else
                     {
-                        ViewBag.ErrorMessage = "Tài khoản của bạn đã bị khóa.";
-                    }
+                        ViewBag.ErrorMessage = "Thông tin đăng nhập không hợp lệ.";
+                    }    
                 }
                 else
                 {
@@ -79,15 +91,11 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            // Xóa toàn bộ session
+            // Clear toàn bộ Session
             HttpContext.Session.Clear();
 
-            // Xóa cookies (nếu cần)
-            Response.Cookies.Delete(".AspNetCore.Session");
-
-            Console.WriteLine(HttpContext.Session.GetString("UserId"));
-            Console.WriteLine(HttpContext.Session.GetString("UserEmail"));
-            Console.WriteLine(HttpContext.Session.GetString("UserFullname"));
+            // Đăng xuất khỏi Cookie Authentication
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return RedirectToAction("Index", "Account");
         }

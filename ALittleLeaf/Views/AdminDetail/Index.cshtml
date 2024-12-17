@@ -1,10 +1,12 @@
-﻿@model List<ALittleLeaf.ViewModels.OrderDetailViewModel>
+﻿@model ALittleLeaf.ViewModels.AdminBillDetailViewModel
 
 @section ChangeUserInfoSection{
     <link rel="stylesheet" href="~/admin/changeUserInfo.css">
 }
 @{
     Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Chi tiết đơn hàng";
+
 }
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -13,7 +15,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Chi tiết đơn hàng - @ViewBag.BillId</h1>
+                    <h1 class="m-0">Chi tiết đơn hàng</h1>
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -26,6 +28,92 @@
     </div>
     <!-- /.content-header -->
     <!-- Đơn Hàng -->
+    <div class="card-body">
+        <form asp-controller="AdminDetail" asp-action="UpdateBillStatus" method="post">
+            <div class="form-group">
+                <label for="user_fullname">Tên khách hàng</label>
+                <input type="text" class="form-control" id="user_fullname" name="UserFullname" value="@Model.Bill.CustomerName" disabled>
+            </div>
+            <input type="hidden" name="BillId" value="@Model.Bill.BillId">
+
+            <div class="form-group">
+                <label for="">Ngày tạo đơn</label>
+                <input type="text" class="form-control" id="user_email" name="DateCreated" value="@Model.Bill.DateCreated" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="user_sex">Số điện thoại khách hàng</label>
+                <input type="text" class="form-control" id="user_email" name="CustomerPhone" value="@Model.Bill.CustomerPhone" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="user_birthday">Địa chỉ giao hàng</label>
+                <input type="text" class="form-control" id="user_email" name="ShippingAddress" value="@Model.Bill.ShippingAddress" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="user_isActive">Phương thức thanh toán</label>
+                <input type="text" class="form-control" id="user_email" name="ShippingAddress" value="@Model.Bill.PaymentMethod" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="user_role">Trạng thái thanh toán</label>
+                <select class="form-control" id="" name="PaymentStatus">
+                    @if (Model.Bill.PaymentStatus == "pending")
+                    {
+                        <option value="pending" selected>Chưa thanh toán</option>
+                        <option value="paid">Đã thanh toán</option>
+                    }
+                    else
+                    {
+                        <option value="pending">Chưa thanh toán</option>
+                        <option value="paid" selected>Đã thanh toán</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="user_role">Tình trạng đơn hàng</label>
+                <select class="form-control" id="" name="IsConfirmed">
+                    @if(Model.Bill.IsConfirmed == true)
+                    {
+                        <option value="true" selected>Đã xác nhận</option>
+                        <option value="false">Chưa xác nhận</option>
+                    }
+                    else
+                    {
+                        <option value="true">Đã xác nhận</option>
+                        <option value="false" selected>Chưa xác nhận</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="user_role">Trạng thái giao hàng</label>
+                <select class="form-control" id="" name="ShippingStatus">
+                    @if (Model.Bill.ShippingStatus == "fulfilled")
+                    {
+                        <option value="fulfilled" selected>Đã giao hàng</option>
+                        <option value="not_fulfilled">Chưa giao hàng</option>
+                    }
+                    else
+                    {
+                        <option value="fulfilled">Đã giao hàng</option>
+                        <option value="not_fulfilled" selected>Chưa giao hàng</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="user_role">Ghi chú đơn hàng</label>
+                <br />
+                <textarea class="form-control" rows="5" disabled>
+                    @Model.Bill.Note
+                </textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Cập nhật trạng thái đơn hàng</button>
+        </form>
+    </div>
     <div class="donhang">
         <table id="userTable" class="table-header">
             <thead>
@@ -41,9 +129,9 @@
             <tbody>
                 @{
                     int count = 1;
-                    int billTotal = Model.Sum(i=> i.Quantity * i.UnitPrice);
+                    int billTotal = Model.OrderDetails.Sum(i=> i.Quantity * i.UnitPrice);
                 }
-                @foreach(var product in Model)
+                @foreach(var product in Model.OrderDetails)
                 {
                     <!--Mỗi Product trong Bill 1 tr-->
                     <tr>

@@ -41,11 +41,15 @@ namespace ALittleLeaf.Controllers
                     return View("Index");
                 }
 
+                var hashPass = new HashPasswordController();
+
+                string hashedPass = hashPass.HashPassword(model.UserPassword);
+
                 // Tạo một người dùng mới
                 var user = new User
                 {
                     UserEmail = model.UserEmail,
-                    UserPassword = model.UserPassword, 
+                    UserPassword = hashedPass, 
                     UserFullname = model.UserFullname,
                     UserSex = model.UserSex,
                     UserBirthday = model.UserBirthday,
@@ -92,12 +96,6 @@ namespace ALittleLeaf.Controllers
                 }
             }
             return View("Index"); // Nếu không hợp lệ, trả về view với lỗi
-        }
-
-        // Trang thành công sau khi đăng ký
-        public IActionResult Success()
-        {
-            return View();
         }
     }
 }

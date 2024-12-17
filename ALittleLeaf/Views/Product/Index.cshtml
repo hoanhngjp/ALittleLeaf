@@ -77,9 +77,18 @@
                                     <input type="text" id="quantity" class="quantity-selector" name="quantity" value="1" min="1" data-product-id="@Model.ProductId">
                                     <input id="plusBtn" class="qty-btn" type="button" value="+">
                                 </div>
-                                <div class="wrap-addcart">
-                                    <button type="submit" id="add-to-cart" class="addToCartProduct">Thêm vào giỏ</button>
-                                </div>
+                                @if(Model.QuantityInStock > 0)
+                                {
+                                    <div class="wrap-addcart">
+                                        <button type="submit" id="add-to-cart" class="addToCartProduct">Thêm vào giỏ</button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="wrap-addcart">
+                                        <button type="submit" id="add-to-cart" class="addToCartProduct" style="background-color: red" disabled>HẾT HÀNG</button>
+                                    </div>
+                                }
                             </div>
                         </form>
                         <div class="product-description">
