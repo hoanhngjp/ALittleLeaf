@@ -25,6 +25,11 @@ namespace ALittleLeaf.Controllers
             var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
             ViewData["Cart"] = cart;
 
+            if (cart == null || !cart.Any())
+            {
+                return RedirectToAction("Index", "Collections");
+            }
+
             // Lấy danh sách địa chỉ của người dùng hiện tại (giả sử IdUser được lưu trong Session)
             var userIdString = HttpContext.Session.GetString("UserId");
 

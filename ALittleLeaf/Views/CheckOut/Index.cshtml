@@ -1,5 +1,11 @@
 ﻿@{
     Layout = null;
+    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+    var totalProducts = 0;
+    foreach (var item in cart)
+    {
+        totalProducts += item.Quantity;
+    }
 }
 <!DOCTYPE html>
 <html lang="en">

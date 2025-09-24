@@ -61,10 +61,19 @@
                                 </a>
                             </td>
                             <td>
-                                <!--Nếu Login rồi thì chuyển sang Order, chưa Login chuyển sang Login-->
-                                <a href="~/orderinfo">
-                                    <button>THANH TOÁN</button>
-                                </a>
+                                @if (cart.Count == 0){
+                                    <!--Nếu Login rồi thì chuyển sang Order, chưa Login chuyển sang Login-->
+                                    <a href="~/orderinfo">
+                                        <button>THANH TOÁN</button>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <!--Nếu Login rồi thì chuyển sang Order, chưa Login chuyển sang Login-->
+                                    <a href="~/orderinfo">
+                                        <button>THANH TOÁN</button>
+                                    </a>
+                                }
                             </td>
                         </tr>
                     </tbody>

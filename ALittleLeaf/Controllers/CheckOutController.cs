@@ -31,6 +31,11 @@ namespace ALittleLeaf.Controllers
             var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
             ViewData["Cart"] = cart;
 
+            if (!cart.Any())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             return View();
         }
 
