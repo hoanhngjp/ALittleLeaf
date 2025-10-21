@@ -156,6 +156,7 @@ html, body{
 
 .item-picture {
     order: -1; /* Đưa item-picture lên trên */
+    position: relative
 }
 
 .item-picture img{
@@ -220,4 +221,17 @@ html, body{
 
 a.current{
     font-weight: bold;
+}
+
+.item-wrap > .item-picture > .sold-out > span {
+    right: 10px;
+    bottom: 10px;
+    position: absolute;
+    font-size: 12px;
+    line-height: 1;
+    padding: 5px 10px;
+    font-weight: bold;
+    z-index: 9;
+    color: #001812;
+    background: #fff;
 }

@@ -29,6 +29,12 @@
                 {
                     <div class="item-wrap">
                         <div class="item-picture">
+                            @if(product.ProductQuantity == 0)
+                            {
+                                <div class="sold-out">
+                                    <span>Hết hàng</span>
+                                </div>
+                            }
                             <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId" asp-route-idCategory="@product.IdCategory">
                                 <img src="~/img/prdImg/@product.ProductImg" alt="@product.ProductName">
                             </a>

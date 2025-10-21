@@ -62,6 +62,7 @@ namespace ALittleLeaf.Controllers
                     IdCategory = p.IdCategory,
                     ProductName = p.ProductName,
                     ProductPrice = p.ProductPrice,
+                    ProductQuantity = p.QuantityInStock,
                     ProductImg = p.ProductImages.FirstOrDefault(img => img.IsPrimary).ImgName,
                 }).ToList();
 
