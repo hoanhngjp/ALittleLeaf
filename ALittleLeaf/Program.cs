@@ -25,8 +25,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Thời gian tồn tại của cookie
     });
 
+var connectionString = builder.Configuration["DB_CONNECTION_STRING"];
+
 builder.Services.AddDbContext<AlittleLeafDecorContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // Thêm dịch vụ MVC
 builder.Services.AddControllersWithViews();
