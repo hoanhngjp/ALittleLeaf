@@ -1,0 +1,98 @@
+﻿@model ALittleLeaf.ViewModels.UserSearchViewModel
+
+<div class="wrap-table" id="resultUser">
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-warning">@ViewBag.Message</div>
+    }
+    else
+    {
+        <table id="userTable" class="table table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Họ và Tên</th>
+                    <th>Giới tính</th>
+                    <th>Ngày sinh</th>
+                    <th>Trạng thái tài khoản</th>
+                    <th>Loại tài khoản</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày cập nhật</th>
+                    <th>Cập nhật thông tin</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <!-- <form asp-controller="AdminChangeUserInfo" asp-action="ChangeUserInfo" method="get"> -->
+                    <tr>
+                        <td>@user.UserId</td>
+                        <input type="hidden" name="UserId" value="@user.UserId">
+                        <td class="editable">
+                            @user.UserEmail
+                        </td>
+                        <td class="editable">
+                            @user.UserFullname
+                        </td>
+                        <td>
+                            @if(user.UserSex == true)
+                            {
+                                <p>Nữ</p>
+                            }
+                            else
+                            {
+                                <p>Nam</p>
+                            }
+                        </td>
+                        <td class="editable">
+                            @user.UserBirthday
+                        </td>
+                        <td>
+                                @if (user.UserIsActive == true)
+                                {
+                                <p>Đang hoạt động</p>
+                                }
+                                else
+                                {
+                                    <p>Đang bị khóa</p>
+                                }
+                        </td>
+                        <td>
+                                @if (user.UserRole == "customer")
+                                {
+                                    <p>Khách hàng</p>
+                                }
+                                else
+                                {
+                                    <p>Admin</p>
+                                }
+                        </td>
+                        <td>@user.CreatedAt</td>
+                        <td>@user.UpdatedAt</td>
+                        <td>
+                            <a asp-area="Admin" asp-controller="Users" asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-outline-primary">Cập nhật thông tin</a>
+                            <!-- <button class="sign-in-btn" type="submit">Cập nhật</button> -->
+                        </td>
+                    </tr>
+                    <!-- </form> -->
+                }
+            </tbody>
+        </table>
+        <div class="pagination">
+            @if (Model.Pagination.CurrentPage > 1)
+            {
+                <a href="#" onclick="loadPage(@(Model.Pagination.CurrentPage - 1))" class="prev">&laquo; Trang trước</a>
+            }
+            @for (int i = Model.Pagination.StartPage; i <= Model.Pagination.EndPage; i++)
+            {
+                <a href="#" onclick="loadPage(@i)" class="@(i == Model.Pagination.CurrentPage ? "active" : "")">@i</a>
+            }
+
+            @if (Model.Pagination.CurrentPage < Model.Pagination.TotalPages)
+            {
+                <a href="#" onclick="loadPage(@(Model.Pagination.CurrentPage + 1))" class="next">Trang tiếp theo &raquo;</a>
+            }
+        </div>
+    }
+</div>

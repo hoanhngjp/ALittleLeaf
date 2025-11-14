@@ -25,4 +25,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Areas\Admin\Models\" />
+    <Folder Include="Areas\Admin\ViewComponents\" />
+    <Folder Include="Areas\Admin\Views\Shared\Components\" />
+  </ItemGroup>
+
 </Project>

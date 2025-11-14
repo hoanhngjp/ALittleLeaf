@@ -1,0 +1,261 @@
+﻿@model ALittleLeaf.ViewModels.OrderStatisticsViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thống kê Đơn hàng";
+    int stt = 1;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/changeUserInfo.css">
+    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
+}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Thống kê đơn hàng</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Thống kê đơn hàng</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="Statistics" asp-controller="Orders" asp-area="Admin" method="get" class="form-inline">
+                        <div class="form-group mb-2">
+                            <label for="fromDate" class="mr-2">Từ ngày:</label>
+                            <input asp-for="FromDate" type="date" class="form-control" id="fromDate">
+                        </div>
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="toDate" class="mr-2">Đến ngày:</label>
+                            <input asp-for="ToDate" type="date" class="form-control" id="toDate">
+                        </div>
+                        <button type="submit" class="btn btn-primary mb-2">Xem báo cáo</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box shadow-sm text-white bg-primary">
+                        <div class="inner">
+                            <h3>@Model.TotalOrders</h3>
+                            <p>Tổng đơn hàng</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box shadow-sm text-white bg-success">
+                        <div class="inner">
+                            <h3>@Model.TotalRevenue.ToString("N0")₫</h3>
+                            <p>Tổng doanh thu</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box shadow-sm text-white bg-warning">
+                        <div class="inner">
+                            <h3>@Model.ConfirmedOrders</h3>
+                            <p>Đơn hàng đã xác nhận</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box shadow-sm text-white bg-danger">
+                        <div class="inner">
+                            <h3>@Model.PendingShippingOrders</h3>
+                            <p>Đơn hàng chờ giao</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                Doanh thu (các đơn đã xác nhận) từ @Model.FromDate.ToString("dd/MM/yyyy") đến @Model.ToDate.ToString("dd/MM/yyyy")
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenue-line-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning">
+                            <h3 class="card-title">
+                                <i class="fas fa-truck mr-1"></i>
+                                Trạng thái Giao hàng
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="shipping-status-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-danger">
+                            <h3 class="card-title">
+                                <i class="fas fa-money-bill-wave mr-1"></i>
+                                Trạng thái Thanh toán
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="payment-status-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div><div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Danh Sách 10 Đơn Hàng Gần Đây Nhất</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã Đơn Hàng</th>
+                                <th>Khách Hàng</th>
+                                <th>Ngày Tạo</th>
+                                <th>Tổng Tiền</th>
+                                <th>Trạng Thái Đơn Hàng</th>
+                                <th>Trạng Thái Giao Hàng</th>
+                                <th>Chi Tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bill in Model.RecentOrders)
+                            {
+                                <tr>
+                                    <td>@stt</td>
+                                    <td>@bill.BillId</td>
+                                    <td>@bill.CustomerName</td>
+                                    <td>@bill.DateCreated</td>
+                                    <td>@bill.TotalAmount.ToString("N0")₫</td>
+                                    <td>
+                                        @if (bill.IsConfirmed)
+                                        {
+                                            <span class="badge bg-success">Đã Xác Nhận</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge bg-danger">Chưa Xác Nhận</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (bill.ShippingStatus == "fulfilled")
+                                        {
+                                            <span class="badge bg-success">Đã Giao Hàng</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge bg-danger">Chưa giao hàng</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@bill.BillId" style="color: black;" class="btn btn-light btn-sm">
+                                            <i class="fa fa-eye"></i>
+                                            Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                                stt++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <script src="~/plugins/moment/moment.min.js"></script>
+    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
+
+    <script>
+        $(function () {
+            'useS trict'
+            var ticksStyle = { fontColor: '#495057', fontStyle: 'bold' };
+
+            // --- 1. BIỂU ĐỒ DOANH THU (LINE CHART) ---
+            var chartLabels = @Html.Raw(Json.Serialize(Model.RevenueChartLabels));
+            var chartData = @Html.Raw(Json.Serialize(Model.RevenueChartData));
+            var $revenueChart = $('#revenue-line-chart');
+            var revenueChart = new Chart($revenueChart, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [ {
+                        label: 'Doanh thu',
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: '#007bff',
+                        data: chartData,
+                        fill: true,
+                    } ]
+                },
+                options: {
+                    maintainAspectRatio: false, responsive: true, legend: { display: false },
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true, callback: function (value) { return value.toLocaleString('vi-VN') + ' ₫' } } }],
+                        xAxes: [{ ticks: { autoSkip: true, maxTicksLimit: 15 } }]
+                    }
+                }
+            });
+
+            // --- 2. BIỂU ĐỒ TRẠNG THÁI GIAO HÀNG (DOUGHNUT) ---
+            var shippingLabels = @Html.Raw(Json.Serialize(Model.ShippingStatusLabels));
+            var shippingData = @Html.Raw(Json.Serialize(Model.ShippingStatusData));
+            var shippingColors = @Html.Raw(Json.Serialize(Model.ShippingStatusColors));
+            new Chart($('#shipping-status-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: shippingLabels,
+                    datasets: [{
+                        data: shippingData,
+                        backgroundColor: shippingColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, responsive: true, legend: { display: true, position: 'bottom' } }
+            });
+
+            // --- 3. BIỂU ĐỒ TRẠNG THÁI THANH TOÁN (DOUGHNUT) ---
+            var paymentLabels = @Html.Raw(Json.Serialize(Model.PaymentStatusLabels));
+            var paymentData = @Html.Raw(Json.Serialize(Model.PaymentStatusData));
+            var paymentColors = @Html.Raw(Json.Serialize(Model.PaymentStatusColors));
+            new Chart($('#payment-status-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: paymentLabels,
+                    datasets: [{
+                        data: paymentData,
+                        backgroundColor: paymentColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, responsive: true, legend: { display: true, position: 'bottom' } }
+            });
+
+        });
+    </script>
+}

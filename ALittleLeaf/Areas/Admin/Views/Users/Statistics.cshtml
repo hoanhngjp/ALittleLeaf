@@ -1,0 +1,191 @@
+﻿@model ALittleLeaf.Areas.Admin.ViewModels.UserStatisticsViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thống kê Người dùng";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
+}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Thống kê người dùng</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Thống kê người dùng</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="Statistics" asp-controller="Users" asp-area="Admin" method="get" class="form-inline">
+                        <div class="form-group mb-2">
+                            <label for="fromDate" class="mr-2">Từ ngày:</label>
+                            <input asp-for="FromDate" type="date" class="form-control" id="fromDate">
+                        </div>
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="toDate" class="mr-2">Đến ngày:</label>
+                            <input asp-for="ToDate" type="date" class="form-control" id="toDate">
+                        </div>
+                        <button type="submit" class="btn btn-primary mb-2">Xem báo cáo</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 col-6">
+                    <div class="small-box shadow-sm text-white bg-primary">
+                        <div class="inner">
+                            <h3>@Model.TotalUsers</h3>
+                            <p>Tổng số người dùng</p>
+                        </div>
+                        <div class="icon"><i class="ion ion-person-stalker"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-6">
+                    <div class="small-box shadow-sm text-white bg-success">
+                        <div class="inner">
+                            <h3>@Model.ActiveUsers</h3>
+                            <p>Tài khoản Hoạt động</p>
+                        </div>
+                        <div class="icon"><i class="ion ion-checkmark-circled"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-12">
+                    <div class="small-box shadow-sm text-white bg-danger">
+                        <div class="inner">
+                            <h3>@Model.InactiveUsers</h3>
+                            <p>Tài khoản Bị khóa</p>
+                        </div>
+                        <div class="icon"><i class="ion ion-minus-circled"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                Lượng người dùng đăng ký mới (Từ @Model.FromDate.ToString("dd/MM/yyyy") đến @Model.ToDate.ToString("dd/MM/yyyy"))
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="registration-line-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info">
+                            <h3 class="card-title">
+                                <i class="fas fa-venus-mars mr-1"></i>
+                                Phân bố Giới tính
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="gender-pie-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success">
+                            <h3 class="card-title">
+                                <i class="fas fa-user-check mr-1"></i>
+                                Trạng thái Tài khoản
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="status-pie-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <script src="~/plugins/moment/moment.min.js"></script>
+    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
+
+    <script>
+        $(function () {
+            'use strict'
+
+            // --- 1. BIỂU ĐỒ ĐƯỜNG (ĐĂNG KÝ MỚI) ---
+            var regLabels = @Html.Raw(Json.Serialize(Model.RegistrationChartLabels));
+            var regData = @Html.Raw(Json.Serialize(Model.RegistrationChartData));
+            var $regChart = $('#registration-line-chart');
+            new Chart($regChart, {
+                type: 'line',
+                data: {
+                    labels: regLabels,
+                    datasets: [{
+                        label: 'Người dùng mới',
+                        backgroundColor: 'rgba(23, 162, 184, 0.5)', // Màu Info
+                        borderColor: '#17a2b8',
+                        data: regData,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false, responsive: true, legend: { display: false },
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true, callback: function(val) { return Number.isInteger(val) ? val : null; } } }], // Chỉ hiện số nguyên
+                        xAxes: [{ ticks: { autoSkip: true, maxTicksLimit: 15 } }]
+                    }
+                }
+            });
+
+            // --- 2. BIỂU ĐỒ TRÒN (GIỚI TÍNH) ---
+            var genderLabels = @Html.Raw(Json.Serialize(Model.GenderLabels));
+            var genderData = @Html.Raw(Json.Serialize(Model.GenderData));
+            var genderColors = @Html.Raw(Json.Serialize(Model.GenderColors));
+            new Chart($('#gender-pie-chart'), {
+                type: 'pie', // Dùng 'pie' hoặc 'doughnut'
+                data: {
+                    labels: genderLabels,
+                    datasets: [{
+                        data: genderData,
+                        backgroundColor: genderColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, responsive: true, legend: { display: true, position: 'bottom' } }
+            });
+
+            // --- 3. BIỂU ĐỒ TRÒN (TRẠNG THÁI) ---
+            var statusLabels = @Html.Raw(Json.Serialize(Model.StatusLabels));
+            var statusData = @Html.Raw(Json.Serialize(Model.StatusData));
+            var statusColors = @Html.Raw(Json.Serialize(Model.StatusColors));
+            new Chart($('#status-pie-chart'), {
+                type: 'doughnut', // Dùng 'pie' hoặc 'doughnut'
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: statusColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, responsive: true, legend: { display: true, position: 'bottom' } }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,229 @@
+﻿@model ALittleLeaf.ViewModels.AdminViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Trang chủ";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
+}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Bảng chính</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Bảng chính</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <!-- small box -->
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <!--Tổng đơn hàng-->
+                            <h3>@Model.TotalBills</h3>
+                            <p>Đơn hàng</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-bookmark"></i>
+                        </div>
+                        <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="small-box-footer">Chi tiết <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                <!-- ./col -->
+                <div class="col-lg-3 col-6">
+                    <!-- small box -->
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <!--Tổng ng dùng-->
+                            <h3>@Model.TotalUsers</h3>
+                            <p>Người dùng</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-person-add"></i>
+                        </div>
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="small-box-footer">
+                            Chi tiết 
+                            <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <!-- small box -->
+                    <div class="small-box bg-gray">
+                        <div class="inner">
+                            <!--Tổng số lượng sản phẩm-->
+                            <h3>@Model.TotalProducts</h3>
+                            <p>Sản phẩm</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-android-car"></i>
+                        </div>
+                        <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="small-box-footer">Cập nhật <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <section class="col-lg-12 connectedSortable">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-pie mr-1"></i>
+                                Doanh thu 7 ngày qua
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content p-0">
+                                <canvas id="revenue-chart" style="position: relative; height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="row">
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-pie mr-1"></i>
+                                Trạng thái đơn hàng
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="order-status-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-credit-card mr-1"></i>
+                                Phương thức thanh toán
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="payment-method-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+</div>
+@section Scripts {
+    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+
+    <script src="~/plugins/moment/moment.min.js"></script>
+    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
+    <script src="~/plugins/summernote/summernote-bs4.min.js"></script>
+
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <script src="~/plugins/moment/moment.min.js"></script>
+    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
+    <script src="~/plugins/summernote/summernote-bs4.min.js"></script>
+
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+
+    <script>
+        $(function () {
+            'use strict'
+            var ticksStyle = { fontColor: '#495057', fontStyle: 'bold' }
+
+            // --- 1. BIỂU ĐỒ DOANH THU (BAR CHART) ---
+            var revenueChartLabels = @Html.Raw(Json.Serialize(Model.RevenueChartLabels));
+            var revenueChartData = @Html.Raw(Json.Serialize(Model.RevenueChartData));
+            var $revenueChart = $('#revenue-chart')
+            var revenueChart = new Chart($revenueChart, {
+                type: 'bar',
+                data: {
+                    labels: revenueChartLabels,
+                    datasets: [{
+                        label: 'Doanh thu',
+                        backgroundColor: '#007bff',
+                        borderColor: '#007bff',
+                        data: revenueChartData
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    tooltips: { mode: 'index', intersect: false },
+                    hover: { mode: 'index', intersect: false },
+                    legend: { display: false },
+                    scales: {
+                        yAxes: [{
+                            gridLines: { display: true, },
+                            ticks: $.extend({
+                                beginAtZero: true,
+                                callback: function (value) { return value.toLocaleString('vi-VN') + ' ₫' }
+                            }, ticksStyle)
+                        }],
+                        xAxes: [{ display: true, gridLines: { display: false }, ticks: ticksStyle }]
+                    }
+                }
+            });
+
+            // --- 2. BIỂU ĐỒ TRẠNG THÁI ĐƠN (DOUGHNUT) ---
+            var orderStatusLabels = @Html.Raw(Json.Serialize(Model.OrderStatusLabels));
+            var orderStatusData = @Html.Raw(Json.Serialize(Model.OrderStatusData));
+            var orderStatusColors = @Html.Raw(Json.Serialize(Model.OrderStatusColors));
+            var $orderStatusChart = $('#order-status-chart');
+            var orderStatusChart = new Chart($orderStatusChart, {
+                type: 'doughnut',
+                data: {
+                    labels: orderStatusLabels,
+                    datasets: [{
+                        data: orderStatusData,
+                        backgroundColor: orderStatusColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, legend: { display: true, position: 'bottom' } }
+            });
+
+            // --- 3. BIỂU ĐỒ PTTT (DOUGHNUT) ---
+            var paymentLabels = @Html.Raw(Json.Serialize(Model.PaymentMethodLabels));
+            var paymentData = @Html.Raw(Json.Serialize(Model.PaymentMethodData));
+            var paymentColors = @Html.Raw(Json.Serialize(Model.PaymentMethodColors));
+            var $paymentMethodChart = $('#payment-method-chart');
+            var paymentMethodChart = new Chart($paymentMethodChart, {
+                type: 'doughnut',
+                data: {
+                    labels: paymentLabels,
+                    datasets: [{
+                        data: paymentData,
+                        backgroundColor: paymentColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, legend: { display: true, position: 'bottom' } }
+            });
+        })
+    </script>
+}

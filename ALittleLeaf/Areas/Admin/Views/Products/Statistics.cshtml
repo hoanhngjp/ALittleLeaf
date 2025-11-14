@@ -1,0 +1,208 @@
+﻿@model ALittleLeaf.ViewModels.ProductStatisticsViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thống kê Sản phẩm";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/changeUserInfo.css">
+}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Thống kê sản phẩm</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Thống kê sản phẩm</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <div class="small-box shadow-sm text-center bg-primary text-white">
+                        <div class="inner">
+                            <h3>@Model.TotalProducts.ToString("N0")</h3>
+                            <p>Tổng số sản phẩm</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="small-box shadow-sm text-center bg-success text-white">
+                        <div class="inner">
+                            <h3>@Model.TotalSoldProducts.ToString("N0")</h3>
+                            <p>Tổng số đã bán</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12">
+                    <div class="small-box shadow-sm text-center bg-warning text-dark">
+                        <div class="inner">
+                            <h3>@Model.TotalStock.ToString("N0")</h3>
+                            <p>Tổng số tồn kho</p>
+                        </div>
+                    </div>
+                </div>
+            </div><div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-bar mr-1"></i>
+                                Top 10 Sản Phẩm Bán Chạy
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="top-selling-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div><div class="row">
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-danger text-white">
+                            <h3 class="card-title">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Top 10 Sản Phẩm Tồn Kho Thấp
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="low-stock-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="col-lg-6 connectedSortable">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-pie mr-1"></i>
+                                Tỷ Lệ Bán Hàng Theo Danh Mục
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="category-sales-chart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div><div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5>Danh sách Top 10 Bán Chạy</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped table-hover text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID Sản Phẩm</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Số Lượng Đã Bán</th>
+                                <th>Tồn Kho</th>
+                                <th>Chi Tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model.TopSellingProducts)
+                            {
+                                <tr>
+                                    <td>@product.ProductId</td>
+                                    <td>@product.ProductName</td>
+                                    <td>@product.QuantitySold</td>
+                                    <td>@product.Stock</td>
+                                    <td>
+                                        <a asp-area="Admin" asp-controller="Products" asp-action="Edit" asp-route-id="@product.ProductId" style="color: black;" class="btn btn-light btn-sm">
+                                            <i class="fa fa-eye"></i>
+                                            Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+
+    <script>
+        $(function () {
+            'use strict'
+
+            // --- 1. BIỂU ĐỒ TOP BÁN CHẠY (BAR CHART) ---
+            var topSellingLabels = @Html.Raw(Json.Serialize(Model.TopSellingProducts.Select(p => p.ProductName)));
+            var topSellingData = @Html.Raw(Json.Serialize(Model.TopSellingProducts.Select(p => p.QuantitySold)));
+
+            new Chart($('#top-selling-chart'), {
+                type: 'bar',
+                data: {
+                    labels: topSellingLabels,
+                    datasets: [{
+                        label: 'Số lượng đã bán',
+                        backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                        borderColor: '#007bff',
+                        data: topSellingData
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false, responsive: true, legend: { display: false },
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true, callback: function(val) { return Number.isInteger(val) ? val : null; } } }],
+                        xAxes: [{ ticks: { callback: function(val) { return (val.length > 20) ? val.substr(0, 20) + '...' : val; } } }]
+                    }
+                }
+            });
+
+            // --- 2. BIỂU ĐỒ TỒN KHO THẤP (HORIZONTAL BAR CHART) ---
+            var lowStockLabels = @Html.Raw(Json.Serialize(Model.LowStockProducts.Select(p => p.ProductName)));
+            var lowStockData = @Html.Raw(Json.Serialize(Model.LowStockProducts.Select(p => p.QuantityInStock)));
+
+            new Chart($('#low-stock-chart'), {
+                type: 'horizontalBar', // Biểu đồ cột ngang
+                data: {
+                    labels: lowStockLabels,
+                    datasets: [{
+                        label: 'Tồn kho',
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)', // Màu đỏ
+                        borderColor: '#dc3545',
+                        data: lowStockData
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false, responsive: true, legend: { display: false },
+                    scales: {
+                        xAxes: [{ ticks: { beginAtZero: true, callback: function(val) { return Number.isInteger(val) ? val : null; } } }],
+                        yAxes: [{ ticks: { callback: function(val) { return (val.length > 20) ? val.substr(0, 20) + '...' : val; } } }]
+                    }
+                }
+            });
+
+            // --- 3. BIỂU ĐỒ DOANH THU DANH MỤC (DOUGHNUT) ---
+            var categoryLabels = @Html.Raw(Json.Serialize(Model.CategorySalesLabels));
+            var categoryData = @Html.Raw(Json.Serialize(Model.CategorySalesData));
+            var categoryColors = @Html.Raw(Json.Serialize(Model.CategorySalesColors));
+
+            new Chart($('#category-sales-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryData,
+                        backgroundColor: categoryColors
+                    }]
+                },
+                options: { maintainAspectRatio: false, responsive: true, legend: { display: true, position: 'bottom' } }
+            });
+        });
+    </script>
+}

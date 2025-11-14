@@ -39,11 +39,15 @@ app.UseStaticFiles();
 
 app.UseSession();
 
-// Thêm Authentication và Authorization Middleware
-app.UseAuthentication(); // Phải thêm phần này để kích hoạt cookie authentication
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRouting();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
+);
 
 app.MapControllerRoute(
     name: "default",

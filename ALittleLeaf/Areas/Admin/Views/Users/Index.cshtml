@@ -1,0 +1,175 @@
+﻿@model IEnumerable<ALittleLeaf.Models.User>
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Sửa thông tin người dùng";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/admin/changeUserInfo.css">
+}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Sửa thông tin người dùng</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-controller="AdminChangeUserInfo" asp-action="Index">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">...</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+    <!-- Khách hàng -->
+    <div class="khachhang">
+        <div class="table-footer">
+            <select id="searchType" name="searchType">
+                <option value="findByID">Tìm theo ID</option>
+                <option value="findByEmail">Tìm theo Email</option>
+                <option value="findByName">Tìm theo Họ tên</option>
+            </select>
+            <input id="searchKey" type="text" placeholder="Tìm kiếm..." onkeyup="loadPage()">
+            <button onclick="loadPage()"><i class="fa fa-search"></i> Tìm</button>
+        </div>
+    </div> <!-- // khach hang -->
+    <div class="wrap-table" id="resultUser">
+        <table id="userTable" class="table table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Họ và Tên</th>
+                    <th>Giới tính</th>
+                    <th>Ngày sinh</th>
+                    <th>Trạng thái tài khoản</th>
+                    <th>Loại tài khoản</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày cập nhật</th>
+                    <th>Cập nhật thông tin</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <!-- <form asp-controller="AdminChangeUserInfo" asp-action="ChangeUserInfo" method="get"> -->
+                    <tr>
+                        <td>@user.UserId</td>
+                        <input type="hidden" name="UserId" value="@user.UserId">
+                        <td class="editable">
+                            @user.UserEmail
+                        </td>
+                        <td class="editable">
+                            @user.UserFullname
+                        </td>
+                        <td>
+                            @if (user.UserSex == true)
+                            {
+                                <p>Nữ</p>
+                            }
+                            else
+                            {
+                                <p>Nam</p>
+                            }
+                        </td>
+                        <td class="editable">
+                            @user.UserBirthday
+                        </td>
+                        <td>
+                            @if (user.UserIsActive == true)
+                            {
+                                <p>Đang hoạt động</p>
+                            }
+                            else
+                            {
+                                <p>Đang bị khóa</p>
+                            }
+                        </td>
+                        <td>
+                            @if (user.UserRole == "customer")
+                            {
+                                <p>Khách hàng</p>
+                            }
+                            else
+                            {
+                                <p>Admin</p>
+                            }
+                        </td>
+                        <td>@user.CreatedAt</td>
+                        <td>@user.UpdatedAt</td>
+                        <td>
+                            <a asp-area="Admin" asp-controller="Users" asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-outline-primary">Cập nhật thông tin</a>
+                            <!-- <button class="sign-in-btn" type="submit">Cập nhật</button> -->
+                        </td>
+                    </tr>
+                    <!-- </form> -->
+                }
+            </tbody>
+        </table>
+        <div class="pagination">
+            <!-- Nút "Previous Page" -->
+            @if (ViewBag.Pagination.CurrentPage > 1)
+            {
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@(ViewBag.Pagination.CurrentPage - 1)" class="prev">&laquo; Trang trước</a>
+            }
+            <!-- Hiển thị 4 trang đầu tiên -->
+            @for (int i = 1; i <= Math.Min(4, ViewBag.Pagination.TotalPages); i++)
+            {
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "active" : "")">@i</a>
+            }
+            <!-- Nếu có nhiều hơn 8 trang, hiển thị dấu ba chấm -->
+            @if (ViewBag.Pagination.TotalPages > 8 && ViewBag.Pagination.CurrentPage > 5)
+            {
+                <span>...</span>
+            }
+            <!-- Hiển thị trang hiện tại và các trang xung quanh nó nếu ở giữa -->
+            @if (ViewBag.Pagination.TotalPages > 8)
+            {
+                @for (int i = Math.Max(5, ViewBag.Pagination.CurrentPage - 1); i <= Math.Min(ViewBag.Pagination.CurrentPage + 1, ViewBag.Pagination.TotalPages - 4); i++)
+                {
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "active" : "")">@i</a>
+                }
+            }
+            <!-- Hiển thị dấu ba chấm trước 4 trang cuối nếu cần -->
+            @if (ViewBag.Pagination.TotalPages > 8 && ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages - 4)
+            {
+                <span>...</span>
+            }
+            <!-- Hiển thị 4 trang cuối -->
+            @for (int i = Math.Max(ViewBag.Pagination.TotalPages - 3, 5); i <= ViewBag.Pagination.TotalPages; i++)
+            {
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "active" : "")">@i</a>
+            }
+            <!-- Nút "Next Page" -->
+            @if (ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages)
+            {
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-page="@(ViewBag.Pagination.CurrentPage + 1)" class="next">Trang tiếp theo &raquo;</a>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        function loadPage(page) {
+            var searchKey = document.getElementById("searchKey").value;
+            var searchType = document.getElementById("searchType").value;
+
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("SearchUser", "Users", new { Area = "Admin" })",
+                data: {
+                    searchKey: searchKey,
+                    searchType: searchType,
+                    page: page
+                },
+                success: function (response) {
+                    $("#resultUser").html(response); // Cập nhật bảng và phân trang
+                }
+            });
+        }
+    </script>
+}
