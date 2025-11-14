@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ALittleLeaf.Controllers
 {
-    public class CollectionsController : Controller
+    public class CollectionsController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -72,10 +72,6 @@ namespace ALittleLeaf.Controllers
             ViewBag.CategoryName = categoryName;
             ViewBag.CategoryId = CategoryId;
             ViewBag.CollectionName = collectionName;
-
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
 
             return View(result);
         }

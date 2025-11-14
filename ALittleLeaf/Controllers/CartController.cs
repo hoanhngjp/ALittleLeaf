@@ -1,4 +1,5 @@
-﻿using ALittleLeaf.Models;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Http;
@@ -8,19 +9,17 @@ using System.Collections;
 
 namespace ALittleLeaf.Controllers
 {
-    public class CartController : Controller
+    [CheckLogin]
+    public class CartController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext db;
         public CartController(AlittleLeafDecorContext context) => db = context;
         
         public IActionResult Index()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
-            {
-                return RedirectToAction("Index", "Login");
-            }
-            // Lấy giỏ hàng từ Session
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+            // Lấy giỏ hàng
+            var cart = ViewData["Cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+
             var totalPrice = cart.Sum(c => c.Quantity * c.ProductPrice);
 
             ViewBag.TotalPrice = totalPrice;

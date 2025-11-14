@@ -1,20 +1,14 @@
-﻿using ALittleLeaf.ViewModels;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ALittleLeaf.Controllers
 {
-    public class AccountController : Controller
+    [CheckLogin]
+    public class AccountController : SiteBaseController
     {
         public IActionResult Index()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
-            {
-                return RedirectToAction("Index", "Login");
-            }
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
-
             return View();
         }
     }

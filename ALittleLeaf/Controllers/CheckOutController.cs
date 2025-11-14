@@ -1,4 +1,5 @@
-﻿using ALittleLeaf.Models;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Http;
@@ -11,8 +12,8 @@ using System.Net.WebSockets;
 
 namespace ALittleLeaf.Controllers
 {
-
-    public class CheckOutController : Controller
+    [CheckLogin]
+    public class CheckOutController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -23,12 +24,9 @@ namespace ALittleLeaf.Controllers
 
         public IActionResult Index()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
-            {
-                return RedirectToAction("Index", "Login");
-            }
-            // Lấy giỏ hàng từ session
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+            // Lấy giỏ hàng
+            var cart = ViewData["Cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+
             ViewData["Cart"] = cart;
 
             if (!cart.Any())

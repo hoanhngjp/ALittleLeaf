@@ -1,11 +1,13 @@
-﻿using ALittleLeaf.Models;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ALittleLeaf.Controllers
 {
-    public class OrderDetailController : Controller
+    [CheckLogin]
+    public class OrderDetailController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -15,10 +17,6 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index(int billId)
         {
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
-
             var billDetails = (from bd in _context.BillDetails
                                join p in _context.Products on bd.IdProduct equals p.ProductId
                                join pi in _context.ProductImages on p.ProductId equals pi.IdProduct

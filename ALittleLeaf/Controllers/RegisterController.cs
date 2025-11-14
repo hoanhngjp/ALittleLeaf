@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ALittleLeaf.Controllers
 {
-    public class RegisterController : Controller
+    public class RegisterController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -16,10 +16,6 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
-
             return View();
         }
         [HttpPost]

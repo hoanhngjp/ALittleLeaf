@@ -27,9 +27,7 @@
     <link rel="stylesheet" href="~/admin/process.css">
 
     @await RenderSectionAsync("Styles", required: false)
-    @RenderSection("AddUserSection", required: false)
-    @RenderSection("ChangeProductInfoSection", required: false)
-    @RenderSection("ChangeUserInfoSection", required: false)
+    @await RenderSectionAsync("HeadScripts", required: false)
     <title>@ViewBag.Title</title>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">

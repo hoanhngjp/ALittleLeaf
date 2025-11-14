@@ -1,8 +1,11 @@
 ﻿using ALittleLeaf.Repository;
+using ALittleLeaf.Services.VNPay;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Thêm dịch vụ cho session
 builder.Services.AddDistributedMemoryCache();

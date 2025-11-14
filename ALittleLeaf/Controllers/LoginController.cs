@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace ALittleLeaf.Controllers
 {
-    public class LoginController : Controller
+    public class LoginController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -22,10 +22,6 @@ namespace ALittleLeaf.Controllers
         public IActionResult Index(string? ReturnUrl)
         {
             ViewBag.ReturnUrl = ReturnUrl;
-
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
 
             return View();
         }
