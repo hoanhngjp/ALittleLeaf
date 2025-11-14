@@ -1,4 +1,5 @@
-﻿using ALittleLeaf.Models;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ALittleLeaf.Controllers
 {
-    public class AddressController : Controller
+    [CheckLogin]
+    public class AddressController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -18,20 +20,12 @@ namespace ALittleLeaf.Controllers
         {
             var userId = HttpContext.Session.GetString("UserId");
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Index", "Login");
-            }
-
             // Lấy danh sách địa chỉ từ cơ sở dữ liệu
             var addresses = _context.AddressLists
                 .Where(a => a.IdUser == long.Parse(userId))
                 .ToList();
 
             ViewData["Addresses"] = addresses;
-
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-            ViewData["Cart"] = cart;
 
             return View();
         }

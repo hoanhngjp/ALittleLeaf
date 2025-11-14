@@ -1,19 +1,20 @@
-$(document).ready(function() {
-    $('#checkout_complete').submit(function(event) {
-        event.preventDefault(); // Ngăn chặn form submit mặc định
-
+$(document).ready(function () {
+    $('#btn-complete-order').on('click', function (event) {
+        event.preventDefault();
         var selectedMethod = $('input[name="checkoutMethod"]:checked').val();
-        $.ajax({
-            url: '/CheckOut/SaveCheckOutMethod',
-            type: 'POST',
-            data: { checkoutMethod: selectedMethod },
-            success: function(response) {
-                $('#checkout_complete').unbind('submit').submit(); // Tiếp tục submit form sau khi lưu vào session
-                window.location.href = "/account";
-            },
-            error: function(xhr, status, error) {
-                console.error(xhr.responseText);
-            }
-        });
+
+        var $form = $('#checkout_complete');
+
+        if (selectedMethod === 'VNPAY') {
+            $form.attr('action', '/Payment/CreatePaymentUrl');
+        }
+        else if (selectedMethod === 'cod' || selectedMethod === 'online') {
+            $form.attr('action', '/CheckOut/SaveCheckOutMethod');
+        }
+        else {
+            alert('Vui lòng chọn phương thức thanh toán.');
+            return;
+        }
+        $form.submit();
     });
 });

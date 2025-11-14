@@ -1,0 +1,83 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán thất bại";
+}
+
+@section Styles {
+    <style>
+        .payment-container {
+            padding-top: 70px;
+            padding-bottom: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 80vh;
+        }
+
+        .payment-box {
+            max-width: 500px;
+            padding: 40px;
+            border: 1px solid #e7e7e7;
+            border-radius: 8px;
+        }
+
+        .payment-icon-fail {
+            font-size: 70px;
+            color: #dc3545; /* Màu đỏ */
+        }
+
+        /* CSS cho các nút bấm (thay thế Bootstrap) */
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            min-width: 200px;
+            margin: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-danger {
+            background-color: #dc3545; /* Màu đỏ */
+            color: #ffffff;
+        }
+
+            .btn-danger:hover {
+                background-color: #c82333;
+            }
+
+        .btn-secondary {
+            background-color: #e7e7e7;
+            border-color: #e7e7e7;
+            color: #333;
+        }
+
+            .btn-secondary:hover {
+                background-color: #d1d1d1;
+            }
+    </style>
+}
+
+<div class="payment-container">
+    <div class="payment-box">
+
+        <i class="fas fa-times-circle payment-icon-fail"></i>
+
+        <h1 style="margin-top: 20px;">Thanh toán thất bại</h1>
+        <p style="font-size: 1.1rem; line-height: 1.6;">
+            Đã có lỗi xảy ra hoặc bạn đã hủy giao dịch.<br>
+            Đơn hàng của bạn chưa được ghi nhận. Vui lòng thử lại.
+        </p>
+
+        <div style="margin-top: 30px;">
+            <a href="/cart" class="btn btn-danger">
+                Quay về giỏ hàng
+            </a>
+            <a href="/" class="btn btn-secondary">
+                Quay về trang chủ
+            </a>
+        </div>
+    </div>
+</div>

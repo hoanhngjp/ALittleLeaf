@@ -3,16 +3,14 @@
 
      var addresses = ViewData["Addresses"] as List<ALittleLeaf.Models.AddressList>;
 }
-@section AddressStyle {
+@section Styles {
     <link rel="stylesheet" href="~/css/address.css"/>
 }
-@section ShowEditAddAddressJs {
+@section HeadScripts {
     <script src="~/js/showEditAddAddress.js" defer></script>
-}
-@section DeleteAddressJs {
     <script src="~/js/delete_address.js" defer></script>
-}
-    
+
+}    
 <!--------------------------------------------LAYOUT-ADDRESS----------------------------------------------------->
 <div class="layout-address">
     <div class="address-header">

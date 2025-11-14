@@ -8,25 +8,13 @@
     <script src="https://kit.fontawesome.com/39b6b90061.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="~/css/header.css">
     <link rel="stylesheet" href="~/css/footer.css">
-    @RenderSection("HomeStyle", required: false)
-    @RenderSection("LoginRegisterStyle", required: false)
-    @RenderSection("CollectionsStyle", required: false)
-    @RenderSection("ProductStyle", required: false)
-    @RenderSection("SearchStyle", required: false)    
-    @RenderSection("AccountStyle", required: false)
-    @RenderSection("AddressStyle", required: false)
-    @RenderSection("OrderDetailStyle", required: false)
-    @RenderSection("CartStyle", required: false)
     <link rel="stylesheet" href="~/css/cart-search.css">
+    @await RenderSectionAsync("Styles", required: false)
     <title>@ViewBag.Title</title>
     <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
     <script src="~/js/showCartSearch.js" defer></script>
     <script src="~/js/showSubMenu.js" defer></script>
-    @RenderSection("ProductJs", required: false)
-    @RenderSection("LoginRegistryJs" , required: false)
-    @RenderSection("CartFunctionJs", required: false)
-    @RenderSection("ShowEditAddAddressJs", required: false)
-    @RenderSection("DeleteAddressJs", required: false)
+    @await RenderSectionAsync("HeadScripts", required: false)
 </head>
 <body>
     <div id="main-body">

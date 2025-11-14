@@ -18,9 +18,9 @@
     <link rel="stylesheet" href="~/css/checkout.css">
     <title>Thanh toán</title>
     <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="~/js/showCheckOutMethods.js" defer></script>
     <script src="~/js/checkout.js" defer></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
     <!--------------------------------------------CHECKOUT-CONTENT----------------------------------------------------->
@@ -73,9 +73,22 @@
                             <div class="section-content">
                                 <div class="content-box">
                                     <div class="radio-wrapper content-box-row">
+                                        <label for="vnpay_method" class="two-page">
+                                            <div class="radio-input payment-method-checkbox">
+                                                <input name="checkoutMethod" type="radio" class="input-radio" value="VNPAY" id="vnpay_method" checked>
+                                            </div>
+                                            <div class="radio-content-input">
+                                                <img src="https://vnpay.vn/s1/statics/Images/logo-VNPAY-QR-1.png" alt="VNPAY" style="width: 32px; height: 32px; margin-right: 15px;">
+                                                <div class="content-wrapper">
+                                                    <span class="radio-label-primary">Thanh toán qua VNPAY</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="radio-wrapper content-box-row">
                                         <label for="" class="two-page">
                                             <div class="radio-input payment-method-checkbox">
-                                                <input name="checkoutMethod" type="radio" class="input-radio" value="online" checked>
+                                                <input name="checkoutMethod" type="radio" class="input-radio" value="online">
                                             </div>
                                             <div class="radio-content-input">
                                                 <img src="~/img/other.svg" alt="" class="main-img">
@@ -120,7 +133,7 @@
                     </div>
                     <div class="step-footer" id="step-footer-checkout">
                         <form id="checkout_complete" action="~/CheckOut/SaveCheckOutMethod" method="post">
-                            <button type="submit" class="step-footer-continue-btn btn">
+                            <button type="button" class="step-footer-continue-btn btn" id="btn-complete-order">
                                 <span class="btn-content">Hoàn tất đơn hàng</span>
                             </button>
                         </form>

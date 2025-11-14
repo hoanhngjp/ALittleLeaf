@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace ALittleLeaf.Controllers
 {
-    public class ProductController : Controller
+    public class ProductController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -17,9 +17,6 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index(int productId, int idCategory)
         {
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
             // Sử dụng productId và idCategory trong phương thức
             var product = _context.Products
                 .Where(p => p.ProductId == productId)

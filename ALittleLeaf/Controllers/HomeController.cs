@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace ALittleLeaf.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : SiteBaseController
     {
         private readonly ILogger<HomeController> _logger;
 
@@ -16,10 +16,6 @@ namespace ALittleLeaf.Controllers
 
         public IActionResult Index()
         {
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
-
-            ViewData["Cart"] = cart;
-
             return View();
         }
     }

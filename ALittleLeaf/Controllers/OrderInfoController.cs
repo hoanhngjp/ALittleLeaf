@@ -1,4 +1,5 @@
-﻿using ALittleLeaf.Models;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,8 @@ using System.Linq;
 
 namespace ALittleLeaf.Controllers
 {
-    public class OrderInfoController : Controller
+    [CheckLogin]
+    public class OrderInfoController : SiteBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -17,12 +19,9 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
-            {
-                return RedirectToAction("Index", "Login");
-            }
-            // Lấy giỏ hàng từ session
-            var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart") ?? new List<CartItemViewModel>();
+            // Lấy giỏ hàng
+            var cart = ViewData["Cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+            
             ViewData["Cart"] = cart;
 
             if (cart == null || !cart.Any())
@@ -30,10 +29,9 @@ namespace ALittleLeaf.Controllers
                 return RedirectToAction("Index", "Collections");
             }
 
-            // Lấy danh sách địa chỉ của người dùng hiện tại (giả sử IdUser được lưu trong Session)
             var userIdString = HttpContext.Session.GetString("UserId");
 
-            long userId = long.Parse(userIdString); // Chuyển đổi chuỗi thành kiểu long
+            long userId = long.Parse(userIdString);
 
             var addresses = _context.AddressLists
                 .Where(a => a.IdUser == userId)

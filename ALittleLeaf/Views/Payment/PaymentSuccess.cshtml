@@ -1,0 +1,86 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán thành công";
+}
+
+@section Styles {
+    <style>
+        .payment-container {
+            /* 1. Đẩy nội dung xuống dưới Header (70px) */
+            padding-top: 70px;
+            padding-bottom: 50px; /* Khoảng cách với Footer */
+            /* 2. Căn giữa nội dung */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            /* 3. Đảm bảo nó chiếm đủ chiều cao */
+            min-height: 80vh;
+        }
+
+        .payment-box {
+            max-width: 500px; /* Giới hạn chiều rộng của box */
+            padding: 40px;
+            border: 1px solid #e7e7e7; /* Giống màu border footer của bạn */
+            border-radius: 8px;
+        }
+
+        .payment-icon-success {
+            font-size: 70px;
+            color: #28a745; /* Màu xanh lá */
+        }
+
+        /* CSS cho các nút bấm (thay thế Bootstrap) */
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            min-width: 200px;
+            margin: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #2a5f4b; /* Lấy màu từ footer.css của bạn */
+            color: #ffffff;
+        }
+
+            .btn-primary:hover {
+                background-color: #518372; /* Lấy màu hover từ header.css */
+            }
+
+        .btn-secondary {
+            background-color: #e7e7e7;
+            border-color: #e7e7e7;
+            color: #333;
+        }
+
+            .btn-secondary:hover {
+                background-color: #d1d1d1;
+            }
+    </style>
+}
+
+<div class="payment-container">
+    <div class="payment-box">
+
+        <i class="fas fa-check-circle payment-icon-success"></i>
+
+        <h1 style="margin-top: 20px;">Thanh toán thành công!</h1>
+        <p style="font-size: 1.1rem; line-height: 1.6;">
+            Cảm ơn bạn đã tin tưởng và mua hàng.<br>
+            Đơn hàng <strong>#@ViewBag.BillId</strong> của bạn đã được ghi nhận.
+        </p>
+
+        <div style="margin-top: 30px;">
+            <a href="/" class="btn btn-primary">
+                Quay về trang chủ
+            </a>
+            <a href="/account" class="btn btn-secondary">
+                Xem lịch sử đơn hàng
+            </a>
+        </div>
+    </div>
+</div>
