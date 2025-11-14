@@ -8,7 +8,8 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=ALittleLeafDecor;User Id=sa;Password=P@ssw0rd123;TrustServerCertificate=True
+    env_file:
+          - ./.env
     volumes:
       - ./wwwroot/img:/app/wwwroot/img
     networks:
