@@ -3,6 +3,7 @@ using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ALittleLeaf.Areas.Admin.Controllers
@@ -11,10 +12,12 @@ namespace ALittleLeaf.Areas.Admin.Controllers
     public class AccountController : Controller
     {
         private readonly AlittleLeafDecorContext _context;
+        private readonly IPasswordHasher<string> _passwordHasher;
 
         public AccountController(AlittleLeafDecorContext context)
         {
             _context = context;
+            _passwordHasher = new PasswordHasher<string>();
         }
 
         // GET: /Admin/Account/Login
@@ -22,7 +25,6 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         public IActionResult Login(string? ReturnUrl)
         {
             ViewBag.ReturnUrl = ReturnUrl;
-            
             return View();
         }
 
@@ -33,14 +35,14 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         {
             if (ModelState.IsValid)
             {
-                var hashPass = new HashPasswordController();
-
+                // Tìm user có role admin
                 var user = _context.Users
                     .FirstOrDefault(u => u.UserEmail == model.UserEmail && u.UserRole == "admin");
 
                 if (user != null)
                 {
-                    bool isPasswordCorrect = hashPass.VerifyPassword(user.UserPassword, model.UserPassword);
+                    var result = _passwordHasher.VerifyHashedPassword(null, user.UserPassword, model.UserPassword);
+                    bool isPasswordCorrect = result == PasswordVerificationResult.Success;
 
                     if (isPasswordCorrect)
                     {
@@ -78,7 +80,7 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         }
 
         // GET: /Admin/Account/Logout
-        [HttpGet] 
+        [HttpGet]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();

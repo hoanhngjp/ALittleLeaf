@@ -55,7 +55,7 @@
                             </div>
                             <div class="product-image-detail">
                                 <div class="product-image-wrap">
-                                    <img class="product-img-feature" src="img/prdImg/@Model.PrimaryImage" alt="@Model.ProductName">
+                                    <img class="product-img-feature" src="~/img/prdImg/@Model.PrimaryImage" alt="@Model.ProductName">
                                 </div>
                             </div>
                             <script src="~/js/changeProductPicture.js" defer></script>
@@ -69,7 +69,7 @@
                         <div class="product-price">
                             <span class="pro-price">@Model.ProductPrice.ToString("N0")₫</span>
                         </div>
-                        <form class="form-add-item" asp-action="AddToCart" asp-controller="Cart" method="post">
+                        <form class="form-add-item" asp-controller="Cart" asp-action="AddToCart" method="post">
                             <input type="hidden" name="ProductId" value="@Model.ProductId">
                             <div class="selector-actions">
                                 <div class="quantity-area">

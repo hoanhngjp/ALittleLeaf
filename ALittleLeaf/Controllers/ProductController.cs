@@ -1,5 +1,6 @@
 ﻿using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
+using ALittleLeaf.Services.Product;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,61 +10,20 @@ namespace ALittleLeaf.Controllers
 {
     public class ProductController : SiteBaseController
     {
-        private readonly AlittleLeafDecorContext _context;
+        private readonly IProductService _productService;
 
-        public ProductController(AlittleLeafDecorContext context)
+        public ProductController(IProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
-        public IActionResult Index(int productId, int idCategory)
+
+        public async Task<IActionResult> Index(int productId)
         {
-            // Sử dụng productId và idCategory trong phương thức
-            var product = _context.Products
-                .Where(p => p.ProductId == productId)
-                .SingleOrDefault();
+            var viewModel = await _productService.GetProductDetailAsync(productId);
 
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            // Lấy tất cả hình ảnh liên quan đến sản phẩm
-            var productImages = _context.ProductImages
-                .Where(img => img.IdProduct == productId)
-                .ToList();
-
-            // Tìm hình ảnh chính (IsPrimary = true)
-            var primaryImage = productImages.FirstOrDefault(img => img.IsPrimary)?.ImgName;
-
-            // Lấy thông tin Category
-            var category = _context.Categories
-                     .Where(c => c.CategoryId == idCategory)
-                     .Select(c => c.CategoryName)
-                     .FirstOrDefault();
-
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            // Tạo ViewModel và điền dữ liệu
-            var viewModel = new ProductDetailViewModel
-            {
-                ProductId = product.ProductId,
-                IdCategory = product.IdCategory,
-                ProductName = product.ProductName,
-                ProductPrice = product.ProductPrice,
-                ProductDescription = product.ProductDescription,
-                QuantityInStock = product.QuantityInStock,
-                IsOnSale = product.IsOnSale,
-                ProductImages = productImages.Select(img => img.ImgName).ToArray(),
-                PrimaryImage = primaryImage,
-                CategoryName = category
-            };
+            if (viewModel == null) return NotFound();
 
             return View(viewModel);
         }
-
-
     }
 }

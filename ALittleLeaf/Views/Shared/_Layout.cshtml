@@ -26,5 +26,10 @@
         @Html.Partial("_Footer");
     </div>
     @Html.Partial("_SideNav");
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="~/js/site-ajax.js" defer></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

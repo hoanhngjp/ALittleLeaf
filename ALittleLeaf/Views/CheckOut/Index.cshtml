@@ -1,11 +1,5 @@
 ﻿@{
     Layout = null;
-    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
-    var totalProducts = 0;
-    foreach (var item in cart)
-    {
-        totalProducts += item.Quantity;
-    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -18,9 +12,8 @@
     <link rel="stylesheet" href="~/css/checkout.css">
     <title>Thanh toán</title>
     <link rel="icon" type="image/x-icon" href="~/img/footerLogo.webp">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="~/js/showCheckOutMethods.js" defer></script>
-    <script src="~/js/checkout.js" defer></script>
+    <script src="~/js/orderinfo.js" defer></script>
 </head>
 <body>
     <!--------------------------------------------CHECKOUT-CONTENT----------------------------------------------------->
@@ -32,120 +25,94 @@
                 </a>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item">
-                        <a href="~/cart">Giỏ hàng</a>
+                        <a asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
                     </li>
                     <li class="breadcrumb-item">
-                        <a href="~/orderinfo">Thông tin giao hàng</a>
+                        Thông tin giao hàng
                     </li>
                     <li class="breadcrumb-item">
-                        Phương thức thanh toán
+                        <a asp-controller="Checkout" asp-action="Payment">Phương thức thanh toán</a>
                     </li>
                 </ul>
             </div>
             <div class="main-content">
                 <div class="step">
-                    <div class="step-actions" step="2">
+                    <div class="step-actions" step="1">
                         <div id="section-shipping-rate" class="section">
                             <div class="section-header">
-                                <h2 class="section-title">Phương thức vận chuyển</h2>
+                                <h2 class="section-title">Thông tin giao hàng</h2>
                             </div>
-                            <div class="section-content">
-                                <div class="content-box">
-                                    <div class="content-box-row">
-                                        <div class="radio-wrapper">
-                                            <label for="">
-                                                <div class="radio-input">
-                                                    <input class="input-radio" type="radio" checked>
-                                                </div>
-                                                <span class="radio-label-primary">
-                                                    Để phí vận chuyển được chính xác nhất, tụi mình sẽ liên hệ báo phí vận chuyển sau khi xác nhận đơn hàng ạ
-                                                </span>
-                                            </label>
-                                        </div>
+                            <div class="section-content section-content section-customer-information no-mb">
+                                <div class="logged-in-customer-information">
+                                    <div class="logged-in-customer-information-avatar-wrapper">
+                                        <div class="logged-in-customer-information-avatar gravatar" style="background-image: url(//www.gravatar.com/avatar/0b5f1cba1f77d746ad0f059ff7061a5e.jpg?s=100&d=blank);filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//www.gravatar.com/avatar/0b5f1cba1f77d746ad0f059ff7061a5e.jpg?s=100&d=blank', sizingMethod='scale')"></div>
                                     </div>
+                                    <p class="logged-in-customer-information-paragraph">
+                                        @ViewContext.HttpContext.Session.GetString("UserFullname") (@ViewContext.HttpContext.Session.GetString("UserEmail"))
+                                        <br>
+                                        <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
+                                    </p>
                                 </div>
-                            </div>
-                        </div>
-                        <div id="section-payment-method" class="section">
-                            <div class="section-header">
-                                <h2 class="section-title">Phương thức thanh toán</h2>
-                            </div>
-                            <div class="section-content">
-                                <div class="content-box">
-                                    <div class="radio-wrapper content-box-row">
-                                        <label for="vnpay_method" class="two-page">
-                                            <div class="radio-input payment-method-checkbox">
-                                                <input name="checkoutMethod" type="radio" class="input-radio" value="VNPAY" id="vnpay_method" checked>
-                                            </div>
-                                            <div class="radio-content-input">
-                                                <img src="https://vnpay.vn/s1/statics/Images/logo-VNPAY-QR-1.png" alt="VNPAY" style="width: 32px; height: 32px; margin-right: 15px;">
-                                                <div class="content-wrapper">
-                                                    <span class="radio-label-primary">Thanh toán qua VNPAY</span>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="radio-wrapper content-box-row">
-                                        <label for="" class="two-page">
-                                            <div class="radio-input payment-method-checkbox">
-                                                <input name="checkoutMethod" type="radio" class="input-radio" value="online">
-                                            </div>
-                                            <div class="radio-content-input">
-                                                <img src="~/img/other.svg" alt="" class="main-img">
-                                                <div class="content-wrapper">
-                                                    <span class="radio-label-primary">Chuyển khoản qua ngân hàng</span>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="radio-wrapper content-box-row content-box-row-secondary">
-                                        <div class="blank-slate">
-                                            STK của tụi mình:
-
-                                            STK 27560067
-                                            La Hoành Nghiệp
-                                            Ngân hàng thương mại cổ phần Á Châu
-
-                                            NOTE: Phần nội dung bạn ghi tên đặt hàng của bạn để tụi mình dễ check nha. Bạn kiểm tra hàng trước khi nhận giúp tụi mình với nhé. Cảm ơn bạn ạ ❤️
+                                <div class="fieldset">
+                                    <div class="field field-show-floating-label">
+                                        <div class="field-input-wrapper field-input-wrapper-select">
+                                            <select id="stored_addresses" class="field-input">
+                                                <option value="add" selected>Thêm địa chỉ mới ...</option>
+                                                <option value="" disabled>Địa chỉ đã lưu trữ</option>
+                                                @if (ViewData["Addresses"] is List<ALittleLeaf.Models.AddressList> addresses)
+                                                {
+                                                    foreach (var address in addresses)
+                                                    {
+                                                        <option value="@address.AdrsId">@address.AdrsAddress</option>
+                                                    }
+                                                }
+                                            </select>
                                         </div>
                                     </div>
-                                    <div class="radio-wrapper content-box-row">
-                                        <label for="" class="two-page">
-                                            <div class="radio-input payment-method-checkbox">
-                                                <input name="checkoutMethod" type="radio" class="input-radio" value="cod">
+                                    <form id="checkout_complete" asp-controller="Checkout" asp-action="SaveShippingInfo" method="post" onsubmit="return checkInput()">
+                                        <input type="hidden" id="bill_addressId" name="bill_addressId">
+                                        <div class="field field-required  field-show-floating-label">
+                                            <div class="field-input-wrapper">
+                                                <label for="billing_address_full_name" class="field-label">Họ và Tên</label>
+                                                <input type="text" placeholder="Họ và tên" class="field-input" size="30" id="billing_address_full_name" name="billing_address_full_name">
+                                                <p id="fullname_error" class="error-show">Vui lòng không bỏ trống Họ tên </p>
                                             </div>
-                                            <div class="radio-content-input">
-                                                <img src="~/img/cod.svg" alt="" class="main-img">
-                                                <div class="content-wrapper">
-                                                    <span class="radio-label-primary">Thanh toán khi giao hàng (COD)</span>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="radio-wrapper content-box-row content-box-row-secondary" style="display: none;">
-                                        <div class="blank-slate">
-                                            Tụi mình nhận ship cod với đơn hàng dưới 1tr và không có sản phẩm dễ vỡ.
                                         </div>
-                                    </div>
+                                        <div class="field field-required   field-show-floating-label">
+                                            <div class="field-input-wrapper">
+                                                <label for="billing_address_phone" class="field-label">Số điện thoại</label>
+                                                <input type="tel" placeholder="Số điện thoại" class="field-input" size="30" maxlength="15" id="billing_address_phone" name="billing_address_phone">
+                                                <p id="phone_error" class="error-show">Vui lòng không bỏ trống Số điện thoại</p>
+                                            </div>
+                                        </div>
+                                        <div class="field field-required   field-show-floating-label">
+                                            <div class="field-input-wrapper">
+                                                <label for="">Địa chỉ</label>
+                                                <input type="text" size="30" placeholder="Địa chỉ" id="billing_address_address" name="billing_address_address">
+                                                <p id="address_error" class="error-show">Vui lòng không bỏ trống địa chỉ</p>
+                                            </div>
+                                        </div>
+                                        <div class="step-footer" id="step-footer-checkout">
+                                            <button type="submit" class="step-footer-continue-btn btn">
+                                                <span class="btn-content">Tiếp tục đến phương thức thanh toán</span>
+                                            </button>
+
+                                            <a asp-controller="Cart" asp-action="Index" class="step-footer-previous-link">Giỏ hàng</a>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="step-footer" id="step-footer-checkout">
-                        <form id="checkout_complete" action="~/CheckOut/SaveCheckOutMethod" method="post">
-                            <button type="button" class="step-footer-continue-btn btn" id="btn-complete-order">
-                                <span class="btn-content">Hoàn tất đơn hàng</span>
-                            </button>
-                        </form>
-                        <a href="~/orderinfo" class="step-footer-previous-link">Thông tin đặt hàng</a>
-                    </div>
+
                 </div>
             </div>
             <div class="main-footer footer-powered-by">Powered by HoanhNgjp</div>
         </div>
         <div class="checkout-sidebar">
-            @Html.Partial("_SideBarContent")
+            @Html.Partial("_SideBarContent");
         </div>
+
     </div>
 </body>
 </html>

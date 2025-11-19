@@ -20,7 +20,7 @@
     </div>
     <div class="form-wrap">
         <div class="form">
-            <form asp-action="Register" method="post" onsubmit="return checkRegistry()">
+            <form asp-controller="Account" asp-action="Register" method="post" onsubmit="return checkRegistry()">
                 <div class="errors-wrap">
                     <span class="show-error" id="isExist-error" style="display:none;">Email đã tồn tại.</span>
                 </div>
@@ -90,7 +90,7 @@
                         <button class="sign-in-btn" type="submit">ĐĂNG KÝ</button>
                     </div>
                     <div class="return">
-                        <a asp-controller="Login" asp-action="Index">
+                        <a asp-controller="Account" asp-action="Login">
                             <i class="fa-solid fa-arrow-left-long"></i>
                             Quay lại đăng nhập
                         </a>

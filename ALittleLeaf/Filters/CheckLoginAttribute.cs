@@ -18,8 +18,8 @@ namespace ALittleLeaf.Filters
                 context.Result = new RedirectToRouteResult(
                     new RouteValueDictionary
                     {
-                        { "controller", "Login" },
-                        { "action", "Index" }
+                        { "controller", "Account" },
+                        { "action", "Login" }
                     });
             }
 
