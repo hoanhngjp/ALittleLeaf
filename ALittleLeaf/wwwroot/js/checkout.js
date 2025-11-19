@@ -9,7 +9,7 @@ $(document).ready(function () {
             $form.attr('action', '/Payment/CreatePaymentUrl');
         }
         else if (selectedMethod === 'cod' || selectedMethod === 'online') {
-            $form.attr('action', '/CheckOut/SaveCheckOutMethod');
+            $form.attr('action', '/CheckOut/PlaceCodOrder');
         }
         else {
             alert('Vui lòng chọn phương thức thanh toán.');

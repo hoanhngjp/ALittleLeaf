@@ -1,10 +1,5 @@
 ﻿@{
     var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
-    var totalItems = 0;
-    foreach (var item in cart)
-    {
-        totalItems += item.Quantity;
-    }
 }
 <header>
     <div class="homeLogo">
@@ -30,14 +25,14 @@
             else
             {
                 <!-- Nếu chưa Login -->
-                <li><a asp-controller="Login" asp-action="Index"><ion-icon name="person-circle-outline"></ion-icon></a></li>
+                <li><a asp-controller="Account" asp-action="Login"><ion-icon name="person-circle-outline"></ion-icon></a></li>
             }
             <li><a href="" id="open-site-search"><ion-icon name="search-outline"></ion-icon></a></li>
             <li>
                 <a href="" id="open-site-cart">
                     <ion-icon name="bag-outline"></ion-icon>
                     <span class="count-holder">
-                        <span class="count">@totalItems</span>
+                        <span class="count">@(ViewData["CartItemCount"] ?? 0)</span>
                     </span>
                 </a>
             </li>

@@ -1,11 +1,11 @@
-﻿@section Styles {
+﻿@model List<ALittleLeaf.Models.Bill>
+@section Styles {
     <link rel="stylesheet" href="~/css/account.css">
 }
 
 @{
     ViewData["Title"] = "Tài khoản";
 }
-<!--------------------------------------------LAYOUT-ACCOUNT----------------------------------------------------->
 <div class="layout-account">
     <div class="account-header">
         <h1>Tài khoản của bạn</h1>
@@ -19,19 +19,20 @@
                         <div class="account-list">
                             <ul>
                                 <li>
-                                    <a asp-controller="Account" asp-action="Index">Thông tin tài khoản</a>
+                                    <a asp-controller="Account" asp-action="Index" class="active">Thông tin tài khoản</a>
                                 </li>
                                 <li>
                                     <a asp-controller="Address" asp-action="Index">Danh sách địa chỉ</a>
                                 </li>
                                 <li>
-                                    <a asp-controller="Login" asp-action="Logout">Đăng xuất</a>
+                                    <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
                                 </li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="customer-sidebar-wrap">
                 <div class="row-inside">
                     <div class="customer-sidebar">
@@ -45,19 +46,84 @@
                             <p class="account-email"> @ViewContext.HttpContext.Session.GetString("UserEmail") </p>
                         }
                         <div class="address">
-                            <a id="view-address" asp-controller="Address" asp.action="Index">Xem địa chỉ</a>
+                            <a id="view-address" asp-controller="Address" asp-action="Index">Xem địa chỉ</a>
                         </div>
                     </div>
-                    @{
-                        var userIdString = ViewContext.HttpContext.Session.GetString("UserId");  // Lấy UserId từ Session
-                        long userId = 0;
-                        if (!string.IsNullOrEmpty(userIdString))
-                        {
-                            long.TryParse(userIdString, out userId);  // Chuyển từ string sang long
-                        }
-                    }
+
                     <div class="customer-table-wrap">
-                        @await Component.InvokeAsync("CustomerBills", new { userId = userId })
+                        <div class="customer-table-bg">
+                            @if (Model == null || !Model.Any())
+                            {
+                                <p>Bạn chưa đặt mua sản phẩm</p>
+                            }
+                            else
+                            {
+                                <p class="title-detail"> Danh sách các đơn hàng </p>
+                                <div class="table-wrap">
+                                    <table class="table">
+                                        <thead>
+                                        <th class="order-number text-center">Mã đơn hàng</th>
+                                        <th class="date text-center">Ngày đặt</th>
+                                        <th class="total text-center">Thành tiền</th>
+                                        <th class="payment-status text-center">Trạng thái thanh toán</th>
+                                        <th class="fulfillment-status text-center">Vận chuyển</th>
+                                        <th class="order-detail text-center">Hành động</th>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var bill in Model)
+                                            {
+                                                <tr class="order">
+                                                    <td class="text-center">
+                                                        <a href="#">#@bill.BillId</a>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span>@bill.DateCreated.ToString("dd/MM/yyyy")</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="total-money">@bill.TotalAmount.ToString("N0")₫</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if (bill.PaymentStatus == "paid")
+                                                        {
+                                                            <span class="status-paid">Đã thanh toán</span>
+                                                        }
+                                                        else if (bill.PaymentStatus == "pending_vnpay")
+                                                        {
+                                                            <span class="status-pending_vnpay">Chờ thanh toán VNPAY</span>
+                                                        }
+                                                        else if (bill.PaymentStatus == "pending" || bill.PaymentMethod == "cod" || bill.PaymentMethod == "online")
+                                                        {
+                                                            <span class="status-cod">Chờ thanh toán (COD)</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="status-pending">@bill.PaymentStatus</span>
+                                                        }
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if (bill.ShippingStatus == "fulfilled")
+                                                        {
+                                                            <span class="status-fulfilled">Đã giao hàng</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="status-not_fulfilled">Chưa giao hàng</span>
+                                                        }
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if (bill.PaymentStatus == "pending_vnpay")
+                                                        {
+                                                            <a asp-controller="Payment" asp-action="RetryPayment" asp-route-billId="@bill.BillId" class="btn-action btn-retry-payment">Thanh toán lại</a>
+                                                        }
+                                                        <a asp-controller="Account" asp-action="OrderDetails" asp-route-id="@bill.BillId" class="btn-action btn-details">Chi tiết</a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>

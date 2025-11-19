@@ -20,7 +20,7 @@
     </div>
     <div class="form-wrap">
         <div class="form">
-            <form action="~/Login/Login" method="post" onsubmit="return checkLogin()">
+            <form asp-controller="Account" asp-action="Login" method="post" onsubmit="return checkLogin()">
                 <div class="errors-wrap">
                     @if (ViewBag.ErrorMessage != null)
                     {
@@ -48,10 +48,9 @@
                         <a href="#">Quên mật khẩu?</a>
                         <br>
                         hoặc
-                        <a asp-controller="Register" asp-action="Index">Đăng ký</a>
+                        <a asp-controller="Account" asp-action="Register">Đăng ký</a>
                     </div>
                 </div>
-                <script></script>
             </form>
         </div>
     </div>

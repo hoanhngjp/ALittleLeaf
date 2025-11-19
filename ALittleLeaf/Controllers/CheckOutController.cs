@@ -1,176 +1,120 @@
 ﻿using ALittleLeaf.Filters;
-using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
+using ALittleLeaf.Services;
+using ALittleLeaf.Services.Order;
 using ALittleLeaf.ViewModels;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Net.WebSockets;
-
+using System.Threading.Tasks;
 
 namespace ALittleLeaf.Controllers
 {
     [CheckLogin]
     public class CheckOutController : SiteBaseController
     {
-        private readonly AlittleLeafDecorContext _context;
+        private readonly IOrderService _orderService;
+        private readonly AlittleLeafDecorContext _context; // Tạm giữ
 
-        public CheckOutController(AlittleLeafDecorContext context)
+        // SỬA: Inject IOrderService
+        public CheckOutController(IOrderService orderService, AlittleLeafDecorContext context)
         {
+            _orderService = orderService;
             _context = context;
         }
 
-        public IActionResult Index()
+        // --- BƯỚC 1: NHẬP THÔNG TIN GIAO HÀNG ---
+        // (Đây là Action Index() cũ của OrderInfoController)
+        [HttpGet]
+        public async Task<IActionResult> Index()
         {
-            // Lấy giỏ hàng
-            var cart = ViewData["Cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+            var cart = ViewData["Cart"] as List<CartItemViewModel>;
+            if (cart == null || !cart.Any())
+            {
+                return RedirectToAction("Index", "Collections");
+            }
 
-            ViewData["Cart"] = cart;
+            var userId = long.Parse(HttpContext.Session.GetString("UserId"));
 
+            // Gọi Service để lấy địa chỉ
+            ViewData["Addresses"] = await _orderService.GetUserAddressesAsync(userId);
+
+            return View(); // Sẽ dùng View: /Views/CheckOut/Index.cshtml
+        }
+
+        // (Action GetAddressInfo() cũ của OrderInfoController)
+        [HttpPost]
+        public async Task<IActionResult> GetAddressInfo(int addressId)
+        {
+            if (addressId <= 0) return Json(new { error = "Invalid address ID" });
+
+            // Gọi Service
+            var address = await _orderService.GetAddressDetailsAsync(addressId);
+
+            if (address == null) return Json(new { error = "Address not found" });
+
+            return Json(new
+            {
+                adrs_id = address.AdrsId,
+                adrs_fullname = address.AdrsFullname,
+                adrs_phone = address.AdrsPhone,
+                adrs_address = address.AdrsAddress
+            });
+        }
+
+        // (Action SaveAddressInfo() cũ của OrderInfoController)
+        [HttpPost]
+        public IActionResult SaveShippingInfo(string bill_addressId, string billing_address_full_name, string billing_address_phone, string billing_address_address)
+        {
+            // Logic lưu vào Session này là OK
+            if (bill_addressId == null)
+            {
+                HttpContext.Session.SetString("BillingAdrsId", "new");
+            }
+            else
+            {
+                HttpContext.Session.SetString("BillingAdrsId", bill_addressId);
+            }
+            HttpContext.Session.SetString("BillingFullName", billing_address_full_name);
+            HttpContext.Session.SetString("BillingPhone", billing_address_phone);
+            HttpContext.Session.SetString("BillingAddress", billing_address_address);
+
+            // SỬA: Chuyển hướng đến Bước 2 (Payment)
+            return RedirectToAction("Payment", "CheckOut");
+        }
+
+        // --- BƯỚC 2: CHỌN PHƯƠNG THỨC THANH TOÁN ---
+        // (Đây là Action Index() cũ của CheckOutController)
+        [HttpGet]
+        public IActionResult Payment()
+        {
+            var cart = ViewData["Cart"] as List<CartItemViewModel>;
             if (!cart.Any())
             {
                 return RedirectToAction("Index", "Home");
             }
-
-            return View();
+            return View(); // Sẽ dùng View: /Views/CheckOut/Payment.cshtml
         }
 
-        public IActionResult SaveCheckOutMethod(string checkoutMethod)
+        // (Action SaveCheckOutMethod() cũ, giờ chỉ xử lý COD)
+        [HttpPost]
+        public async Task<IActionResult> PlaceCodOrder(string checkoutMethod)
         {
-            if (HttpContext.Session.GetString("BillingAdrsId") == "new")
+            try
             {
-                var userId = long.Parse(HttpContext.Session.GetString("UserId"));
+                // 1. Tạo đơn hàng (pending)
+                // (Giả sử COD có 'checkoutMethod' là "cod", Chuyển khoản là "online")
+                var bill = await _orderService.CreateOrderFromSessionAsync(checkoutMethod, "pending");
 
-                string AdrsFullname = HttpContext.Session.GetString("BillingFullName");
-                string AdrsAddress = HttpContext.Session.GetString("BillingAddress");
-                string AdrsPhone = HttpContext.Session.GetString("BillingPhone");
-                int AdrsIsDefault = 0;
+                // 2. Xử lý đơn hàng (Trừ kho, Xóa cart) ngay lập tức
+                await _orderService.FulfillOrderAsync(bill.BillId);
 
-                var newAddress = new AddressList
-                {
-                    AdrsFullname = AdrsFullname,
-                    AdrsAddress = AdrsAddress,
-                    AdrsPhone = AdrsPhone,
-                    AdrsIsDefault = AdrsIsDefault == 1, // Chuyển đổi thành kiểu bool
-                    IdUser = userId // Giả sử bạn có cách lấy ID người dùng hiện tại
-                };
-
-                // Nếu địa chỉ mới được đặt làm mặc định, cập nhật các địa chỉ khác
-                if (newAddress.AdrsIsDefault)
-                {
-                    var otherAddresses = _context.AddressLists.Where(a => a.IdUser == userId);
-
-                    foreach (var address in otherAddresses)
-                    {
-                        address.AdrsIsDefault = false;
-                    }
-                }
-
-                // Lưu địa chỉ mới vào cơ sở dữ liệu
-                _context.AddressLists.Add(newAddress);
-                _context.SaveChanges();
-
-                // Truy vấn lại để lấy ID của bản ghi vừa thêm
-                var addedAddress = _context.AddressLists
-                    .Where(a => a.AdrsFullname == AdrsFullname
-                                && a.AdrsAddress == AdrsAddress
-                                && a.AdrsPhone == AdrsPhone
-                                && a.IdUser == userId)
-                    .OrderByDescending(a => a.AdrsId)// Sắp xếp giảm dần để lấy bản ghi mới nhất
-                    .FirstOrDefault();
-
-                var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart");
-
-                int adrsId = addedAddress.AdrsId;
-                DateOnly dateCreated = DateOnly.FromDateTime(DateTime.Now);
-                int totalAmount = cart.Sum(c => c.Quantity * c.ProductPrice);
-                string PaymentMethod = checkoutMethod;
-                string PaymentStatus = "pending";
-                int IsConfirmed = 0;
-                string ShippingStatus = "not_fulfilled";
-                string Note = HttpContext.Session.GetString("BillNote");
-                DateTime UpdatedAt = DateTime.Now;
-
-                SaveBill(cart, userId, adrsId, dateCreated, totalAmount, PaymentMethod, PaymentStatus, IsConfirmed, ShippingStatus, Note, UpdatedAt);
+                // 3. Chuyển hướng
+                return RedirectToAction("Index", "Account"); // Hoặc trang "Cảm ơn"
             }
-            else
+            catch (Exception ex)
             {
-                var userId = long.Parse(HttpContext.Session.GetString("UserId"));
-                var adrsId = int.Parse(HttpContext.Session.GetString("BillingAdrsId"));
-                var cart = HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart");
-                DateOnly dateCreated = DateOnly.FromDateTime(DateTime.Now);
-                int totalAmount = cart.Sum(c => c.Quantity * c.ProductPrice);
-                string PaymentMethod = checkoutMethod;
-                string PaymentStatus = "pending";
-                int IsConfirmed = 0;
-                string ShippingStatus = "not_fulfilled";
-                string Note = HttpContext.Session.GetString("BillNote");
-                DateTime UpdatedAt = DateTime.Now;
-
-                SaveBill(cart, userId, adrsId, dateCreated, totalAmount, PaymentMethod, PaymentStatus, IsConfirmed, ShippingStatus, Note, UpdatedAt);
-
-            }   
-            return RedirectToAction("Index", "Account");
-        }
-        public void SaveBill(List<CartItemViewModel> cart, long userId, int adrsId, DateOnly dateCreated, int totalAmount, string PaymentMethod, string PaymentStatus, int IsConfirmed, string ShippingStatus,
-                            string Note, DateTime UpdatedAt)
-        {
-            var bill = new Bill
-            {
-                IdUser = userId,
-                IdAdrs = adrsId,
-                DateCreated = dateCreated,
-                TotalAmount = totalAmount,
-                PaymentMethod = PaymentMethod,
-                PaymentStatus = PaymentStatus,
-                IsConfirmed = IsConfirmed == 0,
-                ShippingStatus = ShippingStatus,
-                Note = Note,
-                UpdatedAt = UpdatedAt
-            };
-
-            _context.Bills.Add(bill);
-            _context.SaveChanges();
-
-            foreach (var item in cart)
-            {
-                var billDetail = new BillDetail
-                {
-                    IdBill = bill.BillId,
-                    IdProduct = item.ProductId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.ProductPrice,
-                    TotalPrice = item.Quantity * item.ProductPrice,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
-                };
-
-                _context.BillDetails.Add(billDetail);
-
-                // Trừ số lượng sản phẩm trong kho
-                var product = _context.Products.FirstOrDefault(p => p.ProductId == item.ProductId);
-                if (product != null)
-                {
-                    product.QuantityInStock -= item.Quantity; // Giảm số lượng
-                    if (product.QuantityInStock < 0)
-                    {
-                        throw new InvalidOperationException($"Sản phẩm {product.ProductName} không đủ số lượng trong kho!");
-                    }
-                }
-
-                _context.SaveChanges();
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Cart");
             }
-
-            HttpContext.Session.Remove("BillingFullName");
-            HttpContext.Session.Remove("BillingAddress");
-            HttpContext.Session.Remove("BillingPhone");
-            HttpContext.Session.Remove("BillNote");
-            HttpContext.Session.Remove("BillingAdrsId");
-            HttpContext.Session.Remove("Cart");
-
         }
-
     }
 }

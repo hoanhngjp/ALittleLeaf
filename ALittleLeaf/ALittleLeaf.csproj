@@ -29,6 +29,7 @@
     <Folder Include="Areas\Admin\Models\" />
     <Folder Include="Areas\Admin\ViewComponents\" />
     <Folder Include="Areas\Admin\Views\Shared\Components\" />
+    <Folder Include="Views\Login\" />
   </ItemGroup>
 
 </Project>

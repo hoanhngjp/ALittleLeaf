@@ -1,4 +1,5 @@
-﻿using ALittleLeaf.ViewModels;
+﻿using ALittleLeaf.Services.Cart;
+using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -8,14 +9,15 @@ namespace ALittleLeaf.Controllers
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            // Tự động tải giỏ hàng từ Session
-            var cart = context.HttpContext.Session.GetObjectFromJson<List<CartItemViewModel>>("Cart")
-                       ?? new List<CartItemViewModel>();
+            var cartService = context.HttpContext.RequestServices.GetService<ICartService>();
 
-            // Tự động gán nó vào ViewData
-            ViewData["Cart"] = cart;
+            if (cartService != null)
+            {
+                ViewData["Cart"] = cartService.GetCartItems();
+                ViewData["CartItemCount"] = cartService.GetCartItemCount();
+                ViewData["CartTotalPrice"] = cartService.GetCartTotal();
+            }
 
-            // Chạy tiếp các logic khác
             base.OnActionExecuting(context);
         }
     }

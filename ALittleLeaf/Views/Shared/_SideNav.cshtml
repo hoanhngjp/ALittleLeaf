@@ -1,38 +1,39 @@
-﻿@{
-    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
+﻿@using ALittleLeaf.ViewModels
+@{
+    var cart = ViewData["Cart"] as List<CartItemViewModel> ?? new List<CartItemViewModel>();
 }
 <div id="site-nav" class="site-nav">
     <div id="site-cart" class="site-nav-container">
         <div class="site-nav-container-last">
-            <p class="title" Giỏ hàng>Giỏ hàng</p>
+            <p class="title">Giỏ hàng</p>
             <div class="cart-view">
-                <table id="cart-inside" class="">
+                <table id="cart-inside">
                     <tbody>
                         @if (cart.Count == 0)
                         {
-                            <!--Nếu chưa có sản phẩm-->
-                            <tr>Hiện chưa có sản phẩm nào</tr>
+                            <tr id="cart-empty-message">
+                                <td colspan="2">Hiện chưa có sản phẩm nào</td>
+                            </tr>
                         }
                         else
                         {
-                            <!--Nếu có sản phẩm-->
-                            foreach (var item in cart)
+                            @foreach (var item in cart)
                             {
-                                <tr class="item-in-cart">
+                                <tr class="item-in-cart" data-product-id="@item.ProductId">
                                     <td class="img">
-                                        <a href="">
+                                        <a asp-controller="Product" asp-action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory">
                                             <img src="~/img/prdImg/@item.ProductImg" alt="@item.ProductName">
                                         </a>
                                     </td>
                                     <td>
-                                        <a asp-controller="Product" asp.action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory" class="pro-title-cart">
+                                        <a asp-controller="Product" asp-action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory" class="pro-title-cart">
                                             @item.ProductName
                                         </a>
                                         <span class="variant"></span>
                                         <span class="pro-quantity-cart">@item.Quantity</span>
                                         <span class="pro-price-cart">@String.Format("{0:N0}₫", item.ProductPrice * item.Quantity)</span>
                                         <span class="remove-in-cart">
-                                            <a href="#" class="remove-from-cart" data-product-id="@item.ProductId">
+                                            <a href="#" class="remove-from-cart-ajax" data-product-id="@item.ProductId">
                                                 <ion-icon name="close-outline"></ion-icon>
                                             </a>
                                         </span>
@@ -47,102 +48,43 @@
                     <tbody>
                         <tr>
                             <td class="text-left" style="font-size: 14px;">TỔNG TIỀN: </td>
-                            <td class="text-right" id="total-in-cart" style="font-size: 14px;">
-                                @{
-                                    var totalPrice = cart.Sum(c => c.Quantity * c.ProductPrice);
-                                } 
-                                @String.Format("{0:N0}₫", totalPrice)
+                            <td class="text-right cart-total-display" id="total-in-cart" style="font-size: 14px;">
+                                @String.Format("{0:N0}₫", (int)(ViewData["CartTotalPrice"] ?? 0))
                             </td>
                         </tr>
                         <tr>
                             <td>
-                                <a href="~/cart">
+                                <a asp-controller="Cart" asp-action="Index">
                                     <button>XEM GIỎ HÀNG</button>
                                 </a>
                             </td>
                             <td>
-                                @if (cart.Count == 0){
-                                    <!--Nếu Login rồi thì chuyển sang Order, chưa Login chuyển sang Login-->
-                                    <a href="~/orderinfo">
-                                        <button>THANH TOÁN</button>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <!--Nếu Login rồi thì chuyển sang Order, chưa Login chuyển sang Login-->
-                                    <a href="~/orderinfo">
-                                        <button>THANH TOÁN</button>
-                                    </a>
-                                }
+                                <a asp-controller="Checkout" asp-action="Index">
+                                    <button>THANH TOÁN</button>
+                                </a>
                             </td>
                         </tr>
                     </tbody>
                 </table>
-                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-                <script>
-                    $(document).ready(function(){
-                        // Xử lý sự kiện click cho nút "Xóa"
-                        $('.remove-from-cart').click(function(e){
-                            e.preventDefault(); // Ngăn chặn hành động mặc định của thẻ <a>
 
-                            var productId = $(this).data('product-id');
-
-                            // Gửi yêu cầu xóa sản phẩm thông qua Ajax
-                            $.ajax({
-                                url: '/Cart/RemoveFromCart',
-                                type: 'post',
-                                data: { productId: productId },
-                                success:function(response){
-                                    // Cập nhật lại tổng tiền sau khi xóa sản phẩm
-                                    $('#total-in-cart').html(response);
-                                    // Cập nhật lại giỏ hàng sau khi xóa sản phẩm
-                                    $('.cart-view').html(response);
-                                    location.reload();
-                                }
-                            });
-                        });
-                    });
-                </script>
             </div>
         </div>
     </div>
+
     <div id="site-search" class="site-nav-container">
         <div class="site-nav-container-last">
             <p class="title">Tìm kiếm</p>
             <div class="search-box-wrap">
                 <form asp-controller="Search" asp-action="Index" method="get" class="searchForm">
                     <div class="search-inner">
-                        <input type="search" class="searchInput" size="20" name="q" placeholder="Tìm kiếm sản phẩm">
+                        <input type="search" class="searchInput" id="live-search-input" size="20" name="q" placeholder="Tìm kiếm sản phẩm">
                     </div>
                     <button type="submit" class="btn-search">
                         <ion-icon name="search-outline"></ion-icon>
                     </button>
                 </form>
                 <div class="result-wrap">
-                    <div class="result-content">
-                        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-                        <script>
-                            $(document).ready(function () {
-                                $('.searchInput').keyup(function () {
-                                    var keyword = $(this).val();
-                                    if (keyword != '') {
-                                        $.ajax({
-                                            url: '/Search/Search', // Gọi action Search của SearchController
-                                            type: 'POST',
-                                            data: { q: keyword },
-                                            success: function (response) {
-                                                $('.result-content').html(response); // Hiển thị kết quả tìm kiếm
-                                            },
-                                            error: function (xhr, status, error) {
-                                                console.error('Error:', error);
-                                            }
-                                        });
-                                    } else {
-                                        $('.result-content').html(''); // Xóa kết quả tìm kiếm nếu không có từ khóa
-                                    }
-                                });
-                            });
-                        </script>
+                    <div class="result-content" id="live-search-results">
                     </div>
                 </div>
             </div>
@@ -152,5 +94,6 @@
     <button id="site-close-handle" class="site-close-handle">
         <span class="close">
             <ion-icon name="close-outline"></ion-icon>
+        </span>
     </button>
 </div>

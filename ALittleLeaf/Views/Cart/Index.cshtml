@@ -1,18 +1,11 @@
 ﻿@{
-    var cart = ViewData["cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel>;
-    var totalProducts = 0;
-    foreach(var item in cart)
-    {
-        totalProducts += item.Quantity;
-    }
+    var cart = ViewData["Cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel> ?? new List<ALittleLeaf.ViewModels.CartItemViewModel>();
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/cart.css" />
 }
-@section HeadScripts {
-    <script src="~/js/cart_function.js" defer></script>
-}
+
 @{
     ViewData["Title"] = "Giỏ hàng";
 }
@@ -23,14 +16,14 @@
             <div class="nav-header">
                 <ol>
                     <li>
-                        <a asp-controller="Home" asp.action="Index">
+                        <a asp-controller="Home" asp-action="Index">
                            <span>Trang chủ</span>
                         </a>
                         <meta itemprop="position" content="1">
                     </li>
                     <li class="active">
                         <span>
-                            <span>Giỏ hàng (@totalProducts)</span>
+                            <span class="total-items">Giỏ hàng (@(ViewData["CartItemCount"] ?? 0))</span>
                         </span>
                         <meta itemprop="position" content="2">
                     </li>
@@ -42,68 +35,66 @@
                 <div class="header-page">
                     <h1>Giỏ hàng của bạn</h1>
                     <p class="count-cart">
-                        Có <span>@totalProducts sản phẩm</span> trong giỏ hàng
+                        Có <span>@(ViewData["CartItemCount"] ?? 0) sản phẩm</span> trong giỏ hàng
                     </p>
                 </div>
             </div>
             <div class="cart-content-wrap">
-                @if (cart.Count == 0)
-                {
-                    <div class="notifications">
+                <div class="notifications" @(cart.Count > 0 ? "style=display:none;" : "")>
                     Giỏ hàng của bạn đang trống
                     <p class="link-continue">
-                        <a href="~/collections" class="button dark">
+                        <a asp-controller="Collections" asp-action="Index" class="button dark">
                             <button>
                                 <i class="fa fa-reply"></i>
-                                    TIẾP TỤC MUA HÀNG
+                                TIẾP TỤC MUA HÀNG
                             </button>
                         </a>
                     </p>
-                    </div>
-                }
-                else
-                {
-                <div class="cart-container">
+                </div>
+                <div class="cart-container" @(cart.Count == 0 ? "style=display:none;" : "")>
                     <div class="main-content-cart">
-                        <form action="~/Cart/GetCartNote" id="cartformpage" method="post">
+                        <form asp-controller="Cart" asp-action="GetCartNote" id="cartformpage" method="post">
                             <div class="display-items">
                                 <table class="table-cart">
                                     <tbody>
                                             @foreach (var item in cart)
                                             {
                                                 // Hiển thị thông tin sản phẩm trong giỏ hàng
-                                        <tr class="line-item-container">
-                                            <td class="image">
-                                                <div class="product-img">
-                                                    <a asp-controller="Product" asp.action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory">
-                                                        <img src="~/img/prdImg/@item.ProductImg" alt="@item.ProductName">
-                                                    </a>
-                                                </div>
-                                            </td>
-                                            <td class="item">
-                                                <a asp-controller="Product" asp.action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory">
-                                                    @item.ProductName
-                                                </a>
-                                                <p>
-                                                    <span>@String.Format("{0:N0}₫", item.ProductPrice)</span>
-                                                </p>
-                                                <div class="qty-click">
-                                                    <button type="button" class="qtyminus qty-btn" data-product-id="@item.ProductId">-</button>
-                                                    <input type="text" size="4" min="1" data-price="@item.ProductPrice" value="@item.Quantity" class="item-quantity" data-product-id="@item.ProductId">
-                                                    <button type="button" class="qtyplus qty-btn" data-product-id="@item.ProductId">+</button>
-                                                </div>
-                                                <p class="price">
-                                                    <span class="text">Thành tiền</span>
-                                                    <span class="line-item-total">@String.Format("{0:N0}₫", item.ProductPrice * item.Quantity)</span>
-                                                </p>
-                                            </td>
-                                            <td class="remove">
-                                                <a href="#" class="remove-from-cart" data-product-id="@item.ProductId">
-                                                    <ion-icon name="close-outline"></ion-icon>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                            }
+                                                <tr class="line-item-container" data-product-id="@item.ProductId">
+                                                    <td class="image">
+                                                        <div class="product-img">
+                                                            <a asp-controller="Product" asp-action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory">
+                                                                <img src="~/img/prdImg/@item.ProductImg" alt="@item.ProductName">
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td class="item">
+                                                        <a asp-controller="Product" asp-action="Index" asp-route-productId="@item.ProductId" asp-route-idCategory="@item.IdCategory">
+                                                            @item.ProductName
+                                                        </a>
+                                                        <p>
+                                                            <span>@String.Format("{0:N0}₫", item.ProductPrice)</span>
+                                                        </p>
+                                                        <div class="qty-click">
+                                                            <button type="button" class="qtyminus qty-btn" data-product-id="@item.ProductId">-</button>
+                                                            <input type="text" size="4" min="1" data-price="@item.ProductPrice" value="@item.Quantity" class="item-quantity" data-product-id="@item.ProductId">
+                                                            <button type="button" class="qtyplus qty-btn" data-product-id="@item.ProductId">+</button>
+                                                        </div>
+                                                        <p class="price">
+                                                            <span class="text">Thành tiền</span>
+                                                            <!-- THÊM: class "line-item-total-display" -->
+                                                            <span class="line-item-total line-item-total-display" data-product-id="@item.ProductId">
+                                                                @String.Format("{0:N0}₫", item.ProductPrice * item.Quantity)
+                                                            </span>
+                                                        </p>
+                                                    </td>
+                                                    <td class="remove">
+                                                        <!-- SỬA: Dùng class "remove-from-cart-ajax" -->
+                                                        <a href="#" class="remove-from-cart-ajax" data-product-id="@item.ProductId">
+                                                            <ion-icon name="close-outline"></ion-icon>
+                                                        </a>
+                                                    </td>
+                                                </tr>                                            }
                                     </tbody>
                                 </table>
                             </div>
@@ -117,11 +108,13 @@
                                     <p class="order-infor">
                                         Tổng tiền
                                         <span class="total-price">
-                                            <b id="total-cart">@String.Format("{0:N0}₫", ViewBag.TotalPrice)</b>
-                                        </span>
+                                                <b id="cart-page-total" class="cart-total-display">
+                                                    @String.Format("{0:N0}₫", (int)(ViewData["CartTotalPrice"] ?? 0))
+                                                </b>
+                                            </span>
                                     </p>
                                     <div class="cart-buttons">
-                                        <a href="~/collections">
+                                        <a asp-asp-controller="Collections" asp-action="Index">
                                             <button type="button">
                                                 <i class="fa fa-reply"></i>
                                                 TIẾP TỤC MUA HÀNG
