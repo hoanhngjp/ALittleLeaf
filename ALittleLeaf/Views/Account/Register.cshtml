@@ -5,7 +5,7 @@
 }
 
 @section HeadScripts {
-    <script src="js/validLoginAndRegistry.js" defer></script>
+    <script src="~/js/validLoginAndRegistry.js" defer></script>
 }
 
 @{
@@ -21,70 +21,106 @@
     <div class="form-wrap">
         <div class="form">
             <form asp-controller="Account" asp-action="Register" method="post" onsubmit="return checkRegistry()">
+
+                <!-- Khu vực hiển thị lỗi chung (nếu có) -->
+                <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 15px;"></div>
+
                 <div class="errors-wrap">
+                    <!-- Span này cho lỗi logic riêng (vd: Email tồn tại check từ JS hoặc Server trả về custom error) -->
                     <span class="show-error" id="isExist-error" style="display:none;">Email đã tồn tại.</span>
                 </div>
+
                 <input asp-for="UserRole" type="hidden" value="customer" />
+
+                <!-- 1. HỌ TÊN -->
                 <div class="input-wrap">
                     <div class="label-wrap">
-                        <label for="fullname">Họ và tên*</label>
+                        <label asp-for="UserFullname">Họ và tên*</label>
                     </div>
-                    <input asp-for="UserFullname" name="UserFullname" type="text" id="fullname" placeholder="Họ và tên">
+                    <input asp-for="UserFullname" type="text" id="fullname" placeholder="Họ và tên">
                     <div class="errors-wrap">
+                        <!-- Lỗi từ Server -->
+                        <span asp-validation-for="UserFullname" class="text-danger" style="display:block; color: red;"></span>
+                        <!-- Lỗi từ JS cũ -->
                         <span class="show-error" id="fullname-error" style="display:none;">*Vui lòng nhập Họ tên của bạn</span>
                     </div>
                 </div>
+
+                <!-- 2. GIỚI TÍNH -->
                 <div class="gender-wrap">
                     <div class="label-wrap">
-                        <label for="gender">Giới tính*</label>
+                        <label>Giới tính*</label>
                     </div>
                     <div class="radio-wrap">
-                        <input asp-for="UserSex" type="radio" id="radio1" name="UserSex" value="true" checked>
+                        <input asp-for="UserSex" type="radio" id="radio1" value="true" checked>
                         <label for="radio1">Nữ</label>
-                        <input asp-for="UserSex" type="radio" id="radio2" name="UserSex" value="false">
+
+                        <input asp-for="UserSex" type="radio" id="radio2" value="false">
                         <label for="radio2">Nam</label>
                     </div>
                     <div class="errors-wrap">
+                        <!-- Lỗi giới tính ít khi xảy ra, nhưng vẫn nên có -->
                         <span class="show-error" id="gender-error" style="display:none;">*Vui lòng chọn Giới tính của bạn</span>
                     </div>
                 </div>
+
+                <!-- 3. NGÀY SINH -->
                 <div class="input-wrap">
                     <div class="label-wrap">
-                        <label for="birthday">Ngày sinh*</label>
+                        <label asp-for="UserBirthday">Ngày sinh*</label>
                     </div>
-                    <input asp-for="UserBirthday" name="UserBirthday" id="birthday" placeholder="mm/đd/yyyy">
+                    <!-- Dùng type="date" sẽ tốt hơn type="text" để browser hỗ trợ lịch -->
+                    <input asp-for="UserBirthday" type="date" id="birthday" placeholder="mm/dd/yyyy">
                     <div class="errors-wrap">
+                        <!-- Lỗi từ Server -->
+                        <span asp-validation-for="UserBirthday" class="text-danger" style="display:block; color: red;"></span>
+                        <!-- Lỗi từ JS cũ -->
                         <span class="show-error" id="birthday-error" style="display:none;"></span>
                     </div>
                 </div>
+
+                <!-- 4. EMAIL -->
                 <div class="input-wrap">
                     <div class="label-wrap">
-                        <label for="email">Email*</label>
+                        <label asp-for="UserEmail">Email*</label>
                     </div>
-                    <input asp-for="UserEmail" name="UserEmail" type="text" id="email" placeholder="Email">
+                    <input asp-for="UserEmail" type="text" id="email" placeholder="Email">
                     <div class="errors-wrap">
-                        <span asp-validation-for="UserEmail" class="text-danger"></span>
+                        <!-- Lỗi từ Server (Bạn đã làm đúng chỗ này) -->
+                        <span asp-validation-for="UserEmail" class="text-danger" style="display:block; color: red;"></span>
+                        <!-- Lỗi từ JS cũ -->
                         <span class="show-error" id="email-error" style="display:none;"></span>
                     </div>
                 </div>
+
+                <!-- 5. MẬT KHẨU -->
                 <div class="input-wrap">
                     <div class="label-wrap">
-                        <label for="password">Mật khẩu*</label>
+                        <label asp-for="UserPassword">Mật khẩu*</label>
                     </div>
-                    <input asp-for="UserPassword" name="UserPassword" type="password" id="password" placeholder="Mật khẩu">
+                    <input asp-for="UserPassword" type="password" id="password" placeholder="Mật khẩu">
                     <div class="errors-wrap">
+                        <!-- Lỗi từ Server (Rất quan trọng để hiển thị lỗi Regex: chữ hoa, thường...) -->
+                        <span asp-validation-for="UserPassword" class="text-danger" style="display:block; color: red;"></span>
+                        <!-- Lỗi từ JS cũ -->
                         <span class="show-error" id="password-error" style="display:none;"></span>
                     </div>
                 </div>
+
+                <!-- 6. ĐỊA CHỈ -->
                 <div class="input-wrap">
                     <div class="label-wrap">
-                        <label for="address">Địa chỉ*</label>
+                        <label asp-for="Address">Địa chỉ*</label>
                     </div>
-                    <input asp-for="Address" name="Address" type="text" id="address" placeholder="Địa chỉ">
+                    <input asp-for="Address" type="text" id="address" placeholder="Địa chỉ">
                     <div class="errors-wrap">
+                        <!-- Lỗi từ Server -->
+                        <span asp-validation-for="Address" class="text-danger" style="display:block; color: red;"></span>
+                        <!-- Lỗi từ JS cũ -->
                         <span class="show-error" id="address-error" style="display:none;">*Vui lòng nhập Địa chỉ của bạn</span>
                     </div>
                 </div>
+
                 <div class="others-wrap">
                     <div class="button-wrap">
                         <button class="sign-in-btn" type="submit">ĐĂNG KÝ</button>
@@ -97,7 +133,6 @@
                     </div>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
