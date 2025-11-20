@@ -33,7 +33,7 @@
     </div>
     <!-- /.card-header -->
     <div class="card-body">
-        <form asp-area="Admin" asp-action="Users" asp-controller="Update" method="post">
+        <form asp-area="Admin" asp-controller="Users" asp-action="Update" method="post">
             <div class="form-group">
                 <label for="user_fullname">Tên người dùng</label>
                 <input type="text" class="form-control" id="user_fullname" name="UserFullname" value="@Model.UserFullname" required>

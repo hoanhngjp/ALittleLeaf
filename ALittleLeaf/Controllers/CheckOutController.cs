@@ -2,6 +2,7 @@
 using ALittleLeaf.Repository;
 using ALittleLeaf.Services;
 using ALittleLeaf.Services.Order;
+using ALittleLeaf.Utils;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -32,7 +33,9 @@ namespace ALittleLeaf.Controllers
                 return RedirectToAction("Index", "Collections");
             }
 
-            var userId = long.Parse(HttpContext.Session.GetString("UserId"));
+            var userId = User.GetUserId();
+
+            if (userId == 0) return RedirectToAction("Logout");
 
             // Gọi Service để lấy địa chỉ
             ViewData["Addresses"] = await _orderService.GetUserAddressesAsync(userId);

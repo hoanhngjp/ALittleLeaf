@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ALittleLeaf.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class OrdersController : Controller
+    public class OrdersController : AdminBaseController
     {
         private readonly AlittleLeafDecorContext _context;
 
@@ -16,23 +16,11 @@ namespace ALittleLeaf.Areas.Admin.Controllers
             _context = context;
         }
 
-        private IActionResult CheckAdminSession()
-        {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("AdminId")))
-            {
-                return RedirectToAction("Login", "Account", new { Area = "Admin" });
-            }
-            return null;
-        }
-
         // GET: /Admin/Orders
         // GET: /Admin/Orders/Index
         [HttpGet]
         public IActionResult Index(int page = 1)
         {
-            var sessionError = CheckAdminSession();
-            if (sessionError != null) return sessionError;
-
             int pageSize = 10;
 
             var bills = _context.Bills
@@ -72,9 +60,6 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult Search(DateOnly? FromDate, DateOnly? ToDate, string? PaymentStatus, bool? IsConfirmed, string? ShippingStatus, string? SearchType, string? SearchKey, int page = 1, int pageSize = 10)
         {
-            var sessionError = CheckAdminSession();
-            if (sessionError != null) return Unauthorized();
-
             var billQuery = _context.Bills
                 .Include(b => b.IdUserNavigation)
                 .Include(b => b.IdAdrsNavigation)
@@ -154,9 +139,6 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Statistics(DateOnly? fromDate, DateOnly? toDate)
         {
-            var sessionError = CheckAdminSession();
-            if (sessionError != null) return sessionError;
-
             // 1. Xử lý ngày tháng
             var today = DateOnly.FromDateTime(DateTime.Now);
             DateOnly startDate = fromDate ?? today.AddDays(-29); // Mặc định 30 ngày qua
@@ -301,9 +283,6 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult Details(int id)
         {
-            var sessionError = CheckAdminSession();
-            if (sessionError != null) return sessionError;
-
             var bill = _context.Bills
                 .Include(b => b.IdUserNavigation)
                 .Include(b => b.IdAdrsNavigation)
@@ -362,9 +341,6 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult UpdateStatus(int BillId, bool IsConfirmed, string PaymentStatus, string ShippingStatus)
         {
-            var sessionError = CheckAdminSession();
-            if (sessionError != null) return sessionError;
-
             var bill = _context.Bills.FirstOrDefault(b => b.BillId == BillId);
 
             if (bill != null)

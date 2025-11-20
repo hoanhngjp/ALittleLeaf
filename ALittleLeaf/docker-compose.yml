@@ -6,17 +6,19 @@ services:
     container_name: myaspnetapp
     ports:
       - "8080:8080"
+    env_file:
+      - ./.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-    env_file:
-          - ./.env
+      - DB_CONNECTION_STRING=Server=db;Database=ALittleLeafDecor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
     volumes:
       - ./wwwroot/img:/app/wwwroot/img
     networks:
       - alittleleaf-network
     depends_on:
       db:
-        condition: service_healthy # Đợi cho đến khi db "khỏe mạnh"
+        condition: service_healthy
+    restart: unless-stopped
 
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -25,22 +27,24 @@ services:
       - "1433:1433"
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=${MSSQL_SA_PASSWORD}
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
+      - MSSQL_PID=Developer
     volumes:
       - mssqldata:/var/opt/mssql
-      - ./SQL:/docker-entrypoint-initdb.d
+      - ./SQL:/docker-entrypoint-initdb.d 
     networks:
       - alittleleaf-network
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-C", "-Q", "select 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD} -C -Q 'SELECT 1' || exit 1"]
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 10
       start_period: 10s
+    restart: unless-stopped
 
 volumes:
   mssqldata:
-  
+
 networks:
   alittleleaf-network:
     driver: bridge

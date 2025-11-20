@@ -1,10 +1,14 @@
 ﻿using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ALittleLeaf.Services.Auth
 {
@@ -13,64 +17,47 @@ namespace ALittleLeaf.Services.Auth
         private readonly AlittleLeafDecorContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly PasswordHasher<string> _passwordHasher;
+        private readonly IConfiguration _configuration; // <-- Inject Configuration
 
-        public AuthService(AlittleLeafDecorContext context, IHttpContextAccessor httpContextAccessor)
+        public AuthService(AlittleLeafDecorContext context,
+                           IHttpContextAccessor httpContextAccessor,
+                           IConfiguration configuration)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
             _passwordHasher = new PasswordHasher<string>();
         }
-
-        private ISession Session => _httpContextAccessor.HttpContext.Session;
 
         public async Task<AuthServiceResult> LoginAsync(UserLoggedViewModel model)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == model.UserEmail);
 
             if (user == null)
-            {
                 return new AuthServiceResult { Succeeded = false, ErrorMessage = "Thông tin đăng nhập không hợp lệ." };
-            }
 
             var result = _passwordHasher.VerifyHashedPassword(null, user.UserPassword, model.UserPassword);
-            bool isPasswordCorrect = result == PasswordVerificationResult.Success;
-
-            if (!isPasswordCorrect)
-            {
+            if (result != PasswordVerificationResult.Success)
                 return new AuthServiceResult { Succeeded = false, ErrorMessage = "Thông tin đăng nhập không hợp lệ." };
-            }
 
             if (!user.UserIsActive)
-            {
                 return new AuthServiceResult { Succeeded = false, ErrorMessage = "Tài khoản của bạn đã bị khóa." };
-            }
 
-            // Đăng nhập thành công -> Set Session
-            Session.SetString("UserEmail", user.UserEmail);
-            Session.SetString("UserFullname", user.UserFullname);
-            Session.SetString("UserId", user.UserId.ToString());
-
-            return new AuthServiceResult { Succeeded = true, User = user };
+            // --- THAY ĐỔI LỚN: KHÔNG SET SESSION NỮA, MÀ SINH TOKEN ---
+            return await GenerateJwtToken(user);
         }
 
         public async Task<AuthServiceResult> RegisterAsync(RegisterViewModel model)
         {
-            // 1. Kiểm tra Email
             if (await _context.Users.AnyAsync(u => u.UserEmail == model.UserEmail))
-            {
                 return new AuthServiceResult { Succeeded = false, ErrorMessage = "Email đã tồn tại." };
-            }
 
-            // 2. Hash mật khẩu
             string hashedPass = _passwordHasher.HashPassword(null, model.UserPassword);
 
-            // 3. Bắt đầu Transactio (Rất quan trọng!)
-            // Đảm bảo việc tạo User VÀ Address cùng thành công, hoặc cùng thất bại
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    // 4. Tạo User
                     var user = new User
                     {
                         UserEmail = model.UserEmail,
@@ -81,18 +68,17 @@ namespace ALittleLeaf.Services.Auth
                         UserIsActive = true,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        UserRole = model.UserRole // Thường nên là "customer"
+                        UserRole = model.UserRole
                     };
                     _context.Users.Add(user);
-                    await _context.SaveChangesAsync(); // Lưu để lấy UserId
+                    await _context.SaveChangesAsync();
 
-                    // 5. Tạo AddressList
                     var address = new AddressList
                     {
                         IdUser = user.UserId,
                         AdrsFullname = user.UserFullname,
                         AdrsAddress = model.Address,
-                        AdrsPhone = "N/A", // Sẽ cập nhật sau
+                        AdrsPhone = "N/A",
                         AdrsIsDefault = true,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now
@@ -100,30 +86,75 @@ namespace ALittleLeaf.Services.Auth
                     _context.AddressLists.Add(address);
                     await _context.SaveChangesAsync();
 
-                    // 6. Mọi thứ OK -> Commit
                     await transaction.CommitAsync();
 
-                    // 7. Tự động đăng nhập
-                    Session.SetString("UserEmail", user.UserEmail);
-                    Session.SetString("UserFullname", user.UserFullname);
-                    Session.SetString("UserId", user.UserId.ToString());
-
-                    return new AuthServiceResult { Succeeded = true, User = user };
+                    // --- THAY ĐỔI: SINH TOKEN SAU KHI ĐĂNG KÝ ---
+                    return await GenerateJwtToken(user);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // 8. Nếu có lỗi (ví dụ DB sập), Rollback
                     await transaction.RollbackAsync();
-                    // Log lỗi ex.Message
-                    return new AuthServiceResult { Succeeded = false, ErrorMessage = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại." };
+                    return new AuthServiceResult { Succeeded = false, ErrorMessage = "Lỗi hệ thống." };
                 }
             }
         }
 
         public async Task LogoutAsync()
         {
-            Session.Clear();
-            await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            // Với JWT, logout phía server chủ yếu là xóa cookie ở Controller.
+            // Ở đây ta có thể đánh dấu RefreshToken là revoked (nếu muốn chặt chẽ hơn).
+            await Task.CompletedTask;
+        }
+
+        // --- HÀM PRIVATE: SINH JWT VÀ REFRESH TOKEN ---
+        private async Task<AuthServiceResult> GenerateJwtToken(User user)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            // Lấy SecretKey từ .env (thông qua Configuration)
+            var key = Encoding.ASCII.GetBytes(_configuration["JWT_SECRET"]);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim("Id", user.UserId.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, user.UserEmail),
+                    new Claim(JwtRegisteredClaimNames.Sub, user.UserEmail),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim("FullName", user.UserFullname),
+                    new Claim(ClaimTypes.Role, user.UserRole) // Quan trọng để phân quyền Admin/User
+                }),
+                // Access Token sống 30 phút
+                Expires = DateTime.UtcNow.AddMinutes(30),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                // Bạn nên thêm Issuer và Audience vào appsettings.json và đọc ở đây
+            };
+
+            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
+            var jwtToken = jwtTokenHandler.WriteToken(token);
+
+            // Tạo Refresh Token
+            var refreshToken = new RefreshToken
+            {
+                JwtId = token.Id,
+                IsUsed = false,
+                IsRevoked = false,
+                UserId = user.UserId,
+                AddedDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddDays(30), // Refresh Token sống 30 ngày
+                Token = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString()
+            };
+
+            await _context.RefreshTokens.AddAsync(refreshToken);
+            await _context.SaveChangesAsync();
+
+            return new AuthServiceResult
+            {
+                Succeeded = true,
+                User = user,
+                AccessToken = jwtToken,
+                RefreshToken = refreshToken.Token
+            };
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using ALittleLeaf.Controllers;
 using ALittleLeaf.Repository;
+using ALittleLeaf.Services.Auth;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -11,16 +12,13 @@ namespace ALittleLeaf.Areas.Admin.Controllers
     [Area("Admin")]
     public class AccountController : Controller
     {
-        private readonly AlittleLeafDecorContext _context;
-        private readonly IPasswordHasher<string> _passwordHasher;
+        private readonly IAuthService _authService;
 
-        public AccountController(AlittleLeafDecorContext context)
+        public AccountController(IAuthService authService)
         {
-            _context = context;
-            _passwordHasher = new PasswordHasher<string>();
+            _authService = authService;
         }
 
-        // GET: /Admin/Account/Login
         [HttpGet]
         public IActionResult Login(string? ReturnUrl)
         {
@@ -28,63 +26,60 @@ namespace ALittleLeaf.Areas.Admin.Controllers
             return View();
         }
 
-        // POST: /Admin/Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(UserLoggedViewModel model, string? ReturnUrl)
+        public async Task<IActionResult> Login(UserLoggedViewModel model, string? ReturnUrl)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(model);
+
+            var result = await _authService.LoginAsync(model);
+
+            if (result.Succeeded)
             {
-                // Tìm user có role admin
-                var user = _context.Users
-                    .FirstOrDefault(u => u.UserEmail == model.UserEmail && u.UserRole == "admin");
-
-                if (user != null)
+                // Kiểm tra quyền Admin
+                if (result.User.UserRole != "admin")
                 {
-                    var result = _passwordHasher.VerifyHashedPassword(null, user.UserPassword, model.UserPassword);
-                    bool isPasswordCorrect = result == PasswordVerificationResult.Success;
-
-                    if (isPasswordCorrect)
-                    {
-                        if (user.UserIsActive)
-                        {
-                            HttpContext.Session.SetString("AdminEmail", user.UserEmail);
-                            HttpContext.Session.SetString("AdminFullname", user.UserFullname);
-                            HttpContext.Session.SetString("AdminId", user.UserId.ToString());
-
-                            if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
-                            {
-                                return Redirect(ReturnUrl);
-                            }
-                            else
-                            {
-                                return RedirectToAction("Index", "Dashboard");
-                            }
-                        }
-                        else
-                        {
-                            ViewBag.ErrorMessage = "Tài khoản của bạn đã bị khóa.";
-                        }
-                    }
-                    else
-                    {
-                        ViewBag.ErrorMessage = "Thông tin đăng nhập không hợp lệ.";
-                    }
+                    ViewBag.ErrorMessage = "Bạn không có quyền truy cập Admin.";
+                    return View(model);
                 }
-                else
+
+                // LƯU COOKIE
+                Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions
                 {
-                    ViewBag.ErrorMessage = "Thông tin đăng nhập không hợp lệ.";
-                }
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddMinutes(30)
+                });
+
+                // Lưu Refresh Token (nếu cần dùng để renew sau này)
+                Response.Cookies.Append("X-Refresh-Token", result.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true, 
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddDays(30)
+                });
+
+                // Vẫn lưu Session cho các logic cũ chưa kịp chuyển (nếu có)
+                HttpContext.Session.SetString("AdminEmail", result.User.UserEmail);
+                HttpContext.Session.SetString("AdminFullname", result.User.UserFullname);
+
+                if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)) return Redirect(ReturnUrl);
+                return RedirectToAction("Index", "Dashboard");
             }
-            return View("Login", model);
+
+            ViewBag.ErrorMessage = result.ErrorMessage;
+            return View(model);
         }
 
-        // GET: /Admin/Account/Logout
         [HttpGet]
         public IActionResult Logout()
         {
+            // Xóa Cookie
+            Response.Cookies.Delete("X-Access-Token");
+            Response.Cookies.Delete("X-Refresh-Token");
+
+            // Xóa Session
             HttpContext.Session.Clear();
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return RedirectToAction("Login", "Account");
         }

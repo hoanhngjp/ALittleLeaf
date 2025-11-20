@@ -1,4 +1,5 @@
-﻿@model List<ALittleLeaf.Models.Bill>
+﻿@using ALittleLeaf.Utils
+@model List<ALittleLeaf.Models.Bill>
 @section Styles {
     <link rel="stylesheet" href="~/css/account.css">
 }
@@ -37,14 +38,8 @@
                 <div class="row-inside">
                     <div class="customer-sidebar">
                         <p class="title-detail">Thông tin tài khoản</p>
-                        @if (ViewContext.HttpContext.Session.GetString("UserFullname") != null)
-                        {
-                            <h2 class="account-name"> @ViewContext.HttpContext.Session.GetString("UserFullname") </h2>
-                        }
-                        @if (ViewContext.HttpContext.Session.GetString("UserEmail") != null)
-                        {
-                            <p class="account-email"> @ViewContext.HttpContext.Session.GetString("UserEmail") </p>
-                        }
+                        <h2 class="account-name"> @User.GetUserFullName() </h2>
+                        <p class="account-email"> @User.GetUserEmail() </p>
                         <div class="address">
                             <a id="view-address" asp-controller="Address" asp-action="Index">Xem địa chỉ</a>
                         </div>

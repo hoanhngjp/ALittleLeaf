@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let formData = new FormData();
         formData.append('addressId', addressId);
 
-        fetch('/OrderInfo/GetAddressInfo', {
+        fetch('/CheckOut/GetAddressInfo', {
             method: 'POST',
             body: formData
         })

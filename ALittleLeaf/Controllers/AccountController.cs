@@ -1,6 +1,7 @@
 ﻿using ALittleLeaf.Filters;
 using ALittleLeaf.Services.Auth;
 using ALittleLeaf.Services.Order;
+using ALittleLeaf.Utils;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,8 +21,10 @@ namespace ALittleLeaf.Controllers
         [CheckLogin]
         public async Task<IActionResult> Index()
         {
-            // Đây là trang Lịch sử đơn hàng
-            var userId = long.Parse(HttpContext.Session.GetString("UserId"));
+            var userId = User.GetUserId();
+
+            if (userId == 0) return RedirectToAction("Logout");
+
             var orders = await _orderService.GetOrderHistoryAsync(userId);
 
             return View(orders); 
@@ -60,23 +63,28 @@ namespace ALittleLeaf.Controllers
             return View();
         }
 
-
         [HttpPost]
         public async Task<IActionResult> Login(UserLoggedViewModel model, string? ReturnUrl)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
             var result = await _authService.LoginAsync(model);
 
             if (result.Succeeded)
             {
-                if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                // LƯU COOKIE
+                Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions
                 {
-                    return Redirect(ReturnUrl);
-                }
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddMinutes(30)
+                });
+
+                // Vẫn lưu Session UserId cho SiteBaseController/Cart dùng (tạm thời)
+                HttpContext.Session.SetString("UserId", result.User.UserId.ToString());
+                HttpContext.Session.SetString("UserFullname", result.User.UserFullname);
+
+                if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)) return Redirect(ReturnUrl);
                 return RedirectToAction("Index", "Account");
             }
 
@@ -115,8 +123,9 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
-            await _authService.LogoutAsync();
-            return RedirectToAction("Index", "Home"); 
+            Response.Cookies.Delete("X-Access-Token");
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index", "Home");
         }
     }
 }

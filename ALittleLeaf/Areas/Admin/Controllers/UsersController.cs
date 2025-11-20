@@ -3,6 +3,7 @@ using ALittleLeaf.Controllers;
 using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.ViewModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,9 +12,11 @@ namespace ALittleLeaf.Areas.Admin.Controllers
     public class UsersController : AdminBaseController
     {
         private readonly AlittleLeafDecorContext _context;
-        public UsersController(AlittleLeafDecorContext context)
+        private readonly IPasswordHasher<string> _passwordHasher;
+        public UsersController(AlittleLeafDecorContext context, IPasswordHasher<string> passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         // GET: /Admin/Users/Index
@@ -205,7 +208,7 @@ namespace ALittleLeaf.Areas.Admin.Controllers
             if (user == null)
             {
                 TempData["ErrorMessage"] = "Người dùng không tồn tại.";
-                return RedirectToAction("Index", "Users"); // <-- SỬA
+                return RedirectToAction("Index", "Users");
             }
 
             user.UserEmail = UserEmail;
@@ -217,8 +220,7 @@ namespace ALittleLeaf.Areas.Admin.Controllers
 
             if (!string.IsNullOrEmpty(UserNewPassword))
             {
-                var hashPass = new HashPasswordController();
-                user.UserPassword = hashPass.HashPassword(UserNewPassword);
+                user.UserPassword = _passwordHasher.HashPassword(null, UserNewPassword);
             }
 
             try
@@ -232,7 +234,7 @@ namespace ALittleLeaf.Areas.Admin.Controllers
                 TempData["ErrorMessage"] = "Đã xảy ra lỗi khi cập nhật: " + ex.Message;
             }
 
-            return RedirectToAction("Index", "Users");
+            return RedirectToAction("Index", "Users", "Admin");
         }
 
         [HttpGet]
