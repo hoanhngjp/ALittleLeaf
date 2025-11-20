@@ -1,4 +1,5 @@
-﻿@{
+﻿@using ALittleLeaf.Utils
+@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -48,7 +49,7 @@
                                         <div class="logged-in-customer-information-avatar gravatar" style="background-image: url(//www.gravatar.com/avatar/0b5f1cba1f77d746ad0f059ff7061a5e.jpg?s=100&d=blank);filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='//www.gravatar.com/avatar/0b5f1cba1f77d746ad0f059ff7061a5e.jpg?s=100&d=blank', sizingMethod='scale')"></div>
                                     </div>
                                     <p class="logged-in-customer-information-paragraph">
-                                        @ViewContext.HttpContext.Session.GetString("UserFullname") (@ViewContext.HttpContext.Session.GetString("UserEmail"))
+                                        @User.GetUserFullName() (@User.GetUserEmail())
                                         <br>
                                         <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
                                     </p>
@@ -110,9 +111,8 @@
             <div class="main-footer footer-powered-by">Powered by HoanhNgjp</div>
         </div>
         <div class="checkout-sidebar">
-            @Html.Partial("_SideBarContent");
+            @Html.Partial("_SideBarContent")
         </div>
-
     </div>
 </body>
 </html>

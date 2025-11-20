@@ -1,6 +1,7 @@
 ﻿using ALittleLeaf.Filters;
 using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
+using ALittleLeaf.Utils;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +19,13 @@ namespace ALittleLeaf.Controllers
         }
         public IActionResult Index()
         {
-            var userId = HttpContext.Session.GetString("UserId");
+            var userId = User.GetUserId();
+
+            if (userId == 0) return RedirectToAction("Logout");
 
             // Lấy danh sách địa chỉ từ cơ sở dữ liệu
             var addresses = _context.AddressLists
-                .Where(a => a.IdUser == long.Parse(userId))
+                .Where(a => a.IdUser == userId)
                 .ToList();
 
             ViewData["Addresses"] = addresses;
@@ -117,21 +120,21 @@ namespace ALittleLeaf.Controllers
         {
             try
             {
-                var userId = HttpContext.Session.GetString("UserId");
+                var userId = User.GetUserId();
                 // Tạo đối tượng Address mới
                 var newAddress = new AddressList
                 {
                     AdrsFullname = AdrsFullname,
                     AdrsAddress = AdrsAddress,
                     AdrsPhone = AdrsPhone,
-                    AdrsIsDefault = AdrsIsDefault == 1, // Chuyển đổi thành kiểu bool
-                    IdUser = long.Parse(userId) // Giả sử bạn có cách lấy ID người dùng hiện tại
+                    AdrsIsDefault = AdrsIsDefault == 1,
+                    IdUser = userId 
                 };
 
                 // Nếu địa chỉ mới được đặt làm mặc định, cập nhật các địa chỉ khác
                 if (newAddress.AdrsIsDefault)
                 {
-                    var otherAddresses = _context.AddressLists.Where(a => a.IdUser == long.Parse(userId));
+                    var otherAddresses = _context.AddressLists.Where(a => a.IdUser == userId);
 
                     foreach (var address in otherAddresses)
                     {
@@ -139,7 +142,6 @@ namespace ALittleLeaf.Controllers
                     }
                 }
 
-                // Lưu địa chỉ mới vào cơ sở dữ liệu
                 _context.AddressLists.Add(newAddress);
                 _context.SaveChanges();
 
@@ -148,7 +150,6 @@ namespace ALittleLeaf.Controllers
             }
             catch (Exception ex)
             {
-                // Xử lý ngoại lệ và hiển thị thông báo lỗi
                 TempData["ErrorMessage"] = $"Đã có lỗi xảy ra: {ex.Message}";
                 return View(); // Hoặc trả về một View lỗi
             }

@@ -3,13 +3,13 @@
 }
 <header>
     <div class="homeLogo">
-        <a asp-controller="Home" asp.action="Index"><img src="~/img/logo.webp" alt=""></a>
+        <a asp-controller="Home" asp-action="Index"><img src="~/img/logo.webp" alt=""></a>
     </div>
     <div class="menu">
         <ul>
-            <li><a asp-controller="Home" asp.action="Index">Trang chủ</a></li>
+            <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
             <li>
-                <a href="~/collections">Sản phẩm <ion-icon name="chevron-down-outline"></ion-icon></a>
+                <a asp-controller="Collections" asp-action="Index">Sản phẩm <ion-icon name="chevron-down-outline"></ion-icon></a>
                 @await Component.InvokeAsync("HeaderCategory")
             </li>
             <li><a href="">Về A Little Leaf</a></li>
@@ -17,7 +17,7 @@
     </div>
     <div class="headerOthers">
         <ul class="others">
-            @if (ViewContext.HttpContext.Session.GetString("UserEmail") != null)
+            @if (Context.User.Identity.IsAuthenticated)
             {
                 <!-- Nếu Login rồi -->
                 <li><a asp-controller="Account" asp-action="Index"><ion-icon name="person-circle-outline"></ion-icon></a></li>
@@ -25,7 +25,7 @@
             else
             {
                 <!-- Nếu chưa Login -->
-                <li><a asp-controller="Account" asp-action="Login"><ion-icon name="person-circle-outline"></ion-icon></a></li>
+                <li><a asp-controller="Account" asp-action="Login" asp-route-ReturnUrl="@Context.Request.Path@Context.Request.QueryString"><ion-icon name="person-circle-outline"></ion-icon></a></li>
             }
             <li><a href="" id="open-site-search"><ion-icon name="search-outline"></ion-icon></a></li>
             <li>

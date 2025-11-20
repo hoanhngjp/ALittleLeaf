@@ -2102,3 +2102,32 @@ REFERENCES [dbo].[Product] ([product_id])
 GO
 ALTER TABLE [dbo].[Product_Images] CHECK CONSTRAINT [FK__Product_I__id_pr__5AEE82B9]
 GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[RefreshToken](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [bigint] NOT NULL,
+	[Token] [nvarchar](max) NOT NULL,
+	[JwtId] [nvarchar](max) NOT NULL,
+	[IsUsed] [bit] NOT NULL,
+	[IsRevoked] [bit] NOT NULL,
+	[AddedDate] [datetime2](7) NOT NULL,
+	[ExpiryDate] [datetime2](7) NOT NULL,
+ CONSTRAINT [PK_RefreshToken] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+-- Tạo khóa ngoại liên kết với bảng User
+ALTER TABLE [dbo].[RefreshToken]  WITH CHECK ADD  CONSTRAINT [FK_RefreshToken_User_UserId] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([user_id])
+ON DELETE CASCADE
+GO
+
+ALTER TABLE [dbo].[RefreshToken] CHECK CONSTRAINT [FK_RefreshToken_User_UserId]
+GO
