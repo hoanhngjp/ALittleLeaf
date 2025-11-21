@@ -80,10 +80,6 @@ namespace ALittleLeaf.Controllers
                     Expires = DateTime.UtcNow.AddMinutes(30)
                 });
 
-                // Vẫn lưu Session UserId cho SiteBaseController/Cart dùng (tạm thời)
-                HttpContext.Session.SetString("UserId", result.User.UserId.ToString());
-                HttpContext.Session.SetString("UserFullname", result.User.UserFullname);
-
                 if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)) return Redirect(ReturnUrl);
                 return RedirectToAction("Index", "Account");
             }

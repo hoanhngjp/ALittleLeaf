@@ -21,12 +21,6 @@ namespace ALittleLeaf.Filters
                         { "ReturnUrl", context.HttpContext.Request.Path }
                     });
             }
-
-            // 2. (Tùy chọn) Kiểm tra Session userId để đồng bộ với logic cũ (như CartService)
-            // Nếu bạn muốn chắc chắn Session cũng phải có
-            // var sessionUserId = context.HttpContext.Session.GetString("UserId");
-            // if (string.IsNullOrEmpty(sessionUserId)) { ... }
-
             base.OnActionExecuting(context);
         }
     }
