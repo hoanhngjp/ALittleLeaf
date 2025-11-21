@@ -51,7 +51,7 @@ html, body{
 /*-----------------------Menu-------------------------------*/
 .menu-wrap{
     flex: auto;
-    width: 30%;
+    width: 100%;
     padding-top: 50px;
 }
 .menu-wrap ul{
@@ -223,15 +223,104 @@ a.current{
     font-weight: bold;
 }
 
-.item-wrap > .item-picture > .sold-out > span {
-    right: 10px;
-    bottom: 10px;
+.item-picture a {
+    display: block; /* Để thẻ a bao khối */
+    position: relative;
+    width: 100%; /* Đảm bảo thẻ a chiếm hết chiều rộng nếu cần */
+    height: 100%;
+}
+
+.item-picture .sold-out {
     position: absolute;
+    bottom: 15px; /* Cách đáy ảnh 15px */
+    right: 40px;
+    z-index: 10;
+    background: #ffffff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+    /* 3. Style chữ bên trong */
+.item-picture .sold-out span {
     font-size: 12px;
-    line-height: 1;
-    padding: 5px 10px;
     font-weight: bold;
-    z-index: 9;
     color: #001812;
-    background: #fff;
+    line-height: 1;
+    display: block;
+}
+
+/* --- Sidebar Layout --- */
+.sidebar-wrap {
+    flex: auto;
+    width: 35%;
+    padding-top: 50px;
+    padding-right: 20px;
+}
+
+/* --- Filter Price Wrapper --- */
+.filter-price-wrap {
+    margin-top: 40px;
+    padding-left: 20px; /* Canh lề thẳng với menu trên */
+}
+
+.filter-price-wrap h3 {
+    font-size: 16px;
+    color: #001812;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-transform: uppercase; /* Làm tiêu đề in hoa cho đẹp */
+    letter-spacing: 1px;
+}
+
+/* --- Price List Styles --- */
+.price-list {
+    list-style: none;
+}
+
+.price-list li {
+    margin-bottom: 10px;
+}
+
+.price-list a {
+    text-decoration: none;
+    color: #001812; /* Màu chữ mặc định */
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.price-list a:hover {
+    color: #518372;
+}
+
+/* Style cho icon checkbox */
+.price-list a i {
+    margin-right: 10px;
+    font-size: 16px;
+    color: #ccc; /* Màu icon khi chưa chọn */
+}
+
+/* Style khi đang Active (Được chọn) */
+.price-list a.active {
+    color: #2a5f4b;
+    font-weight: bold;
+}
+
+.price-list a.active i {
+    color: #2a5f4b; /* Đổi màu icon khi được chọn */
+}
+
+/* Nút bỏ lọc */
+.price-list li.clear-filter {
+    margin-top: 15px;
+    border-top: 1px dashed #ccc;
+    padding-top: 10px;
+}
+
+.price-list li.clear-filter a {
+    color: #d9534f; /* Màu đỏ nhẹ để báo hiệu nút xóa */
+    font-size: 13px;
 }

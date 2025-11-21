@@ -37,7 +37,7 @@ namespace ALittleLeaf.Services.Product
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<ProductServiceResult> GetPaginatedProductsAsync(int? categoryId, string keyword, int page, int pageSize)
+        public async Task<ProductServiceResult> GetPaginatedProductsAsync(int? categoryId, string keyword, int? minPrice, int? maxPrice, int page, int pageSize)
         {
             var productsQuery = _context.Products
                 .Include(p => p.ProductImages)
@@ -73,6 +73,16 @@ namespace ALittleLeaf.Services.Product
             {
                 productsQuery = productsQuery.Where(p => p.ProductName.Contains(keyword));
                 pageTitle = keyword; // Gán từ khóa vào title để ViewBag dùng
+            }
+
+            if (minPrice.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.ProductPrice >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.ProductPrice <= maxPrice.Value);
             }
 
             int totalItems = await productsQuery.CountAsync();

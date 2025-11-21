@@ -28,7 +28,7 @@ namespace ALittleLeaf.Controllers
             }
 
             // Gọi Service
-            var result = await _productService.GetPaginatedProductsAsync(null, q, page, 15);
+            var result = await _productService.GetPaginatedProductsAsync(null, q, null, null, page, 15);
 
             if (result.Pagination.TotalItems == 0)
             {
