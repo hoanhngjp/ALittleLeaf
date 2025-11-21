@@ -4,19 +4,111 @@
 }
 @{
     ViewData["Title"] = "Danh mục sản phẩm";
+    int? currentMin = ViewBag.MinPrice as int?;
+    int? currentMax = ViewBag.MaxPrice as int?;
 }
 <!--------------------------------------------Collections----------------------------------------------------->
 <div class="collections-wrap">
     <!--------------------------------------------DIRECT----------------------------------------------------->
     <div class="direct">
         <div class="direct-items">
-            <a asp-controller="Home" asp.action="Index">Trang chủ</a> <p> / <a href="">Danh mục</a> <p> / </p>@ViewBag.CategoryName</p>
+            <a asp-controller="Home" asp.action="Index">Trang chủ</a> 
+            <p> / <a asp-controller="Collections" asp-action="Index">Danh mục</a> <p> / </p>@ViewBag.CategoryName</p>
         </div>
     </div>
     <!--------------------------------------------COLLECTIONS----------------------------------------------------->
     <div class="collections-content">
         <!--------------------------------------------Collections-MENU----------------------------------------------------->
-        @await Component.InvokeAsync("CollectionsMenu")
+        <div class="sidebar-wrap">
+            @await Component.InvokeAsync("CollectionsMenu")
+            <div class="filter-price-wrap">
+                <h3>Mức giá</h3>
+                <ul class="price-list">
+                    <li>
+                        <a asp-controller="Collections" asp-action="Index"
+                           asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-maxPrice="500000"
+                           class="@(currentMax == 500000 && currentMin == null ? "active" : "")">
+
+                            @if (currentMax == 500000 && currentMin == null)
+                            {
+                                <i class="fa-regular fa-check-square"></i>
+                            }
+                            else
+                            {
+                                <i class="fa-regular fa-square"></i>
+                            }
+                            <span>Dưới 500.000₫</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-controller="Collections" asp-action="Index"
+                           asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-minPrice="500000"
+                           asp-route-maxPrice="1000000"
+                           class="@(currentMin == 500000 && currentMax == 1000000 ? "active" : "")">
+
+                            @if (currentMin == 500000 && currentMax == 1000000)
+                            {
+                                <i class="fa-regular fa-check-square"></i>
+                            }
+                            else
+                            {
+                                <i class="fa-regular fa-square"></i>
+                            }
+                            <span>500.000₫ - 1.000.000₫</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-controller="Collections" asp-action="Index"
+                           asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-minPrice="1000000"
+                           asp-route-maxPrice="2000000"
+                           class="@(currentMin == 1000000 && currentMax == 2000000 ? "active" : "")">
+
+                            @if (currentMin == 1000000 && currentMax == 2000000)
+                            {
+                                <i class="fa-regular fa-check-square"></i>
+                            }
+                            else
+                            {
+                                <i class="fa-regular fa-square"></i>
+                            }
+                            <span>1.000.000₫ - 2.000.000₫</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-controller="Collections" asp-action="Index"
+                           asp-route-categoryId="@ViewBag.CategoryId"
+                           asp-route-minPrice="2000000"
+                           class="@(currentMin == 2000000 && currentMax == null ? "active" : "")">
+
+                            @if (currentMin == 2000000 && currentMax == null)
+                            {
+                                <i class="fa-regular fa-check-square"></i>
+                            }
+                            else
+                            {
+                                <i class="fa-regular fa-square"></i>
+                            }
+                            <span>Trên 2.000.000₫</span>
+                        </a>
+                    </li>
+
+                    @if (currentMin != null || currentMax != null)
+                    {
+                        <li class="clear-filter">
+                            <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId">
+                                <i class="fa-solid fa-xmark"></i> Bỏ lọc giá
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
         <!--------------------------------------------COLLECTIONS-ITEMS----------------------------------------------------->
         <div class="collections-item-wrap">
             <div class="collections-heading-wrap">
@@ -29,13 +121,13 @@
                 {
                     <div class="item-wrap">
                         <div class="item-picture">
-                            @if(product.ProductQuantity == 0)
-                            {
-                                <div class="sold-out">
-                                    <span>Hết hàng</span>
-                                </div>
-                            }
                             <a asp-controller="Product" asp.action="Index" asp-route-productId="@product.ProductId" asp-route-idCategory="@product.IdCategory">
+                                @if (product.ProductQuantity == 0)
+                                {
+                                    <div class="sold-out">
+                                        <span>Hết hàng</span>
+                                    </div>
+                                }
                                 <img src="~/img/prdImg/@product.ProductImg" alt="@product.ProductName">
                             </a>
                         </div>
@@ -54,7 +146,11 @@
                 <!-- Nút "Previous Page" -->
                 @if (ViewBag.Pagination.CurrentPage > 1)
                 {
-                    <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@(ViewBag.Pagination.CurrentPage - 1)" class="prevPage">
+                    <a asp-controller="Collections" asp-action="Index"
+                       asp-route-categoryId="@ViewBag.CategoryId"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       asp-route-page="@(ViewBag.Pagination.CurrentPage - 1)" class="prevPage">
                         <i class="fa-solid fa-arrow-left-long"></i>
                     </a>
                 }
@@ -63,8 +159,12 @@
                     <!-- Hiển thị 4 trang đầu tiên -->
                     @for (int i = 1; i <= Math.Min(4, ViewBag.Pagination.TotalPages); i++)
                     {
-                        <li >
-                            <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
+                        <li>
+                            <a asp-controller="Collections" asp-action="Index"
+                               asp-route-categoryId="@ViewBag.CategoryId"
+                               asp-route-minPrice="@ViewBag.MinPrice"
+                               asp-route-maxPrice="@ViewBag.MaxPrice"
+                               asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
                         </li>
                     }
 
@@ -80,7 +180,11 @@
                         @for (int i = Math.Max(5, ViewBag.Pagination.CurrentPage - 1); i <= Math.Min(ViewBag.Pagination.CurrentPage + 1, ViewBag.Pagination.TotalPages - 4); i++)
                         {
                             <li>
-                                <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
+                                <a asp-controller="Collections" asp-action="Index" 
+                                   asp-route-categoryId="@ViewBag.CategoryId"
+                                   asp-route-minPrice="@ViewBag.MinPrice"
+                                   asp-route-maxPrice="@ViewBag.MaxPrice"
+                                   asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
                             </li>
                         }
                     }
@@ -95,7 +199,11 @@
                     @for (int i = Math.Max(ViewBag.Pagination.TotalPages - 3, 5); i <= ViewBag.Pagination.TotalPages; i++)
                     {
                         <li>
-                            <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
+                            <a asp-controller="Collections" asp-action="Index" 
+                               asp-route-categoryId="@ViewBag.CategoryId"
+                               asp-route-minPrice="@ViewBag.MinPrice"
+                               asp-route-maxPrice="@ViewBag.MaxPrice"
+                               asp-route-page="@i" class="@(i == ViewBag.Pagination.CurrentPage ? "current" : "")">@i</a>
                         </li>
                     }
                 </ul>
@@ -103,7 +211,11 @@
                 <!-- Nút "Next Page" -->
                 @if (ViewBag.Pagination.CurrentPage < ViewBag.Pagination.TotalPages)
                 {
-                    <a asp-controller="Collections" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@(ViewBag.Pagination.CurrentPage + 1)" class="nextPage">
+                    <a asp-controller="Collections" asp-action="Index" 
+                       asp-route-categoryId="@ViewBag.CategoryId"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       asp-route-page="@(ViewBag.Pagination.CurrentPage + 1)" class="nextPage">
                         <i class="fa-solid fa-arrow-right-long"></i>
                     </a>
                 }
