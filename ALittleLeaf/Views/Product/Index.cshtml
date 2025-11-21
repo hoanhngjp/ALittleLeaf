@@ -8,6 +8,9 @@
 }
 @{
     ViewData["Title"] = @Model.ProductName;
+    bool isUserLoggedIn = User.Identity?.IsAuthenticated ?? false;
+
+    string currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 <!--------------------------------------------PRODUCT----------------------------------------------------->
 <div class="productDetail-page">
@@ -64,8 +67,14 @@
                     <div class="product-content-desc">
                         <div class="product-title">
                             <h1>@Model.ProductName</h1>
-                                <span id="pro-sku">SKU: BPHTBGUHH-1</span>
+                            <span id="pro-sku">SKU: BPHTBGUHH-1</span>
                         </div>
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert-error" style="color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 14px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> @TempData["Error"]
+                            </div>
+                        }
                         <div class="product-price">
                             <span class="pro-price">@Model.ProductPrice.ToString("N0")₫</span>
                         </div>
@@ -74,21 +83,36 @@
                             <div class="selector-actions">
                                 <div class="quantity-area">
                                     <input id="minusBtn" class="qty-btn" type="button" value="-">
-                                    <input type="text" id="quantity" class="quantity-selector" name="quantity" value="1" min="1" data-product-id="@Model.ProductId">
+                                    <input type="number" id="quantity" class="quantity-selector" name="quantity" value="1" min="1" data-product-id="@Model.ProductId">
                                     <input id="plusBtn" class="qty-btn" type="button" value="+">
                                 </div>
                                 @if(Model.QuantityInStock > 0)
-                                {
-                                    <div class="wrap-addcart">
-                                        <button type="submit" id="add-to-cart" class="addToCartProduct">Thêm vào giỏ</button>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="wrap-addcart">
-                                        <button type="submit" id="add-to-cart" class="addToCartProduct" style="background-color: red" disabled>HẾT HÀNG</button>
-                                    </div>
-                                }
+{
+    <div class="wrap-addcart">
+        @if (isUserLoggedIn)
+        {
+            // --- TRƯỜNG HỢP 1: ĐÃ LOGIN ---
+            // Hiển thị nút Submit để POST form bình thường
+            <button type="submit" id="add-to-cart" class="addToCartProduct">Thêm vào giỏ</button>
+        }
+        else
+        {
+            // --- TRƯỜNG HỢP 2: CHƯA LOGIN ---
+            // Hiển thị thẻ A dẫn đến trang Login
+            // ReturnUrl = Trang sản phẩm hiện tại (để login xong quay lại đây mua tiếp)
+            <a href="/Account/Login?ReturnUrl=@System.Net.WebUtility.UrlEncode(currentUrl)" 
+               class="addToCartProduct"">
+                Thêm vào giỏ
+            </a>
+        }
+    </div>
+}
+else
+{
+    <div class="wrap-addcart">
+        <button type="button" class="addToCartProduct" style="background-color: red; cursor: not-allowed;" disabled>HẾT HÀNG</button>
+    </div>
+}
                             </div>
                         </form>
                         <div class="product-description">

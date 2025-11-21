@@ -1,13 +1,10 @@
 ﻿@{
     var cart = ViewData["Cart"] as List<ALittleLeaf.ViewModels.CartItemViewModel> ?? new List<ALittleLeaf.ViewModels.CartItemViewModel>();
+    ViewData["Title"] = "Giỏ hàng";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/cart.css" />
-}
-
-@{
-    ViewData["Title"] = "Giỏ hàng";
 }
 <!--------------------------------------------LAYOUT-CART----------------------------------------------------->
 <div class="layout-cart">
