@@ -3,6 +3,7 @@ using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
 using ALittleLeaf.Services.Order;
 using ALittleLeaf.Services.VNPay;
+using ALittleLeaf.Utils;
 using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,12 @@ namespace ALittleLeaf.Controllers
             var bill = await _orderService.CreateOrderFromSessionAsync("VNPAY", "pending_vnpay");
 
             // 2. Tạo model thanh toán
-            var model = new PaymentInformationModel { /* ... */ };
+            var model = new PaymentInformationModel {
+                Amount = bill.TotalAmount,
+                Name = "Khach hang " + bill.IdUser,
+                OrderDescription = $"Thanh toan don hang {bill.BillId}",
+                OrderType = "other"
+            };
             var url = _vnPayService.CreatePaymentUrl(model, HttpContext, bill.BillId.ToString());
 
             return Redirect(url);
@@ -109,7 +115,7 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public async Task<IActionResult> RetryPayment(int billId)
         {
-            var userId = long.Parse(HttpContext.Session.GetString("UserId"));
+            var userId = User.GetUserId();
 
             // 1. Lấy đơn hàng và kiểm tra bảo mật (đơn hàng phải là của user này)
             var bill = await _context.Bills.FirstOrDefaultAsync(b => b.BillId == billId && b.IdUser == userId);

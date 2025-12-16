@@ -1,11 +1,14 @@
-﻿using ALittleLeaf.Models;
+﻿using ALittleLeaf.Filters;
+using ALittleLeaf.Models;
 using ALittleLeaf.Repository;
+using ALittleLeaf.Utils;
 using ALittleLeaf.ViewModels;
 
 using Microsoft.EntityFrameworkCore;
 
 namespace ALittleLeaf.Services.Order
 {
+    [CheckLogin]
     public class OrderService : IOrderService
     {
         private readonly AlittleLeafDecorContext _context;
@@ -30,10 +33,10 @@ namespace ALittleLeaf.Services.Order
         {
             return await _context.AddressLists.FirstOrDefaultAsync(a => a.AdrsId == addressId);
         }
-
+        [CheckLogin]
         public async Task<Bill> CreateOrderFromSessionAsync(string paymentMethod, string paymentStatus)
         {
-            var userId = long.Parse(Session.GetString("UserId"));
+            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
             int adrsId;
 
             // Bắt đầu Transaction

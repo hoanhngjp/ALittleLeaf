@@ -34,16 +34,35 @@ namespace ALittleLeaf.Services.Auth
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == model.UserEmail);
 
             if (user == null)
-                return new AuthServiceResult { Succeeded = false, ErrorMessage = "Thông tin đăng nhập không hợp lệ." };
+            {
+                return new AuthServiceResult 
+                { 
+                    Succeeded = false,
+                    ErrorMessage = "Tên đăng nhập hoặc mật khẩu bằng nhập không kết nối đến tài khoản nào. Tìm tài khoản của bạn và đăng nhập."
+                };
+            }
 
             var result = _passwordHasher.VerifyHashedPassword(null, user.UserPassword, model.UserPassword);
+
             if (result != PasswordVerificationResult.Success)
-                return new AuthServiceResult { Succeeded = false, ErrorMessage = "Thông tin đăng nhập không hợp lệ." };
+            {
+                return new AuthServiceResult 
+                { 
+                    Succeeded = false,
+                    ErrorMessage = "Mật khẩu không chính xác" 
+                };
+
+            }
 
             if (!user.UserIsActive)
-                return new AuthServiceResult { Succeeded = false, ErrorMessage = "Tài khoản của bạn đã bị khóa." };
+            {
+                return new AuthServiceResult
+                {
+                    Succeeded = false,
+                    ErrorMessage = "Tài khoản của bạn đã bị khóa"
+                };
+            }
 
-            // --- THAY ĐỔI LỚN: KHÔNG SET SESSION NỮA, MÀ SINH TOKEN ---
             return await GenerateJwtToken(user);
         }
 
@@ -99,11 +118,43 @@ namespace ALittleLeaf.Services.Auth
             }
         }
 
-        public async Task LogoutAsync()
+        public async Task<bool> LogoutAsync()
         {
-            // Với JWT, logout phía server chủ yếu là xóa cookie ở Controller.
-            // Ở đây ta có thể đánh dấu RefreshToken là revoked (nếu muốn chặt chẽ hơn).
-            await Task.CompletedTask;
+            // 1. Lấy token từ Cookie hiện tại thông qua HttpContextAccessor
+            // (Vì Token nằm trong Cookie "X-Refresh-Token" mà ta đã lưu lúc Login)
+            var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["X-Refresh-Token"];
+
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                // LOGOUT-003, 004: Không có token hoặc token rỗng -> Coi như xong việc (để Controller xóa cookie)
+                return true;
+            }
+
+            // 2. Tìm token trong DB
+            var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken);
+
+            // LOGOUT-004: Token không hợp lệ (không tìm thấy trong DB)
+            if (storedToken == null)
+            {
+                // Không làm gì cả, trả về true để Controller tiếp tục xóa Cookie
+                return true;
+            }
+
+            // LOGOUT-001, 002: Tìm thấy token (dù hết hạn hay chưa) -> Revoke nó
+            try
+            {
+                storedToken.IsRevoked = true;
+                storedToken.IsUsed = true;
+                _context.RefreshTokens.Update(storedToken);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                // LOGOUT-005: Lỗi DB -> Vẫn trả về true (hoặc false tùy logic log) 
+                // để bên ngoài vẫn xóa được Cookie cho người dùng
+                return false;
+            }
         }
 
         // --- HÀM PRIVATE: SINH JWT VÀ REFRESH TOKEN ---

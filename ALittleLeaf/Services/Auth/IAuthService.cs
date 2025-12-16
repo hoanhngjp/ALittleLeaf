@@ -6,6 +6,6 @@ namespace ALittleLeaf.Services.Auth
     {
         Task<AuthServiceResult> RegisterAsync(RegisterViewModel model);
         Task<AuthServiceResult> LoginAsync(UserLoggedViewModel model);
-        Task LogoutAsync();
+        Task<bool> LogoutAsync();
     }
 }

@@ -85,6 +85,7 @@ builder.Services.AddDbContext<AlittleLeafDecorContext>(options =>
 // Thêm dịch vụ MVC
 builder.Services.AddControllersWithViews();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -35,7 +35,7 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public async Task<IActionResult> OrderDetails(int id) // 'id' là BillId
         {
-            var userId = long.Parse(HttpContext.Session.GetString("UserId"));
+            var userId = User.GetUserId();
 
             // 1. Lấy thông tin Bill chính (có kiểm tra bảo mật)
             var bill = await _orderService.GetBillByIdAsync(id, userId);
@@ -66,7 +66,10 @@ namespace ALittleLeaf.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(UserLoggedViewModel model, string? ReturnUrl)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
 
             var result = await _authService.LoginAsync(model);
 
@@ -80,11 +83,16 @@ namespace ALittleLeaf.Controllers
                     Expires = DateTime.UtcNow.AddMinutes(30)
                 });
 
+                TempData["SuccessMessage"] = "Đăng nhập thành công";
+
                 if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)) return Redirect(ReturnUrl);
-                return RedirectToAction("Index", "Account");
+                    return RedirectToAction("Index", "Home");
             }
 
-            ModelState.AddModelError(string.Empty, result.ErrorMessage);
+            ViewBag.ErrorMessage = result.ErrorMessage;
+
+            ViewBag.ReturnUrl = ReturnUrl;
+            
             return View(model);
         }
 
@@ -119,9 +127,22 @@ namespace ALittleLeaf.Controllers
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
+            // 1. Gọi Service để Revoke Token trong DB (Xử lý LOGOUT-001, 002, 004)
+            // Dù Service trả về true hay false, ta vẫn phải xóa Cookie để đảm bảo người dùng thoát hẳn (Xử lý LOGOUT-005)
+            await _authService.LogoutAsync();
+
+            // 2. Xóa toàn bộ dữ liệu phiên làm việc (Cookie & Session)
             Response.Cookies.Delete("X-Access-Token");
+            Response.Cookies.Delete("X-Refresh-Token"); // Xóa cả Refresh Token
             HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Home");
+
+            // 3. Hiển thị thông báo (LOGOUT-001 yêu cầu: "Bạn đã đăng xuất thành công.")
+            // Dùng TempData để truyền thông báo sang trang Login
+            TempData["SuccessMessage"] = "Bạn đã đăng xuất thành công.";
+
+            // 4. Chuyển hướng (LOGOUT-001 yêu cầu: "Chuyển hướng về trang Đăng nhập")
+            // Lưu ý: Test case yêu cầu về trang Đăng nhập, KHÔNG PHẢI trang chủ.
+            return RedirectToAction("Login", "Account");
         }
     }
 }

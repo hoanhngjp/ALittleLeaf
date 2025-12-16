@@ -63,6 +63,8 @@ namespace ALittleLeaf.Areas.Admin.Controllers
                 HttpContext.Session.SetString("AdminEmail", result.User.UserEmail);
                 HttpContext.Session.SetString("AdminFullname", result.User.UserFullname);
 
+                TempData["SuccessMessage"] = "Đăng nhập thành công";
+
                 if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)) return Redirect(ReturnUrl);
                 return RedirectToAction("Index", "Dashboard");
             }
@@ -72,14 +74,18 @@ namespace ALittleLeaf.Areas.Admin.Controllers
         }
 
         [HttpGet]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            await _authService.LogoutAsync();
+
             // Xóa Cookie
             Response.Cookies.Delete("X-Access-Token");
             Response.Cookies.Delete("X-Refresh-Token");
 
             // Xóa Session
             HttpContext.Session.Clear();
+
+            TempData["SuccessMessage"] = "Bạn đã đăng xuất thành công.";
 
             return RedirectToAction("Login", "Account");
         }

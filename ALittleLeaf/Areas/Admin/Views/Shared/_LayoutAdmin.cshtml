@@ -32,6 +32,41 @@
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
+        <style>
+            .alert-success-floating {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #4CAF50; /* Màu xanh lá */
+                color: white;
+                padding: 15px 25px;
+                border-radius: 5px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 9999;
+                opacity: 1;
+                transition: opacity 0.5s ease-out;
+                font-family: Arial, sans-serif;
+                font-size: 16px;
+            }
+        </style>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div id="msgAlert" class="alert-success-floating">
+                <ion-icon name="checkmark-circle-outline" style="vertical-align: middle; margin-right: 5px;"></ion-icon>
+                @TempData["SuccessMessage"]
+            </div>
+
+            <script>
+                // Tự động ẩn thông báo sau 3 giây
+                setTimeout(function() {
+                    var msg = document.getElementById('msgAlert');
+                    if (msg) {
+                        msg.style.opacity = '0';
+                        setTimeout(function() { msg.remove(); }, 500); // Xóa khỏi DOM sau khi mờ dần
+                    }
+                }, 3000);
+            </script>
+        }
         <!-- Navbar -->
         @Html.Partial("AdminHeader");
         <!-- /.navbar -->
