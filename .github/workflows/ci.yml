@@ -1,0 +1,40 @@
+name: CI - Build and Test
+
+# Trigger: Chạy khi push hoặc pull request vào nhánh master
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    # Timeout để tránh treo server nếu build lỗi (15 phút)
+    timeout-minutes: 15
+
+    steps:
+    # 1. Lấy source code về
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. Tạo file .env từ GitHub Secrets
+    # (Docker Compose cần file này để chạy)
+    - name: Create .env file
+      run: echo "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" > .env
+
+    # 3. Dựng Docker images (Build)
+    # Dùng --no-cache để đảm bảo không dùng lại cache cũ lỗi
+    - name: Build Docker Images
+      run: docker-compose build
+
+    # 4. Chạy Unit Test
+    # --exit-code-from: Quan trọng! Nếu unit-tests fail, cả pipeline sẽ fail theo.
+    - name: Run Unit Tests
+      run: docker-compose --profile testing up --exit-code-from unit-tests unit-tests
+
+    # 5. (Optional) Dọn dẹp sau khi chạy
+    - name: Teardown
+      if: always()
+      run: docker-compose down
