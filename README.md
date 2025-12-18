@@ -102,18 +102,24 @@ Dự án đã được thiết lập quy trình Continuous Integration (CI) tự
 
 Trạng thái Build & Test có thể xem trực tiếp tại tab Actions trên GitHub.
 
-📂 Cấu trúc thư mục
+## 📂 Cấu trúc thư mục
+
+```text
 ALittleLeaf/
+├── .github/
+│   └── workflows/               # Cấu hình GitHub Actions (CI/CD)
 ├── ALittleLeaf/                 # Source code chính (Web App)
 │   ├── Controllers/             # Presentation Layer
 │   ├── Services/                # Business Logic Layer
 │   ├── Repositories/            # Data Access Layer
-│   ├── Views/                   # UI
-│   └── Dockerfile               # Cấu hình Docker cho Web
+│   ├── Views/                   # UI (Razor Views)
+│   ├── wwwroot/                 # Static files (CSS, JS, Images)
+│   └── Dockerfile               # Cấu hình Docker cho Web App
 ├── ALittleLeaf.Tests/           # Unit Tests Project (xUnit)
 ├── ALittleLeaf.FunctionalTests/ # E2E Tests Project (Selenium)
-├── .github/workflows/           # Cấu hình GitHub Actions
 ├── docker-compose.yml           # Định nghĩa các Services (Web, DB, Test)
-├── Dockerfile.test              # Cấu hình Docker cho Unit Test
+├── Dockerfile.test              # Cấu hình Docker dành riêng cho Unit Test
+├── ALittleLeaf.sln              # Solution File
 └── README.md                    # Tài liệu dự án
+```
 © 2025 ALittleLeaf Project. 
