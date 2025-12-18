@@ -5,6 +5,7 @@ using ALittleLeaf.Services.Order;
 using ALittleLeaf.Services.VNPay;
 using ALittleLeaf.Utils;
 using ALittleLeaf.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,7 @@ namespace ALittleLeaf.Controllers
             return Redirect(url);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> PaymentCallbackVnpay()
         {
@@ -80,7 +82,7 @@ namespace ALittleLeaf.Controllers
             ViewBag.BillId = billIdSuccess;
             return View("PaymentSuccess");
         }
-
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> VnpayIpnCallback()
         {
