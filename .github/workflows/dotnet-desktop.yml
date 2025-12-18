@@ -1,0 +1,60 @@
+name: .NET Desktop CI/CD
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-test-publish:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration: [Release]
+
+    env:
+      Solution_Name: ALittleLeaf.sln
+      Publish_Dir: publish_output
+
+    steps:
+    # 1. Lấy source code
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    # 2. Cài .NET SDK
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # 3. Setup MSBuild
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    # 4. Restore NuGet
+    - name: Restore packages
+      run: msbuild $env:Solution_Name /t:Restore
+
+    # 5. Build
+    - name: Build solution
+      run: msbuild $env:Solution_Name /p:Configuration=Release
+
+    # 6. Run Tests (nếu có)
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build
+
+    # 7. Publish (đóng gói)
+    - name: Publish app
+      run: |
+        dotnet publish `
+          --configuration Release `
+          --output $env:Publish_Dir
+
+    # 8. Upload artifact
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Desktop-App
+        path: publish_output
