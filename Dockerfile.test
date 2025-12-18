@@ -1,0 +1,25 @@
+# Sử dụng SDK image để build và test
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# 1. Copy file sln
+COPY *.sln .
+
+# 2. Copy các file csproj
+COPY ALittleLeaf/*.csproj ./ALittleLeaf/
+
+COPY ALittleLeaf.Tests/*.csproj ./ALittleLeaf.Tests/
+
+COPY ALittleLeaf.FunctionalTests/*.csproj ./ALittleLeaf.FunctionalTests/
+
+# 3. Restore packages
+RUN dotnet restore
+
+# 4. Copy toàn bộ code
+COPY . .
+
+# 5. Thiết lập thư mục làm việc (Tên mới)
+WORKDIR /src/ALittleLeaf.Tests
+
+# 6. Lệnh chạy mặc định
+CMD ["dotnet", "test", "--logger:trx"]
