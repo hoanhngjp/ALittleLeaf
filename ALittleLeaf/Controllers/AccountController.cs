@@ -79,7 +79,7 @@ namespace ALittleLeaf.Controllers
                 Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions
                 {
                     HttpOnly = true,
-                    SameSite = SameSiteMode.Strict,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTime.UtcNow.AddMinutes(30)
                 });
 
