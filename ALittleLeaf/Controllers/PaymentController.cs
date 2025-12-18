@@ -42,6 +42,7 @@ namespace ALittleLeaf.Controllers
 
             return Redirect(url);
         }
+
         [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> PaymentCallbackVnpay()

@@ -3,7 +3,7 @@ using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Support.UI;
 using Xunit;
 
-namespace ALittleLeaf.Test
+namespace ALittleLeaf.FunctionalTests
 {
     public class AuthenticationE2ETests
     {

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ALitlleLeaf.Test
+namespace ALitlleLeaf.FunctionalTests
 {
     public class OrderE2ETests
     {
@@ -144,7 +144,6 @@ namespace ALitlleLeaf.Test
                 driver.Quit();
             }
         }
-        
         [Fact]
         [Trait("Category", "Order")]
         public void order_002_OrderSuccess_PaymentCompleted()
