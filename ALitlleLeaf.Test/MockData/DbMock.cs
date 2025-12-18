@@ -89,61 +89,59 @@ namespace ALittleLeaf.Tests.MockData
         {
             return new List<Product>
             {
-                // SP 1: Bình thường (Bếp)
+                // SP 1: Dùng để test Tìm kiếm "Ấm", và Detail (ID=1)
                 new Product
                 {
                     ProductId = 1,
                     ProductName = "Ấm Tráng Men",
                     ProductPrice = 50000,
                     QuantityInStock = 100,
-                    IdCategory = 1,
+                    IdCategory = 1, // Bếp
                     ProductDescription = "Ấm đẹp",
-                    IsOnSale = true,
+                    IsOnSale = true, // <--- BẮT BUỘC TRUE
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 },
-                // SP 2: Giá cao (Bếp) -> Test lọc giá > 2tr
+                // SP 2: Dùng để test Lọc giá (> 2tr) và Tìm kiếm "Bếp"
                 new Product
                 {
                     ProductId = 2,
                     ProductName = "Bếp Từ Cao Cấp",
-                    ProductPrice = 2500000,
+                    ProductPrice = 2500000, // Giá > 2.000.000
                     QuantityInStock = 10,
-                    IdCategory = 1,
+                    IdCategory = 1, // Bếp
                     ProductDescription = "Bếp xịn",
-                    IsOnSale = false,
+                    IsOnSale = true, // <--- QUAN TRỌNG: Phải là TRUE thì Service mới lấy
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 },
-                // SP 3: Sắp hết hàng (Cây cảnh) -> Test tồn kho = 1
+                // SP 3: Dùng để test Lọc danh mục (Cây cảnh)
                 new Product
                 {
                     ProductId = 3,
                     ProductName = "Cây Xương Rồng",
                     ProductPrice = 20000,
-                    QuantityInStock = 1,
-                    IdCategory = 2,
+                    QuantityInStock = 5,
+                    IdCategory = 2, // Cây cảnh
                     ProductDescription = "Cây đẹp",
-                    IsOnSale = true,
+                    IsOnSale = true, // <--- BẮT BUỘC TRUE
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 },
-                // SP 4: Hết hàng (Cốc, Ly) -> Test tồn kho = 0
+                // SP 4: SP này đã ẩn, dùng để test xem Service có lọc đúng không (nếu cần)
                 new Product
                 {
                     ProductId = 4,
-                    ProductName = "Ly Sứ",
-                    ProductPrice = 15000,
+                    ProductName = "Sản phẩm cũ",
+                    ProductPrice = 10000,
                     QuantityInStock = 0,
-                    IdCategory = 3,
-                    ProductDescription = "Ly sứ trắng",
-                    IsOnSale = true,
+                    IdCategory = 1,
+                    IsOnSale = false, // <--- Cái này False thì Service sẽ không tìm thấy (Đúng logic)
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 }
             };
         }
-
         // 4. Mock Địa chỉ (AddressList) - Cần thiết để tạo Bill
         public static List<AddressList> GetAddressLists()
         {
