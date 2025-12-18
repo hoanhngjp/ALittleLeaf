@@ -1,6 +1,5 @@
 name: CI - Build and Test
 
-# Trigger: Chạy khi push hoặc pull request vào nhánh master
 on:
   push:
     branches: [ "master" ]
@@ -10,31 +9,49 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
-    # Timeout để tránh treo server nếu build lỗi (15 phút)
     timeout-minutes: 15
 
     steps:
-    # 1. Lấy source code về
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2. Tạo file .env từ GitHub Secrets
-    # (Docker Compose cần file này để chạy)
     - name: Create .env file
       run: echo "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" > .env
 
-    # 3. Dựng Docker images (Build)
-    # Dùng --no-cache để đảm bảo không dùng lại cache cũ lỗi
     - name: Build Docker Images
       run: docker-compose build
 
-    # 4. Chạy Unit Test
-    # --exit-code-from: Quan trọng! Nếu unit-tests fail, cả pipeline sẽ fail theo.
+    # -------------------------------------------------------------
+    # BỔ SUNG: Khởi động DB và nạp dữ liệu (Thay thế cho init-db.ps1)
+    # -------------------------------------------------------------
+    
+    # 1. Bật DB lên trước để nó bắt đầu khởi động
+    - name: Start Database Container
+      run: docker-compose up -d db
+
+    # 2. Đợi 30s cho SQL Server sẵn sàng (Tương đương Start-Sleep -Seconds 20)
+    # Trên môi trường CI server đôi khi chậm hơn máy local nên để 30s cho chắc
+    - name: Wait for SQL Server
+      run: sleep 30s
+
+    # 3. Chạy lệnh SQL CMD để nạp dữ liệu (Tương đương dòng docker exec... trong script của bạn)
+    - name: Initialize Database
+      run: |
+        docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd \
+          -S localhost \
+          -U sa \
+          -P "${{ secrets.MSSQL_SA_PASSWORD }}" \
+          -C \
+          -i /docker-entrypoint-initdb.d/ALittleLeaf.sql
+
+    # -------------------------------------------------------------
+    # KẾT THÚC BỔ SUNG
+    # -------------------------------------------------------------
+
     - name: Run Unit Tests
+      # Lưu ý: Vì DB đã up ở trên, lệnh này sẽ chỉ bật container unit-tests lên thôi
       run: docker-compose --profile testing up --exit-code-from unit-tests unit-tests
 
-    # 5. (Optional) Dọn dẹp sau khi chạy
     - name: Teardown
       if: always()
       run: docker-compose down
