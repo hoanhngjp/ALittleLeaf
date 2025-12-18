@@ -1,18 +1,20 @@
-﻿version: "3.8"
-
+﻿
 services:
   webapp:
-    build: .
+    build:
+      context: .              # Đứng từ gốc
+      dockerfile: ALittleLeaf/Dockerfile # Trỏ vào file Dockerfile nằm trong thư mục con
     container_name: myaspnetapp
     ports:
       - "8080:8080"
     env_file:
-      - ./.env
+      - ./.env                # File .env giờ nằm ngay cạnh docker-compose
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DB_CONNECTION_STRING=Server=db;Database=ALittleLeafDecor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
     volumes:
-      - ./wwwroot/img:/app/wwwroot/img
+      # SỬA ĐƯỜNG DẪN: Phải đi vào thư mục ALittleLeaf trước
+      - ./ALittleLeaf/wwwroot/img:/app/wwwroot/img
     networks:
       - alittleleaf-network
     depends_on:
@@ -31,7 +33,7 @@ services:
       - MSSQL_PID=Developer
     volumes:
       - mssqldata:/var/opt/mssql
-      - ./SQL:/docker-entrypoint-initdb.d 
+      - ./ALittleLeaf/SQL:/docker-entrypoint-initdb.d
     networks:
       - alittleleaf-network
     healthcheck:
@@ -41,6 +43,19 @@ services:
       retries: 10
       start_period: 10s
     restart: unless-stopped
+
+  unit-tests:
+    build:
+      context: .             
+      dockerfile: Dockerfile.test
+    container_name: alittleleaf-unit-tests
+    profiles: ["testing"]
+    depends_on:
+      - db
+    networks:
+      - alittleleaf-network
+    environment:
+      - DB_CONNECTION_STRING=Server=db;Database=ALittleLeafDecor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
 
 volumes:
   mssqldata:

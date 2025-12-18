@@ -5,9 +5,15 @@ VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ALittleLeaf", "ALittleLeaf\ALittleLeaf.csproj", "{5F594478-A608-4378-A3E6-CA1F4E5D1EF5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALitlleLeaf.Test", "ALitlleLeaf.Test\ALitlleLeaf.Test.csproj", "{D48CDF7C-0391-B5DD-57E7-2450C0938AF4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALittleLeaf.Tests", "ALittleLeaf.Tests\ALittleLeaf.Tests.csproj", "{D48CDF7C-0391-B5DD-57E7-2450C0938AF4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALittleLeaf.FunctionalTests", "ALittleLeaf.FunctionalTests\ALittleLeaf.FunctionalTests.csproj", "{1679EB03-A3D7-411A-8966-1E24F529C978}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.env = .env
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

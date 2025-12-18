@@ -8,12 +8,15 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copy file .csproj
-COPY ALittleLeaf.csproj ./
-RUN dotnet restore
+COPY ["ALittleLeaf/ALittleLeaf.csproj", "ALittleLeaf/"]
 
-# Copy toàn bộ source code
+RUN dotnet restore "ALittleLeaf/ALittleLeaf.csproj"
+
 COPY . .
+
+WORKDIR "/src/ALittleLeaf"
+
+RUN dotnet build "ALittleLeaf.csproj" -c $BUILD_CONFIGURATION -o /app/build
 RUN dotnet publish "ALittleLeaf.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Final stage
