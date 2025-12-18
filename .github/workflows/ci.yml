@@ -19,22 +19,15 @@ jobs:
       run: echo "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" > .env
 
     - name: Build Docker Images
-      run: docker-compose build
+      run: docker compose build
 
-    # -------------------------------------------------------------
-    # BỔ SUNG: Khởi động DB và nạp dữ liệu (Thay thế cho init-db.ps1)
-    # -------------------------------------------------------------
-    
-    # 1. Bật DB lên trước để nó bắt đầu khởi động
+    # SỬA: docker compose
     - name: Start Database Container
-      run: docker-compose up -d db
+      run: docker compose up -d db
 
-    # 2. Đợi 30s cho SQL Server sẵn sàng (Tương đương Start-Sleep -Seconds 20)
-    # Trên môi trường CI server đôi khi chậm hơn máy local nên để 30s cho chắc
     - name: Wait for SQL Server
       run: sleep 30s
 
-    # 3. Chạy lệnh SQL CMD để nạp dữ liệu (Tương đương dòng docker exec... trong script của bạn)
     - name: Initialize Database
       run: |
         docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd \
@@ -44,14 +37,9 @@ jobs:
           -C \
           -i /docker-entrypoint-initdb.d/ALittleLeaf.sql
 
-    # -------------------------------------------------------------
-    # KẾT THÚC BỔ SUNG
-    # -------------------------------------------------------------
-
     - name: Run Unit Tests
-      # Lưu ý: Vì DB đã up ở trên, lệnh này sẽ chỉ bật container unit-tests lên thôi
-      run: docker-compose --profile testing up --exit-code-from unit-tests unit-tests
+      run: docker compose --profile testing up --exit-code-from unit-tests unit-tests
 
     - name: Teardown
       if: always()
-      run: docker-compose down
+      run: docker compose down
