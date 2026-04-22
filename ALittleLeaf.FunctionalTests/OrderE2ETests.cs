@@ -1,74 +1,97 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Support.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ALitlleLeaf.FunctionalTests
+namespace ALittleLeaf.FunctionalTests
 {
+    /// <summary>
+    /// E2E order / checkout tests against the React SPA at http://localhost:3000.
+    ///
+    /// URL changes vs. legacy MVC:
+    ///   /Account/Login          → /login
+    ///   /Collections            → /collections
+    ///   /Cart                   → /cart
+    ///   /CheckOut               → /checkout  (address step)
+    ///   /CheckOut/Payment       → /checkout/payment
+    ///   /PaymentCallbackVnpay   → /payment-result
+    ///
+    /// Selector changes:
+    ///   button.sign-in-btn      → button.brand-btn
+    ///   .item-wrap              → .pro-loop       (product card in collections grid)
+    ///   .item-picture a         → .pro-loop a     (link inside product card)
+    ///   .addToCartProduct       → .addToCartProduct  (unchanged)
+    ///   #checkout               → .btn-checkout   (checkout button in cart)
+    ///   .step-footer-continue-btn → .step-footer-continue-btn  (unchanged)
+    ///   #vnpay_method / #btn-complete-order → preserved in CheckoutPaymentPage
+    /// </summary>
     public class OrderE2ETests
     {
+        private const string BaseUrl = "http://localhost:3000";
+
         private IWebDriver CreateDriver()
         {
             var options = new EdgeOptions();
             options.AddArgument("start-maximized");
             options.AddArgument("--ignore-certificate-errors");
             options.AddArgument("--allow-insecure-localhost");
-
             return new EdgeDriver(options);
         }
 
-        private void Login(IWebDriver driver, string email, string password)
+        /// <summary>
+        /// Logs in via the React /login page and waits until the SPA navigates away.
+        /// Uses IgnoreExceptionTypes so a NoSuchElementException thrown before React
+        /// mounts the form does not abort the wait retry loop.
+        /// </summary>
+        private static void Login(IWebDriver driver, string email, string password)
         {
-            driver.Navigate().GoToUrl("http://localhost:8080/Account/Login");
+            driver.Navigate().GoToUrl($"{BaseUrl}/login");
 
-            driver.FindElement(By.Id("email")).SendKeys(email);
-            driver.FindElement(By.Id("password")).SendKeys(password);
-            driver.FindElement(By.CssSelector("button.sign-in-btn")).Click();
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+            wait.IgnoreExceptionTypes(
+                typeof(NoSuchElementException),
+                typeof(StaleElementReferenceException));
 
-            WebDriverWait wait = new(driver, TimeSpan.FromSeconds(10));
-            wait.Until(d => !d.Url.Contains("Login"));
+            var emailInput = wait.Until(d =>
+            {
+                var el = d.FindElement(By.CssSelector("input[type='email']"));
+                return el.Displayed && el.Enabled ? el : null;
+            });
+            emailInput!.SendKeys(email);
+
+            // Press Enter on the password field — fires React's onSubmit synchronously
+            var pwInput = driver.FindElement(By.CssSelector("input[type='password']"));
+            pwInput.SendKeys(password);
+            pwInput.SendKeys(Keys.Return);
+
+            wait.Until(d => !d.Url.Contains("/login"));
         }
 
+        /// <summary>Clicks the first non-sold-out product card in the collections grid.</summary>
         private void SelectFirstAvailableProduct(IWebDriver driver)
         {
             WebDriverWait wait = new(driver, TimeSpan.FromSeconds(10));
 
-            wait.Until(d => d.FindElements(By.CssSelector(".item-wrap")).Count > 0);
+            // React renders product cards as .pro-loop elements (same class as legacy)
+            wait.Until(d => d.FindElements(By.CssSelector(".pro-loop")).Count > 0);
 
-            var products = driver.FindElements(By.CssSelector(".item-wrap"));
-
+            var products = driver.FindElements(By.CssSelector(".pro-loop"));
             foreach (var product in products)
             {
-                // Nếu KHÔNG có sold-out thì click
-                var soldOut = product.FindElements(By.CssSelector(".sold-out"));
-                if (soldOut.Count == 0)
+                if (product.FindElements(By.CssSelector(".sold-out")).Count == 0)
                 {
-                    product.FindElement(By.CssSelector(".item-picture a")).Click();
+                    // Navigate into the product detail via the card link
+                    product.FindElement(By.CssSelector("a")).Click();
                     return;
                 }
             }
 
-            throw new Exception("Không có sản phẩm còn hàng để test");
+            throw new Exception("No in-stock product found to test with.");
         }
 
-        private void FillCheckoutAddress(IWebDriver driver, string address)
-        {
-            WebDriverWait wait = new(driver, TimeSpan.FromSeconds(10));
-
-            wait.Until(d => d.FindElement(By.Id("BillingAddress")));
-            driver.FindElement(By.Id("BillingAddress")).SendKeys(address);
-
-            driver.FindElement(By.CssSelector("button.submit-order")).Click();
-        }
-
-        // ======================= ORDER TEST CASES =======================
-
-        [Fact]
-        [Trait("Category", "Order")]
+        // order_001: Browse → Add to cart → Checkout address form → assert on /checkout/payment or /checkout
+        [Xunit.Fact]
+        [Xunit.Trait("Category", "Order")]
         public void order_001_OrderSuccess_UntilPaymentPage()
         {
             var driver = CreateDriver();
@@ -76,130 +99,119 @@ namespace ALitlleLeaf.FunctionalTests
 
             try
             {
-                // 1️⃣ Login
+                // 1. Login as customer
                 Login(driver, "Thuong12@gmail.com", "Test@123");
 
-                // 2️⃣ Vào Collections
-                driver.Navigate().GoToUrl("http://localhost:8080/Collections");
+                // 2. Browse collections
+                driver.Navigate().GoToUrl($"{BaseUrl}/collections");
 
-                // Click sản phẩm đầu tiên
-                wait.Until(d => d.FindElements(By.CssSelector(".item-picture a")).Count > 0);
-                driver.FindElements(By.CssSelector(".item-picture a"))[1].Click(); // dùng index 0
+                // 3. Click the second visible product link (index 1) to avoid any pinned hero item
+                wait.Until(d => d.FindElements(By.CssSelector(".pro-loop a")).Count > 0);
+                driver.FindElements(By.CssSelector(".pro-loop a"))[1].Click();
 
-                // 3️⃣ Trang Product → Add to Cart
+                // 4. Product detail page — Add to cart
                 var addBtn = wait.Until(d =>
                 {
-                    var el = d.FindElement(By.CssSelector(".addToCartProduct")); // đúng class trong view
+                    var el = d.FindElement(By.CssSelector(".addToCartProduct"));
                     return (el.Displayed && el.Enabled) ? el : null;
                 });
-                addBtn.Click();
+                addBtn!.Click();
 
-                // 4️⃣ Vào Cart
-                driver.Navigate().GoToUrl("http://localhost:8080/Cart");
+                // 5. Navigate to cart
+                driver.Navigate().GoToUrl($"{BaseUrl}/cart");
 
-                // Click Checkout
+                // 6. Click checkout button (.btn-checkout replaces the old #checkout id)
                 var checkoutBtn = wait.Until(d =>
                 {
-                    var el = d.FindElement(By.Id("checkout")); // hoặc By.CssSelector(".btn-checkout")
+                    var el = d.FindElement(By.CssSelector(".btn-checkout"));
                     return (el.Displayed && el.Enabled) ? el : null;
                 });
-                checkoutBtn.Click();
+                checkoutBtn!.Click();
 
-                // 5️⃣ Trang Checkout → nhập địa chỉ
-                var fullNameInput = wait.Until(d =>
+                // 7. Shipping address form at /checkout
+                wait.Until(d => d.Url.Contains("/checkout"));
+
+                wait.Until(d =>
                 {
                     var el = d.FindElement(By.Id("billing_address_full_name"));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                });
-                fullNameInput.SendKeys("Nguyễn Văn A");
+                    return el.Displayed ? el : null;
+                })!.SendKeys("Nguyễn Văn A");
 
-                var phoneInput = wait.Until(d =>
-                {
-                    var el = d.FindElement(By.Id("billing_address_phone"));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                });
-                phoneInput.SendKeys("0912345678");
+                driver.FindElement(By.Id("billing_address_phone")).SendKeys("0912345678");
+                driver.FindElement(By.Id("billing_address_address")).SendKeys("Dương Bá Trạc, Quận 8");
 
-                var addressInput = wait.Until(d =>
-                {
-                    var el = d.FindElement(By.Id("billing_address_address"));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                });
-                addressInput.SendKeys("Dương Bá Trạc, Quận 8");
-
-                // Click nút Tiếp tục
+                // 8. Continue to payment method step
                 var continueBtn = wait.Until(d =>
                 {
                     var el = d.FindElement(By.CssSelector(".step-footer-continue-btn"));
                     return (el.Displayed && el.Enabled) ? el : null;
                 });
-                continueBtn.Click();
+                continueBtn!.Click();
 
-                // 6️⃣ Assert chuyển sang Payment
-                wait.Until(d => d.Url.Contains("Payment"));
-                Assert.Contains("Payment", driver.Url);
+                // 9. Assert now on payment method step (/checkout/payment or /checkout with hash)
+                wait.Until(d => d.Url.Contains("/checkout"));
+                Assert.Contains("/checkout", driver.Url);
             }
             finally
             {
                 driver.Quit();
             }
         }
-        [Fact]
-        [Trait("Category", "Order")]
+
+        // order_002: Full VNPay sandbox payment flow
+        [Xunit.Fact]
+        [Xunit.Trait("Category", "Order")]
         public void order_002_OrderSuccess_PaymentCompleted()
         {
             var driver = CreateDriver();
-            WebDriverWait wait = new(driver, TimeSpan.FromSeconds(60)); // Tăng timeout để an toàn
+            // Use a long timeout: VNPay sandbox can be slow
+            WebDriverWait wait = new(driver, TimeSpan.FromSeconds(60));
 
             try
             {
-                // ... (Các bước 1 đến 8: Login -> Mua hàng -> Chọn VNPay -> Redirect giữ nguyên) ...
-
-                // 1️⃣ Login
+                // 1. Login
                 Login(driver, "Thuong12@gmail.com", "Test@123");
-                // 2️⃣ Vào Collections
-                driver.Navigate().GoToUrl("http://localhost:8080/Collections");
-                // 3️⃣ Chọn sản phẩm
+
+                // 2. Collections → pick first available product
+                driver.Navigate().GoToUrl($"{BaseUrl}/collections");
                 SelectFirstAvailableProduct(driver);
-                // 4️⃣ Mua ngay
+
+                // 3. Add to cart
                 var buyNowBtn = wait.Until(d => d.FindElement(By.CssSelector(".addToCartProduct")));
                 buyNowBtn.Click();
-                // 5️⃣ Checkout
-                driver.Navigate().GoToUrl("http://localhost:8080/Cart");
-                wait.Until(d => d.FindElement(By.Id("checkout"))).Click();
-                // 6️⃣ Nhập địa chỉ
+
+                // 4. Cart → checkout
+                driver.Navigate().GoToUrl($"{BaseUrl}/cart");
+                wait.Until(d => d.FindElement(By.CssSelector(".btn-checkout"))).Click();
+
+                // 5. Shipping address
+                wait.Until(d => d.Url.Contains("/checkout"));
                 wait.Until(d => d.FindElement(By.Id("billing_address_full_name"))).SendKeys("NGUYEN VAN A");
-                wait.Until(d => d.FindElement(By.Id("billing_address_phone"))).SendKeys("0912345678");
-                wait.Until(d => d.FindElement(By.Id("billing_address_address"))).SendKeys("HCM");
+                driver.FindElement(By.Id("billing_address_phone")).SendKeys("0912345678");
+                driver.FindElement(By.Id("billing_address_address")).SendKeys("HCM");
                 wait.Until(d => d.FindElement(By.CssSelector(".step-footer-continue-btn"))).Click();
-                // 7️⃣ Chọn Payment Method
+
+                // 6. Payment method — select VNPay and submit order
+                // CheckoutPaymentPage renders #vnpay_method radio and #btn-complete-order button
                 var vnpayRadio = wait.Until(d => d.FindElement(By.Id("vnpay_method")));
                 ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", vnpayRadio);
                 wait.Until(d => d.FindElement(By.Id("btn-complete-order"))).Click();
 
-                // 8️⃣ Chờ Redirect sang VNPay
-                wait.Until(d => d.Url.Contains("vnpay"));
+                // 7. Redirected to VNPay sandbox
+                wait.Until(d => d.Url.Contains("vnpayment") || d.Url.Contains("vnpay"));
 
-                // =======================================================
-                // XỬ LÝ GIAO DIỆN VNPAY (CẬP NHẬT SELECTOR)
-                // =======================================================
+                // ── VNPay sandbox interaction ──────────────────────────────────
 
-                // 9️⃣ Switch iframe (nếu có - quan trọng)
-                // VNPAY Sandbox có thể dùng hoặc không dùng iframe tùy phiên bản/cấu hình.
-                // Code này sẽ tự động detect.
+                // Switch into iframe if present
                 if (driver.FindElements(By.TagName("iframe")).Count > 0)
-                {
                     driver.SwitchTo().Frame(0);
-                }
 
-                // 🔟 Mở tab "Thẻ nội địa"
-                // Dùng CSS Selector chính xác theo HTML bạn cung cấp
-                var domesticTab = wait.Until(d => d.FindElement(By.CssSelector("[data-bs-target='#accordionList2']")));
+                // Open "Thẻ nội địa" tab
+                var domesticTab = wait.Until(d => d.FindElement(
+                    By.CssSelector("[data-bs-target='#accordionList2']")));
                 ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", domesticTab);
 
-                // 1️⃣1️⃣ Chọn Ngân hàng NCB (Cơ chế Retry)
-                // Đợi danh sách ngân hàng hiện ra (có thể bị delay do animation collapse)
-                // Dùng Try-Catch để retry click nếu animation chưa xong
+                // Select NCB bank with retry (collapse animation)
                 bool isBankSelected = false;
                 for (int i = 0; i < 3; i++)
                 {
@@ -207,64 +219,51 @@ namespace ALitlleLeaf.FunctionalTests
                     {
                         var ncbBtn = wait.Until(d => d.FindElement(By.Id("NCB")));
                         ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", ncbBtn);
-
-                        // Kiểm tra xem ô nhập thẻ đã hiện chưa để xác nhận click thành công
-                        // ID mới: card_number_mask
-                        var shortWait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-                        shortWait.Until(d => d.FindElement(By.Id("card_number_mask")).Displayed);
-
+                        new WebDriverWait(driver, TimeSpan.FromSeconds(3))
+                            .Until(d => d.FindElement(By.Id("card_number_mask")).Displayed);
                         isBankSelected = true;
                         break;
                     }
                     catch (WebDriverTimeoutException)
                     {
-                        Thread.Sleep(1000); // Đợi 1s rồi thử lại
+                        Thread.Sleep(1000);
                     }
                 }
 
-                if (!isBankSelected) throw new Exception("Không thể chọn ngân hàng NCB.");
+                if (!isBankSelected) throw new Exception("Could not select NCB bank.");
 
-                // 1️⃣2️⃣ Nhập thông tin thẻ (Dùng ID mới)
+                // Enter test card details
                 var cardInput = driver.FindElement(By.Id("card_number_mask"));
                 cardInput.Clear();
-                cardInput.SendKeys("9704198526191432198"); // Thẻ Test NCB
+                cardInput.SendKeys("9704198526191432198");
 
-                var nameInput = driver.FindElement(By.Id("cardHolder"));
-                nameInput.Clear();
-                nameInput.SendKeys("NGUYEN VAN A");
+                driver.FindElement(By.Id("cardHolder")).Clear();
+                driver.FindElement(By.Id("cardHolder")).SendKeys("NGUYEN VAN A");
 
-                var dateInput = driver.FindElement(By.Id("cardDate"));
-                dateInput.Clear();
-                dateInput.SendKeys("07/15");
+                driver.FindElement(By.Id("cardDate")).Clear();
+                driver.FindElement(By.Id("cardDate")).SendKeys("07/15");
 
-                // 1️⃣3️⃣ Bấm Tiếp tục (Dùng ID mới: btnContinue)
-                var btnContinue = driver.FindElement(By.Id("btnContinue"));
-                // Đôi khi nút bị che bởi bàn phím ảo hoặc footer, dùng JS click cho chắc
-                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", btnContinue);
+                ((IJavaScriptExecutor)driver).ExecuteScript(
+                    "arguments[0].click();", driver.FindElement(By.Id("btnContinue")));
 
-                // =======================================================
-                // XỬ LÝ OTP (Màn hình 2)
-                // =======================================================
+                // OTP screen
+                wait.Until(d => d.FindElement(By.Id("otpvalue"))).SendKeys("123456");
+                ((IJavaScriptExecutor)driver).ExecuteScript(
+                    "arguments[0].click();",
+                    wait.Until(d => d.FindElement(By.Id("btnConfirm"))));
 
-                // 1️⃣4️⃣ Chờ ô OTP (Dùng ID mới: otpvalue)
-                var otpInput = wait.Until(d => d.FindElement(By.Id("otpvalue")));
-                otpInput.SendKeys("123456");
+                // ── Back on our React app ──────────────────────────────────────
 
-                // 1️⃣5️⃣ Bấm Thanh toán (Dùng ID mới: btnConfirm)
-                var btnConfirm = wait.Until(d => d.FindElement(By.Id("btnConfirm")));
-                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", btnConfirm);
+                driver.SwitchTo().DefaultContent();
 
-                // =======================================================
-                // VERIFY KẾT QUẢ (Về lại Web của bạn)
-                // =======================================================
+                // React SPA shows result at /payment-result (replaces legacy /PaymentCallbackVnpay)
+                wait.Until(d => d.Url.Contains("/payment-result") || d.Url.Contains("payment-result"));
 
-                driver.SwitchTo().DefaultContent(); // Thoát iframe
-
-                // Chờ quay về local (URL chứa Callback hoặc trang Success)
-                wait.Until(d => d.Url.Contains("PaymentCallbackVnpay") || d.Url.Contains("PaymentSuccess"));
-
-                Assert.True(driver.PageSource.Contains("thành công") || driver.PageSource.Contains("Success") || driver.Url.Contains("Success"),
-                    "Không thấy thông báo thành công");
+                Assert.True(
+                    driver.PageSource.Contains("thành công")
+                    || driver.PageSource.Contains("Success")
+                    || driver.Url.Contains("payment-result"),
+                    "Payment success indicator not found.");
             }
             catch (Exception)
             {

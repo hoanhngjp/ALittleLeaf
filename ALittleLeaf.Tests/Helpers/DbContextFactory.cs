@@ -1,10 +1,9 @@
-﻿using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
+using ALittleLeaf.Api.Data;
+using ALittleLeaf.Api.Models;
 using ALittleLeaf.Tests.MockData;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using System;
-using System.Linq; // Nhớ dòng này để dùng .Any()
 
 namespace ALittleLeaf.Tests.Helpers
 {
@@ -13,28 +12,19 @@ namespace ALittleLeaf.Tests.Helpers
         public static AlittleLeafDecorContext Create()
         {
             var options = new DbContextOptionsBuilder<AlittleLeafDecorContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Mỗi test 1 DB mới
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
-                .EnableSensitiveDataLogging() // Giúp debug lỗi dữ liệu dễ hơn
+                .EnableSensitiveDataLogging()
                 .Options;
 
             var context = new AlittleLeafDecorContext(options);
-
-            // Bắt buộc phải tạo DB
             context.Database.EnsureCreated();
 
-            // --- SEED DATA (NẠP DỮ LIỆU) ---
-            // Kiểm tra xem đã có Categories chưa, nếu chưa thì nạp toàn bộ
             if (!context.Categories.Any())
             {
                 context.Categories.AddRange(DbMock.GetCategories());
-                context.Products.AddRange(DbMock.GetProducts()); // <-- QUAN TRỌNG: Nạp sản phẩm
-                context.BillDetails.AddRange(DbMock.GetBillDetails()); // <-- Nạp chi tiết đơn để test thống kê
-
-                // Nạp Users nếu cần test Auth trong cùng context này
-                // context.Users.AddRange(DbMock.GetUsers()); 
-
-                context.SaveChanges(); // <-- BẮT BUỘC: Lưu lại thì DB mới có dữ liệu
+                context.Products.AddRange(DbMock.GetProducts());
+                context.SaveChanges();
             }
 
             return context;
@@ -45,5 +35,30 @@ namespace ALittleLeaf.Tests.Helpers
             context.Database.EnsureDeleted();
             context.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Assertion helpers for Web API IActionResult responses.
+    /// Replaces MVC-era ViewResult / RedirectToActionResult assertions.
+    /// </summary>
+    public static class ApiAssert
+    {
+        public static T OkValue<T>(IActionResult result)
+        {
+            var ok = Assert.IsType<OkObjectResult>(result);
+            return Assert.IsType<T>(ok.Value);
+        }
+
+        public static OkObjectResult IsOk(IActionResult result)
+            => Assert.IsType<OkObjectResult>(result);
+
+        public static BadRequestObjectResult IsBadRequest(IActionResult result)
+            => Assert.IsType<BadRequestObjectResult>(result);
+
+        public static NotFoundObjectResult IsNotFound(IActionResult result)
+            => Assert.IsType<NotFoundObjectResult>(result);
+
+        public static UnauthorizedObjectResult IsUnauthorized(IActionResult result)
+            => Assert.IsType<UnauthorizedObjectResult>(result);
     }
 }

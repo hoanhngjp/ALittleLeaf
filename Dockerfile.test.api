@@ -1,0 +1,19 @@
+# Backend xUnit test runner (targets the refactored ALittleLeaf.Tests after Phase 13 migration)
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy solution and project files
+COPY *.sln .
+COPY Backend/ALittleLeaf.Api/*.csproj ./Backend/ALittleLeaf.Api/
+COPY ALittleLeaf.Tests/*.csproj ./ALittleLeaf.Tests/
+
+# Restore all packages
+RUN dotnet restore ALittleLeaf.Tests/ALittleLeaf.Tests.csproj
+
+# Copy source
+COPY Backend/ALittleLeaf.Api/ Backend/ALittleLeaf.Api/
+COPY ALittleLeaf.Tests/ ALittleLeaf.Tests/
+
+# Run tests
+WORKDIR /src/ALittleLeaf.Tests
+CMD ["dotnet", "test", "--logger:trx", "--no-restore"]

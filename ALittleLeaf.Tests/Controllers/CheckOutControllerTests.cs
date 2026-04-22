@@ -1,112 +1,123 @@
-﻿using ALittleLeaf.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
-using ALittleLeaf.Services.Order;
+using ALittleLeaf.Api.Controllers;
+using ALittleLeaf.Api.DTOs.Order;
+using ALittleLeaf.Api.Services.Order;
 using ALittleLeaf.Tests.Helpers;
-using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit;
+using System.Security.Claims;
+using ALittleLeaf.Api.Data;
 
 namespace ALittleLeaf.Tests.Controllers
 {
     public class CheckOutControllerTests : IDisposable
     {
-        private readonly AlittleLeafDecorContext _context; // Cần thiết vì Controller của bạn có Inject Context
-        private readonly Mock<IOrderService> _mockOrderService;
-        private readonly Mock<ISession> _mockSession;
-        private readonly CheckOutController _controller;
-        private Dictionary<string, byte[]> _sessionStore;
+        private readonly AlittleLeafDecorContext _context;
+        private readonly Mock<IOrderService>     _mockOrderService;
+        private readonly OrdersController        _controller;
+
+        private const long UserId = 10;
 
         public CheckOutControllerTests()
         {
-            _context = DbContextFactory.Create();
+            _context          = DbContextFactory.Create();
             _mockOrderService = new Mock<IOrderService>();
+            _controller       = BuildController(_mockOrderService.Object);
+        }
 
-            // Mock Session
-            _sessionStore = new Dictionary<string, byte[]>();
-            _mockSession = new Mock<ISession>();
-            _mockSession.Setup(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()))
-                .Callback<string, byte[]>((key, value) => _sessionStore[key] = value);
-            _mockSession.Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<byte[]>.IsAny))
-                .Returns((string key, out byte[] value) => _sessionStore.TryGetValue(key, out value));
+        public void Dispose() => DbContextFactory.Destroy(_context);
 
-            var mockHttpContext = new Mock<HttpContext>();
-            mockHttpContext.Setup(c => c.Session).Returns(_mockSession.Object);
+        private static OrdersController BuildController(IOrderService svc)
+        {
+            var user = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, UserId.ToString()) }, "mock"));
 
-            _controller = new CheckOutController(_mockOrderService.Object, _context)
+            return new OrdersController(svc)
             {
-                ControllerContext = new ControllerContext { HttpContext = mockHttpContext.Object },
-                TempData = new TempDataDictionary(mockHttpContext.Object, Mock.Of<ITempDataProvider>())
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext { User = user }
+                }
             };
         }
 
-        public void Dispose()
+        // POST /api/orders — COD success → 201 Created
+
+        [Fact]
+        public async Task CreateOrder_CodSuccess_Returns201WithOrderDto()
         {
-            DbContextFactory.Destroy(_context);
+            var dto      = new CreateOrderDto { AddressId = 1, PaymentMethod = "COD" };
+            var expected = new OrderDto { BillId = 100, TotalAmount = 50000, PaymentMethod = "COD" };
+
+            _mockOrderService.Setup(s => s.CreateOrderAsync(UserId, dto)).ReturnsAsync(expected);
+
+            var result = await _controller.CreateOrder(dto);
+
+            var created = Assert.IsType<CreatedAtActionResult>(result);
+            var order   = Assert.IsType<OrderDto>(created.Value);
+            Assert.Equal(100, order.BillId);
+
+            _mockOrderService.Verify(s => s.CreateOrderAsync(UserId, dto), Times.Once);
         }
 
-        // TC01, TC03: Lưu thông tin ship -> Redirect Payment
+        // POST /api/orders — empty cart → 400 BadRequest
+
         [Fact]
-        public void SaveShippingInfo_ValidData_SavesToSessionAndRedirects()
+        public async Task CreateOrder_EmptyCart_Returns400()
         {
-            // Act
-            var result = _controller.SaveShippingInfo("new", "Nguyen Van A", "0909123456", "123 Street");
+            var dto = new CreateOrderDto { AddressId = 1, PaymentMethod = "COD" };
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Payment", redirectResult.ActionName);
-            Assert.Equal("CheckOut", redirectResult.ControllerName);
+            _mockOrderService.Setup(s => s.CreateOrderAsync(UserId, dto))
+                .ThrowsAsync(new InvalidOperationException("Cart is empty."));
 
-            // Kiểm tra Session
-            Assert.True(_sessionStore.ContainsKey("BillingFullName"));
-            Assert.Equal("Nguyen Van A", Encoding.UTF8.GetString(_sessionStore["BillingFullName"]));
+            var result = await _controller.CreateOrder(dto);
+
+            ApiAssert.IsBadRequest(result);
         }
 
-        // PlaceCodOrder: Đặt hàng COD thành công
+        // GET /api/orders — returns list
+
         [Fact]
-        public async Task PlaceCodOrder_Success_RedirectsToAccount()
+        public async Task GetOrders_ReturnsOkWithList()
         {
-            // Arrange
-            var mockBill = new Bill { BillId = 100, TotalAmount = 50000 };
+            var orders = new List<OrderDto>
+            {
+                new() { BillId = 1, TotalAmount = 100000 },
+                new() { BillId = 2, TotalAmount = 200000 }
+            };
+            _mockOrderService.Setup(s => s.GetOrderHistoryAsync(UserId)).ReturnsAsync(orders);
 
-            _mockOrderService.Setup(s => s.CreateOrderFromSessionAsync("cod", "pending"))
-                .ReturnsAsync(mockBill);
+            var result = await _controller.GetOrders();
 
-            // Act
-            var result = await _controller.PlaceCodOrder("cod");
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Account", redirectResult.ControllerName);
-
-            // Kiểm tra Service được gọi đúng thứ tự
-            _mockOrderService.Verify(s => s.CreateOrderFromSessionAsync("cod", "pending"), Times.Once);
-            _mockOrderService.Verify(s => s.FulfillOrderAsync(100), Times.Once);
+            var list = ApiAssert.OkValue<List<OrderDto>>(result);
+            Assert.Equal(2, list.Count);
         }
 
-        // PlaceCodOrder: Lỗi (Ví dụ hết hàng) -> Redirect về Cart
+        // GET /api/orders/{id} — valid
+
         [Fact]
-        public async Task PlaceCodOrder_Error_RedirectsToCart()
+        public async Task GetOrder_ValidId_ReturnsOkWithDetail()
         {
-            // Arrange
-            _mockOrderService.Setup(s => s.CreateOrderFromSessionAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .ThrowsAsync(new Exception("Out of stock"));
+            var detail = new OrderDetailDto { BillId = 10 };
+            _mockOrderService.Setup(s => s.GetOrderDetailAsync(10, UserId)).ReturnsAsync(detail);
 
-            // Act
-            var result = await _controller.PlaceCodOrder("cod");
+            var result = await _controller.GetOrder(10);
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Cart", redirectResult.ControllerName);
+            var dto = ApiAssert.OkValue<OrderDetailDto>(result);
+            Assert.Equal(10, dto.BillId);
+        }
+
+        // GET /api/orders/{id} — not found or belongs to another user
+
+        [Fact]
+        public async Task GetOrder_InvalidId_ReturnsNotFound()
+        {
+            _mockOrderService.Setup(s => s.GetOrderDetailAsync(999, UserId))
+                .ReturnsAsync((OrderDetailDto?)null);
+
+            var result = await _controller.GetOrder(999);
+
+            ApiAssert.IsNotFound(result);
         }
     }
 }

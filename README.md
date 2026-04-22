@@ -1,157 +1,151 @@
-# 🌿 ALittleLeaf — E-commerce Web Application
+# ALittleLeaf — E-commerce Web Application
 
 [![CI](https://github.com/hoanhngjp/ALittleLeaf/actions/workflows/ci.yml/badge.svg)](https://github.com/hoanhngjp/ALittleLeaf/actions)
 
-ALittleLeaf là một nền tảng thương mại điện tử chuyên kinh doanh cây cảnh và đồ trang trí nội thất.  
-Dự án được xây dựng trên nền tảng **.NET 9 (ASP.NET Core)** với kiến trúc 3 lớp chuẩn mực, tích hợp quy trình DevOps (Docker & CI/CD) và kiểm thử tự động toàn diện.
+ALittleLeaf is an e-commerce platform for plants and home decor, built as a decoupled **React SPA + .NET 9 Web API** architecture.
 
 ---
 
-## 📑 Mục lục
+## Architecture
 
-- [Tính năng chính](#-tính-năng-chính)
-- [Kiến trúc & Công nghệ](#-kiến-trúc--công-nghệ)
-- [Cài đặt và Chạy](#-cài-đặt-và-chạy-sử-dụng-docker)
-- [Hướng dẫn chạy Test](#-hướng-dẫn-chạy-test)
-- [CI/CD](#%EF%B8%8F-cicd-github-actions)
-- [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+```
+Frontend/   — React (Vite) SPA — served by nginx on port 3000
+Backend/    — .NET 9 Web API   — exposed on port 8081
+db          — SQL Server 2022  — exposed on port 1433 (internal)
+```
 
----
-
-## 🚀 Tính Năng Chính
-
-### 👤 Khách hàng (User)
-
-| Tính năng | Mô tả |
-|---|---|
-| 🔐 Authentication | Đăng ký, Đăng nhập, Quản lý hồ sơ |
-| 🛍 Mua sắm | Xem danh sách sản phẩm, Tìm kiếm, Lọc theo danh mục |
-| 🛒 Giỏ hàng | Thêm / Sửa / Xóa sản phẩm trong giỏ |
-| 💳 Thanh toán | Tích hợp cổng thanh toán trực tuyến VNPay |
-
-### 🛠 Quản trị viên (Admin)
-
-| Tính năng | Mô tả |
-|---|---|
-| 📦 Quản lý sản phẩm | Thêm, Sửa, Xóa, Upload ảnh sản phẩm |
-| 📋 Quản lý đơn hàng | Xem trạng thái đơn hàng, doanh thu |
-| 🏭 Quản lý kho | Theo dõi số lượng tồn kho |
+- **Frontend**: React + Vite, Bootstrap, TanStack Query, Zustand, Axios
+- **Backend**: .NET 9 Web API, EF Core (Code-First), JWT auth, Cloudinary for images
+- **Database**: SQL Server (Dockerized), schema managed via EF Core migrations
 
 ---
 
-## 🏗 Kiến Trúc & Công Nghệ
+## Prerequisites
 
-Dự án áp dụng **Kiến trúc 3 Lớp (3-Layer Architecture)** kết hợp với **Repository Pattern** và **Dependency Injection (DI)** để đảm bảo tính tách biệt và dễ bảo trì.
-
-| Layer | Công nghệ |
-|---|---|
-| Backend | ASP.NET Core 9.0 (MVC) |
-| Database | SQL Server 2022 (Dockerized) |
-| Frontend | Razor Views, Bootstrap, jQuery |
-| Unit Test | xUnit |
-| E2E Test | Selenium WebDriver (Edge) |
-| DevOps | Docker, Docker Compose, GitHub Actions |
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Git
 
 ---
 
-## 🐳 Cài đặt và Chạy (Sử dụng Docker)
+## Running the Application
 
-Đây là cách nhanh nhất để khởi chạy dự án mà không cần cài đặt SQL Server hay .NET SDK trên máy.
-
-### Yêu cầu
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (đã cài đặt và đang chạy)
-- [Git](https://git-scm.com/)
-
-### Khởi chạy hệ thống
-
-Mở terminal tại thư mục gốc của dự án và chạy lần lượt các lệnh sau:
+### 1. Clone the repo
 
 ```bash
-# 1. Clone repository
 git clone https://github.com/hoanhngjp/ALittleLeaf.git
 cd ALittleLeaf
-
-# 2. Tạo file .env chứa mật khẩu DB (thay đổi nếu muốn)
-echo "MSSQL_SA_PASSWORD=Password@12345" > .env
-
-# 3. Build và khởi chạy Web App + Database
-docker-compose up -d --build webapp
 ```
 
-✅ Sau khi chạy xong, truy cập website tại: **<http://localhost:8080>**
+### 2. Create the `.env` file
 
-### Dừng hệ thống
+Copy the example and fill in your secrets:
 
 ```bash
-docker-compose down
+cp .env.example .env
+```
+
+Required variables:
+
+| Variable | Description |
+|---|---|
+| `MSSQL_SA_PASSWORD` | SQL Server SA password (min 8 chars, mixed case + symbol) |
+| `JWT_SECRET` | JWT signing secret (min 32 chars) |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| `VNPAY_TMNCODE` | VNPay merchant code |
+| `VNPAY_HASHSECRET` | VNPay hash secret |
+
+### 3. Start all containers
+
+```bash
+docker compose up -d
+```
+
+This starts:
+- `db` — SQL Server (waits until healthy before dependents start)
+- `api` — .NET 9 Web API at `http://localhost:8081` (Swagger: `http://localhost:8081/swagger`)
+- `frontend` — React SPA at `http://localhost:3000`
+
+### 4. Apply database migrations (first run only)
+
+```bash
+dotnet ef database update \
+  --project Backend/ALittleLeaf.Api \
+  --connection "Server=localhost,1433;Database=ALittleLeafDecor;User Id=sa;Password=<YOUR_SA_PASSWORD>;TrustServerCertificate=True"
+```
+
+### 5. Stop containers
+
+```bash
+docker compose down
+```
+
+To also remove the database volume (full reset):
+
+```bash
+docker compose down -v
 ```
 
 ---
 
-## 🧪 Hướng dẫn chạy Test
+## Running Unit Tests
 
-Dự án bao gồm 2 bộ kiểm thử tự động:
-
-### 1. Unit Tests (Chạy trong Docker)
-
-Kiểm tra logic xử lý nội bộ (Services, Repositories).
+### Locally (requires .NET 9 SDK)
 
 ```bash
-# Lệnh này sẽ dựng môi trường test cô lập và chạy test
-docker-compose --profile testing up --build unit-tests
+dotnet test ALittleLeaf.Tests/ALittleLeaf.Tests.csproj
 ```
 
-### 2. E2E Tests (Selenium)
-
-Kiểm tra luồng người dùng thật trên trình duyệt Edge.  
-> ⚠️ **Yêu cầu:** Website phải đang chạy tại `localhost:8080` và máy đã cài **.NET 9 SDK**.
+### Via Docker
 
 ```bash
-# 1. Đảm bảo Web App đang chạy
-docker-compose up -d webapp
+docker build -f Dockerfile.test.api -t alittleleaf-tests .
+docker run --rm alittleleaf-tests
+```
 
-# 2. Chạy E2E test từ máy host
-dotnet test ALittleLeaf.FunctionalTests
+Or with the compose testing profile (requires a running `db` container):
+
+```bash
+docker compose --profile testing up --exit-code-from unit-tests unit-tests
 ```
 
 ---
 
-## ⚙️ CI/CD (GitHub Actions)
+## Project Structure
 
-Dự án đã được thiết lập quy trình **Continuous Integration (CI)** tự động.  
-Mỗi khi có code mới được đẩy lên nhánh `master`, GitHub Actions sẽ tự động:
-
-- ☁️ Checkout Code
-- 🐳 Dựng môi trường Docker (Web & SQL Server)
-- 🗄️ Khởi tạo Database (chạy script SQL mẫu)
-- ✅ Chạy Unit Tests
-
-Trạng thái Build & Test có thể xem tại tab **[Actions](https://github.com/hoanhngjp/ALittleLeaf/actions)** trên GitHub.
-
----
-
-## 📂 Cấu trúc thư mục
-
-```text
+```
 ALittleLeaf/
-├── .github/
-│   └── workflows/               # Cấu hình GitHub Actions (CI/CD)
-├── ALittleLeaf/                 # Source code chính (Web App)
-│   ├── Controllers/             # Presentation Layer
-│   ├── Services/                # Business Logic Layer
-│   ├── Repositories/            # Data Access Layer
-│   ├── Views/                   # UI (Razor Views)
-│   ├── wwwroot/                 # Static files (CSS, JS, Images)
-│   └── Dockerfile               # Cấu hình Docker cho Web App
-├── ALittleLeaf.Tests/           # Unit Tests Project (xUnit)
-├── ALittleLeaf.FunctionalTests/ # E2E Tests Project (Selenium)
-├── docker-compose.yml           # Định nghĩa các Services (Web, DB, Test)
-├── Dockerfile.test              # Cấu hình Docker dành riêng cho Unit Test
-├── ALittleLeaf.sln              # Solution File
-└── README.md                    # Tài liệu dự án
+├── Backend/
+│   └── ALittleLeaf.Api/        .NET 9 Web API (Controllers, Services, Repositories, Models)
+├── Frontend/
+│   └── alittleleaf-frontend/   React (Vite) SPA (pages, components, hooks, stores)
+├── ALittleLeaf.Tests/          xUnit unit tests for Backend services and controllers
+├── ALittleLeaf.FunctionalTests/ Selenium E2E tests against the running SPA
+├── docker-compose.yml
+├── Dockerfile.test.api         Docker image for running the unit test suite
+└── .env.example
 ```
 
 ---
 
-© 2025 ALittleLeaf Project.
+## CI/CD
+
+GitHub Actions runs on every push/PR to `master`:
+
+| Job | What it does |
+|---|---|
+| `build-api` | Builds the Backend Docker image |
+| `build-frontend` | Builds the Frontend Docker image |
+| `test-api` | Runs the xUnit unit test suite via `Dockerfile.test.api` |
+
+Required GitHub Secrets: `MSSQL_SA_PASSWORD`, `JWT_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `VNPAY_TMNCODE`, `VNPAY_HASHSECRET`.
+
+---
+
+## Default Accounts (seeded)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | hoanhnghiep2704@gmail.com | 4L27hN04Aa@ |
+| Customer | Thuong12@gmail.com | Test@123 |

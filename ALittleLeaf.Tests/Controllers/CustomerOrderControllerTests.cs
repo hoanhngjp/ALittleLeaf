@@ -1,37 +1,29 @@
-﻿using ALittleLeaf.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Services; // IAuthService
-using ALittleLeaf.Services.Auth;
-using ALittleLeaf.Services.Order;
-using ALittleLeaf.ViewModels;
+using ALittleLeaf.Api.Controllers;
+using ALittleLeaf.Api.DTOs.Order;
+using ALittleLeaf.Api.Services.Order;
+using ALittleLeaf.Tests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace ALittleLeaf.Tests.Controllers
 {
     public class CustomerOrderControllerTests
     {
         private readonly Mock<IOrderService> _mockOrderService;
-        private readonly Mock<IAuthService> _mockAuthService;
-        private readonly AccountController _controller;
+        private readonly OrdersController    _controller;
+
+        private const long UserId = 1;
 
         public CustomerOrderControllerTests()
         {
             _mockOrderService = new Mock<IOrderService>();
-            _mockAuthService = new Mock<IAuthService>();
 
-            // Mock User Login (UserId = 1)
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-            {
-                new Claim("Id", "1"),
-            }, "mock"));
+            var user = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, UserId.ToString()) }, "mock"));
 
-            _controller = new AccountController(_mockAuthService.Object, _mockOrderService.Object)
+            _controller = new OrdersController(_mockOrderService.Object)
             {
                 ControllerContext = new ControllerContext
                 {
@@ -42,82 +34,63 @@ namespace ALittleLeaf.Tests.Controllers
 
         // ORDL-01: Hiển thị danh sách đơn hàng (Có đơn)
         [Fact]
-        public async Task Index_HasOrders_ReturnsViewWithList()
+        public async Task GetOrders_HasOrders_ReturnsOkWithList()
         {
-            // Arrange
-            var orders = new List<Bill>
+            var orders = new List<OrderDto>
             {
-                new Bill { BillId = 1, TotalAmount = 100000 },
-                new Bill { BillId = 2, TotalAmount = 200000 }
+                new() { BillId = 1, TotalAmount = 100000 },
+                new() { BillId = 2, TotalAmount = 200000 }
             };
-            _mockOrderService.Setup(s => s.GetOrderHistoryAsync(1)).ReturnsAsync(orders);
+            _mockOrderService.Setup(s => s.GetOrderHistoryAsync(UserId)).ReturnsAsync(orders);
 
-            // Act
-            var result = await _controller.Index();
+            var result = await _controller.GetOrders();
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<List<Bill>>(viewResult.Model);
-            Assert.Equal(2, model.Count);
+            var list = ApiAssert.OkValue<List<OrderDto>>(result);
+            Assert.Equal(2, list.Count);
         }
 
         // ORDL-02: Hiển thị danh sách đơn hàng (Trống)
         [Fact]
-        public async Task Index_NoOrders_ReturnsEmptyList()
+        public async Task GetOrders_NoOrders_ReturnsEmptyList()
         {
-            // Arrange
-            _mockOrderService.Setup(s => s.GetOrderHistoryAsync(1)).ReturnsAsync(new List<Bill>());
+            _mockOrderService.Setup(s => s.GetOrderHistoryAsync(UserId))
+                .ReturnsAsync(new List<OrderDto>());
 
-            // Act
-            var result = await _controller.Index();
+            var result = await _controller.GetOrders();
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<List<Bill>>(viewResult.Model);
-            Assert.Empty(model);
+            var list = ApiAssert.OkValue<List<OrderDto>>(result);
+            Assert.Empty(list);
         }
 
         // ORD-01: Xem chi tiết đơn hàng (Thành công)
         [Fact]
-        public async Task OrderDetails_ValidId_ReturnsViewWithDetails()
+        public async Task GetOrder_ValidId_ReturnsOkWithDetail()
         {
-            // Arrange
-            int billId = 10;
-            var bill = new Bill { BillId = 10, TotalAmount = 50000 };
-            var details = new List<OrderDetailViewModel>
+            var detail = new OrderDetailDto
             {
-                new OrderDetailViewModel { ProductName = "Product A", Quantity = 1 }
+                BillId      = 10,
+                TotalAmount = 50000,
+                Items       = new List<OrderLineItemDto> { new() { ProductName = "Product A", Quantity = 1 } }
             };
+            _mockOrderService.Setup(s => s.GetOrderDetailAsync(10, UserId)).ReturnsAsync(detail);
 
-            _mockOrderService.Setup(s => s.GetBillByIdAsync(billId, 1)).ReturnsAsync(bill);
-            _mockOrderService.Setup(s => s.GetBillDetailsAsync(billId)).ReturnsAsync(details);
+            var result = await _controller.GetOrder(10);
 
-            // Act
-            var result = await _controller.OrderDetails(billId);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<List<OrderDetailViewModel>>(viewResult.Model); // View nhận details
-            Assert.Single(model);
-
-            // Kiểm tra ViewBag chứa Bill info
-            Assert.NotNull(_controller.ViewBag.Bill);
-            var billInViewBag = (Bill)_controller.ViewBag.Bill;
-            Assert.Equal(10, billInViewBag.BillId);
+            var dto = ApiAssert.OkValue<OrderDetailDto>(result);
+            Assert.Equal(10, dto.BillId);
+            Assert.Single(dto.Items);
         }
 
-        // ORD Error: Xem đơn hàng không tồn tại (hoặc của người khác)
+        // ORD Error: Xem đơn hàng không tồn tại (hoặc của người khác) → 404
         [Fact]
-        public async Task OrderDetails_InvalidId_ReturnsNotFound()
+        public async Task GetOrder_InvalidId_ReturnsNotFound()
         {
-            // Arrange
-            _mockOrderService.Setup(s => s.GetBillByIdAsync(999, 1)).ReturnsAsync((Bill)null);
+            _mockOrderService.Setup(s => s.GetOrderDetailAsync(999, UserId))
+                .ReturnsAsync((OrderDetailDto?)null);
 
-            // Act
-            var result = await _controller.OrderDetails(999);
+            var result = await _controller.GetOrder(999);
 
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
+            ApiAssert.IsNotFound(result);
         }
     }
 }

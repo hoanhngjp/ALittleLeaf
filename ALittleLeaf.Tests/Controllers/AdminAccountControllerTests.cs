@@ -1,101 +1,105 @@
-﻿using ALittleLeaf.Areas.Admin.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Services.Auth;
-using ALittleLeaf.ViewModels;
+using ALittleLeaf.Api.Controllers;
+using ALittleLeaf.Api.DTOs.Auth;
+using ALittleLeaf.Api.Models;
+using ALittleLeaf.Api.Services.Auth;
+using ALittleLeaf.Tests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ALitlleLeaf.Test.Controllers
+namespace ALittleLeaf.Tests.Controllers
 {
+    /// <summary>
+    /// Admin login tests against the shared AuthController.
+    /// The "admin portal" is just the same POST /api/auth/login endpoint —
+    /// the frontend routes based on the returned role claim.
+    /// </summary>
     public class AdminAccountControllerTests
     {
         private readonly Mock<IAuthService> _mockAuthService;
-        private readonly Mock<IResponseCookies> _mockCookies;
-        private readonly Mock<ISession> _mockSession;
-        private readonly AccountController _controller; // Admin Controller
+        private readonly AuthController     _controller;
 
         public AdminAccountControllerTests()
         {
             _mockAuthService = new Mock<IAuthService>();
-            _mockCookies = new Mock<IResponseCookies>();
-            _mockSession = new Mock<ISession>();
-
-            var mockHttpContext = new Mock<HttpContext>();
-            var mockResponse = new Mock<HttpResponse>();
-
-            mockResponse.Setup(r => r.Cookies).Returns(_mockCookies.Object);
-            mockHttpContext.Setup(c => c.Response).Returns(mockResponse.Object);
-            mockHttpContext.Setup(c => c.Session).Returns(_mockSession.Object);
-
-            _controller = new AccountController(_mockAuthService.Object)
+            _controller = new AuthController(_mockAuthService.Object)
             {
-                ControllerContext = new ControllerContext { HttpContext = mockHttpContext.Object },
-                TempData = new TempDataDictionary(mockHttpContext.Object, Mock.Of<ITempDataProvider>())
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
             };
         }
 
-        // LOGIN-005: Đăng nhập thành công với quyền Admin
+        // LOGIN-05: Đăng nhập thành công với quyền Admin → 200 OK + role="admin" trong token
         [Fact]
-        public async Task Login_AdminRole_RedirectsToDashboard()
+        public async Task Login_AdminRole_Returns200WithAdminRole()
         {
-            // Arrange
-            var model = new UserLoggedViewModel { UserEmail = "admin@test.com", UserPassword = "Pass" };
-
-            // Mock kết quả trả về UserRole = "admin"
+            var dto = new LoginRequestDto { Email = "admin@test.com", Password = "Pass" };
             var authResult = new AuthServiceResult
             {
-                Succeeded = true,
-                AccessToken = "admin-token",
-                RefreshToken = "refresh-token",
-                User = new User { UserRole = "admin", UserEmail = "admin@test.com", UserFullname = "Admin" }
+                Succeeded    = true,
+                AccessToken  = "admin-jwt",
+                RefreshToken = "admin-refresh",
+                User         = new User
+                {
+                    UserId       = 1,
+                    UserEmail    = "admin@test.com",
+                    UserFullname = "Administrator",
+                    UserRole     = "admin"
+                }
             };
 
-            _mockAuthService.Setup(s => s.LoginAsync(model)).ReturnsAsync(authResult);
+            _mockAuthService.Setup(s => s.LoginAsync(dto)).ReturnsAsync(authResult);
 
-            // Act
-            var result = await _controller.Login(model, null);
+            var result = await _controller.Login(dto);
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Dashboard", redirectResult.ControllerName);
-
-            // Kiểm tra Cookie Refresh Token được lưu (Đặc thù Admin)
-            _mockCookies.Verify(c => c.Append("X-Refresh-Token", "refresh-token", It.IsAny<CookieOptions>()), Times.Once);
+            var response = ApiAssert.OkValue<LoginResponseDto>(result);
+            Assert.Equal("admin", response.User.Role);
+            Assert.Equal("admin-jwt", response.AccessToken);
+            Assert.NotNull(response.RefreshToken);
         }
 
-        // Test Case: Đăng nhập đúng pass nhưng KHÔNG PHẢI ADMIN (UserRole = "customer")
+        // Đăng nhập đúng pass nhưng là customer (không phải admin)
+        // → API vẫn trả 200; việc phân quyền do [Authorize(Roles="admin")] trên từng admin endpoint
         [Fact]
-        public async Task Login_CustomerRole_ReturnsErrorForAdminPortal()
+        public async Task Login_CustomerRole_Returns200ButRoleIsCustomer()
         {
-            // Arrange
-            var model = new UserLoggedViewModel { UserEmail = "user@test.com", UserPassword = "Pass" };
-
-            // Mock UserRole = "customer"
+            var dto = new LoginRequestDto { Email = "user@test.com", Password = "Pass" };
             var authResult = new AuthServiceResult
             {
-                Succeeded = true,
-                User = new User { UserRole = "customer" }
+                Succeeded    = true,
+                AccessToken  = "customer-jwt",
+                RefreshToken = "customer-refresh",
+                User         = new User
+                {
+                    UserId       = 2,
+                    UserEmail    = "user@test.com",
+                    UserFullname = "Customer",
+                    UserRole     = "customer"
+                }
             };
 
-            _mockAuthService.Setup(s => s.LoginAsync(model)).ReturnsAsync(authResult);
+            _mockAuthService.Setup(s => s.LoginAsync(dto)).ReturnsAsync(authResult);
 
-            // Act
-            var result = await _controller.Login(model, null);
+            var result = await _controller.Login(dto);
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Equal("Bạn không có quyền truy cập Admin.", _controller.ViewBag.ErrorMessage);
+            var response = ApiAssert.OkValue<LoginResponseDto>(result);
+            // Frontend is responsible for gating the admin UI based on this role value
+            Assert.Equal("customer", response.User.Role);
+        }
 
-            // Đảm bảo KHÔNG set cookie nếu sai quyền
-            _mockCookies.Verify(c => c.Append(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CookieOptions>()), Times.Never);
+        // Đăng nhập sai mật khẩu → 401 Unauthorized
+        [Fact]
+        public async Task Login_WrongPassword_Returns401()
+        {
+            var dto = new LoginRequestDto { Email = "admin@test.com", Password = "wrong" };
+            _mockAuthService.Setup(s => s.LoginAsync(dto))
+                .ReturnsAsync(new AuthServiceResult { Succeeded = false, ErrorMessage = "Mật khẩu không chính xác." });
+
+            var result = await _controller.Login(dto);
+
+            ApiAssert.IsUnauthorized(result);
         }
     }
 }

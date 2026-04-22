@@ -1,80 +1,119 @@
-﻿using ALittleLeaf.Areas.Admin.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
+using ALittleLeaf.Api.Controllers.Admin;
+using ALittleLeaf.Api.DTOs.Admin;
+using ALittleLeaf.Api.Services.Admin;
 using ALittleLeaf.Tests.Helpers;
-using ALittleLeaf.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace ALittleLeaf.Tests.Controllers
 {
-    public class AdminOrderControllerTests : IDisposable
+    public class AdminOrderControllerTests
     {
-        private readonly AlittleLeafDecorContext _context;
-        private readonly OrdersController _controller;
+        private readonly Mock<IAdminService>  _mockAdminService;
+        private readonly AdminOrdersController _controller;
 
         public AdminOrderControllerTests()
         {
-            _context = DbContextFactory.Create();
-            _controller = new OrdersController(_context);
+            _mockAdminService = new Mock<IAdminService>();
+            _controller       = new AdminOrdersController(_mockAdminService.Object);
         }
 
-        public void Dispose()
-        {
-            DbContextFactory.Destroy(_context);
-        }
-
+        // GET /api/admin/orders — returns paginated list
         [Fact]
-        public void UpdateStatus_Post_UpdatesDatabaseAndRedirects()
+        public async Task GetOrders_ReturnsOkWithPagedResult()
         {
-            // Arrange
-            // Tạo Bill mẫu trong DB
-            var bill = new Bill
+            var paged = new PaginatedAdminResultDto<AdminOrderDto>
             {
-                IdUser = 1,
-                BillId = 100,
-                IsConfirmed = false,
-                PaymentStatus = "Pending",
-                ShippingStatus = "Not Shipped",
-                DateCreated = DateOnly.FromDateTime(DateTime.Now),
-
-                // --- THÊM DÒNG NÀY ---
-                PaymentMethod = "COD",  // <--- Bổ sung trường bắt buộc
-                IdAdrs = 1 // (Tùy chọn) Nên thêm ID địa chỉ giả để dữ liệu chuẩn hơn
+                Items      = new List<AdminOrderDto> { new() { BillId = 100, TotalAmount = 50000 } },
+                TotalItems = 1,
+                Page       = 1,
+                PageSize   = 10
             };
-            _context.Bills.Add(bill);
-            _context.SaveChanges();
+            _mockAdminService
+                .Setup(s => s.GetOrdersAsync(null, null, null, null, null, "dateCreated", true, 1, 10))
+                .ReturnsAsync(paged);
 
-            // Act
-            // Giả lập Admin confirm đơn hàng
-            var result = _controller.UpdateStatus(100, true, "Paid", "Shipped");
+            var result = await _controller.GetOrders();
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Details", redirectResult.ActionName);
-
-            // Check DB
-            var updatedBill = _context.Bills.Find(100);
-            Assert.True(updatedBill.IsConfirmed);
-            Assert.Equal("Paid", updatedBill.PaymentStatus);
-            Assert.Equal("Shipped", updatedBill.ShippingStatus);
+            var dto = ApiAssert.OkValue<PaginatedAdminResultDto<AdminOrderDto>>(result);
+            Assert.Single(dto.Items);
+            Assert.Equal(100, dto.Items.First().BillId);
         }
 
+        // GET /api/admin/orders/{id} — found
         [Fact]
-        public async Task Statistics_ReturnsViewModel()
+        public async Task GetOrder_ValidId_ReturnsOkWithDetail()
         {
-            // Act
-            var result = await _controller.Statistics(null, null);
+            var detail = new AdminOrderDetailDto { BillId = 100, TotalAmount = 50000 };
+            _mockAdminService.Setup(s => s.GetOrderByIdAsync(100)).ReturnsAsync(detail);
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<OrderStatisticsViewModel>(viewResult.Model);
-            Assert.NotNull(model.RecentOrders);
-            // Có thể kiểm tra thêm model.TotalOrders nếu đã seed data trong DbContextFactory
+            var result = await _controller.GetOrder(100);
+
+            var dto = ApiAssert.OkValue<AdminOrderDetailDto>(result);
+            Assert.Equal(100, dto.BillId);
+        }
+
+        // GET /api/admin/orders/{id} — not found → 404
+        [Fact]
+        public async Task GetOrder_InvalidId_ReturnsNotFound()
+        {
+            _mockAdminService.Setup(s => s.GetOrderByIdAsync(999))
+                .ReturnsAsync((AdminOrderDetailDto?)null);
+
+            var result = await _controller.GetOrder(999);
+
+            ApiAssert.IsNotFound(result);
+        }
+
+        // PATCH /api/admin/orders/{id}/status — updates successfully
+        [Fact]
+        public async Task UpdateOrderStatus_ValidId_ReturnsOkWithUpdatedOrder()
+        {
+            var updated = new AdminOrderDto
+            {
+                BillId        = 100,
+                IsConfirmed   = true,
+                PaymentStatus = "paid",
+                ShippingStatus = "fulfilled"
+            };
+            var dto = new UpdateOrderStatusDto
+            {
+                IsConfirmed   = true,
+                PaymentStatus  = "paid",
+                ShippingStatus = "fulfilled"
+            };
+            _mockAdminService.Setup(s => s.UpdateOrderStatusAsync(100, dto)).ReturnsAsync(updated);
+
+            var result = await _controller.UpdateOrderStatus(100, dto);
+
+            var order = ApiAssert.OkValue<AdminOrderDto>(result);
+            Assert.True(order.IsConfirmed);
+            Assert.Equal("paid", order.PaymentStatus);
+        }
+
+        // PATCH /api/admin/orders/{id}/status — no fields provided → 400
+        [Fact]
+        public async Task UpdateOrderStatus_NoFields_ReturnsBadRequest()
+        {
+            var dto = new UpdateOrderStatusDto(); // all null
+
+            var result = await _controller.UpdateOrderStatus(100, dto);
+
+            ApiAssert.IsBadRequest(result);
+            _mockAdminService.Verify(s => s.UpdateOrderStatusAsync(It.IsAny<int>(), It.IsAny<UpdateOrderStatusDto>()), Times.Never);
+        }
+
+        // PATCH /api/admin/orders/{id}/status — order not found → 404
+        [Fact]
+        public async Task UpdateOrderStatus_InvalidId_ReturnsNotFound()
+        {
+            var dto = new UpdateOrderStatusDto { ShippingStatus = "fulfilled" };
+            _mockAdminService.Setup(s => s.UpdateOrderStatusAsync(999, dto))
+                .ReturnsAsync((AdminOrderDto?)null);
+
+            var result = await _controller.UpdateOrderStatus(999, dto);
+
+            ApiAssert.IsNotFound(result);
         }
     }
 }

@@ -1,178 +1,125 @@
-﻿using ALittleLeaf.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Services.Auth;
-using ALittleLeaf.Services.Order;
-using ALittleLeaf.ViewModels;
+using ALittleLeaf.Api.Controllers;
+using ALittleLeaf.Api.DTOs.Auth;
+using ALittleLeaf.Api.Services.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ALittleLeaf.Api.Models;
+using ALittleLeaf.Tests.Helpers;
 
-namespace ALitlleLeaf.Test.Controllers
+namespace ALittleLeaf.Tests.Controllers
 {
     public class CustomerAccountControllerTests
     {
         private readonly Mock<IAuthService> _mockAuthService;
-        private readonly Mock<IOrderService> _mockOrderService;
-        private readonly Mock<IResponseCookies> _mockCookies;
-        private readonly Mock<ISession> _mockSession;
-        private readonly AccountController _controller;
+        private readonly AuthController     _controller;
 
         public CustomerAccountControllerTests()
         {
-            // 1. Setup Service Mocks
             _mockAuthService = new Mock<IAuthService>();
-            _mockOrderService = new Mock<IOrderService>();
-
-            // 2. Setup HttpContext Mocks (Cookie & Session)
-            _mockCookies = new Mock<IResponseCookies>();
-            _mockSession = new Mock<ISession>();
-
-            var mockHttpContext = new Mock<HttpContext>();
-            var mockResponse = new Mock<HttpResponse>();
-
-            mockResponse.Setup(r => r.Cookies).Returns(_mockCookies.Object);
-            mockHttpContext.Setup(c => c.Response).Returns(mockResponse.Object);
-            mockHttpContext.Setup(c => c.Session).Returns(_mockSession.Object);
-
-            // 3. Khởi tạo Controller
-            _controller = new AccountController(_mockAuthService.Object, _mockOrderService.Object)
+            _controller = new AuthController(_mockAuthService.Object)
             {
-                ControllerContext = new ControllerContext { HttpContext = mockHttpContext.Object },
-                // Setup TempData để test thông báo thành công
-                TempData = new TempDataDictionary(mockHttpContext.Object, Mock.Of<ITempDataProvider>())
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
             };
         }
 
-        #region LOGIN TESTS
+        // ── Login ─────────────────────────────────────────────────────────────
 
-        // Test Case: LOGIN-004 (Thành công)
+        // LOGIN-04: Đăng nhập thành công → 200 OK với JWT
         [Fact]
-        public async Task Login_Success_SetsCookieAndRedirects()
+        public async Task Login_Success_Returns200WithTokens()
         {
-            // Arrange
-            var model = new UserLoggedViewModel { UserEmail = "user@test.com", UserPassword = "Pass" };
+            var dto = new LoginRequestDto { Email = "user@test.com", Password = "Pass123!" };
             var authResult = new AuthServiceResult
             {
-                Succeeded = true,
-                AccessToken = "fake-jwt-token",
-                User = new User { UserRole = "customer" }
+                Succeeded    = true,
+                AccessToken  = "fake-jwt",
+                RefreshToken = "fake-refresh",
+                User         = new User { UserId = 1, UserEmail = "user@test.com", UserFullname = "Test User", UserRole = "customer" }
             };
 
-            _mockAuthService.Setup(s => s.LoginAsync(model)).ReturnsAsync(authResult);
+            _mockAuthService.Setup(s => s.LoginAsync(dto)).ReturnsAsync(authResult);
 
-            // Act
-            var result = await _controller.Login(model, null);
+            var result = await _controller.Login(dto);
 
-            // Assert
-            // 1. Kiểm tra Redirect về Home
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Home", redirectResult.ControllerName);
-
-            // 2. Kiểm tra Cookie AccessToken được lưu
-            _mockCookies.Verify(c => c.Append("X-Access-Token", "fake-jwt-token", It.IsAny<CookieOptions>()), Times.Once);
-
-            // 3. Kiểm tra TempData
-            Assert.Equal("Đăng nhập thành công", _controller.TempData["SuccessMessage"]);
+            var response = ApiAssert.OkValue<LoginResponseDto>(result);
+            Assert.Equal("fake-jwt", response.AccessToken);
+            Assert.NotNull(response.RefreshToken);
+            Assert.Equal("user@test.com", response.User.Email);
         }
 
-        // Test Case: LOGIN-001, 002, 003 (Thất bại)
+        // LOGIN-01/02/03: Đăng nhập thất bại → 401 Unauthorized
         [Fact]
-        public async Task Login_Failure_ReturnsViewWithErrorMessage()
+        public async Task Login_Failure_Returns401()
         {
-            // Arrange
-            var model = new UserLoggedViewModel { UserEmail = "wrong@test.com", UserPassword = "wrong" };
+            var dto = new LoginRequestDto { Email = "wrong@test.com", Password = "wrong" };
+            _mockAuthService.Setup(s => s.LoginAsync(dto))
+                .ReturnsAsync(new AuthServiceResult { Succeeded = false, ErrorMessage = "Mật khẩu không chính xác." });
+
+            var result = await _controller.Login(dto);
+
+            ApiAssert.IsUnauthorized(result);
+        }
+
+        // ── Register ──────────────────────────────────────────────────────────
+
+        // REGISTER-01: Đăng ký hợp lệ → 201 Created
+        [Fact]
+        public async Task Register_Success_Returns201()
+        {
+            var dto = new RegisterRequestDto
+            {
+                Email    = "new@test.com",
+                Password = "Password123!",
+                FullName = "New User",
+                Address  = "123 Street"
+            };
             var authResult = new AuthServiceResult
             {
-                Succeeded = false,
-                ErrorMessage = "Mật khẩu không chính xác"
+                Succeeded    = true,
+                AccessToken  = "new-jwt",
+                RefreshToken = "new-refresh",
+                User         = new User { UserId = 5, UserEmail = "new@test.com", UserFullname = "New User", UserRole = "customer" }
             };
 
-            _mockAuthService.Setup(s => s.LoginAsync(model)).ReturnsAsync(authResult);
+            _mockAuthService.Setup(s => s.RegisterAsync(dto)).ReturnsAsync(authResult);
 
-            // Act
-            var result = await _controller.Login(model, null);
+            var result = await _controller.Register(dto);
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Equal("Mật khẩu không chính xác", _controller.ViewBag.ErrorMessage);
+            var created = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(201, created.StatusCode);
         }
 
-        #endregion
-
-        #region REGISTER TESTS
-
-        // Test Case: REGISTER-001 (Thành công)
+        // REGISTER-05: Email đã tồn tại → 409 Conflict
         [Fact]
-        public async Task Register_Success_RedirectsToAccountIndex()
+        public async Task Register_DuplicateEmail_Returns409()
         {
-            // Arrange
-            var model = new RegisterViewModel { UserEmail = "new@test.com", UserPassword = "Pass" };
-            var authResult = new AuthServiceResult { Succeeded = true };
+            var dto = new RegisterRequestDto { Email = "exists@test.com", Password = "Abc1@xyz", FullName = "X", Address = "Y" };
+            _mockAuthService.Setup(s => s.RegisterAsync(dto))
+                .ReturnsAsync(new AuthServiceResult { Succeeded = false, ErrorMessage = "Email đã tồn tại." });
 
-            _mockAuthService.Setup(s => s.RegisterAsync(model)).ReturnsAsync(authResult);
+            var result = await _controller.Register(dto);
 
-            // Act
-            var result = await _controller.Register(model);
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Account", redirectResult.ControllerName);
+            var conflict = Assert.IsType<ConflictObjectResult>(result);
+            Assert.Equal(409, conflict.StatusCode);
         }
 
-        // Test Case: REGISTER-005 (Thất bại - Email trùng)
+        // ── Logout ────────────────────────────────────────────────────────────
+
+        // LOGOUT-01/02: Đăng xuất với token hợp lệ → 200 OK
         [Fact]
-        public async Task Register_Failure_ReturnsViewWithModelError()
+        public async Task Logout_ValidToken_Returns200()
         {
-            // Arrange
-            var model = new RegisterViewModel { UserEmail = "exist@test.com" };
-            var authResult = new AuthServiceResult { Succeeded = false, ErrorMessage = "Email đã tồn tại." };
+            var dto = new LogoutRequestDto { RefreshToken = "some-refresh-token" };
+            _mockAuthService.Setup(s => s.LogoutAsync("some-refresh-token")).ReturnsAsync(true);
 
-            _mockAuthService.Setup(s => s.RegisterAsync(model)).ReturnsAsync(authResult);
+            var result = await _controller.Logout(dto);
 
-            // Act
-            var result = await _controller.Register(model);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.False(_controller.ModelState.IsValid);
-            Assert.Equal("Email đã tồn tại.", _controller.ModelState["UserEmail"].Errors[0].ErrorMessage);
+            ApiAssert.IsOk(result);
+            _mockAuthService.Verify(s => s.LogoutAsync("some-refresh-token"), Times.Once);
         }
-
-        #endregion
-
-        #region LOGOUT TESTS
-
-        // Test Case: LOGOUT-001
-        [Fact]
-        public async Task Logout_Action_ClearsDataAndRedirectsToLogin()
-        {
-            // Act
-            var result = await _controller.Logout();
-
-            // Assert
-            // 1. Verify Service Logout được gọi
-            _mockAuthService.Verify(s => s.LogoutAsync(), Times.Once);
-
-            // 2. Verify Cookie bị xóa (Access Token & Refresh Token)
-            _mockCookies.Verify(c => c.Delete("X-Access-Token"), Times.Once);
-            _mockCookies.Verify(c => c.Delete("X-Refresh-Token"), Times.Once);
-
-            // 3. Verify Session Clear
-            _mockSession.Verify(s => s.Clear(), Times.Once);
-
-            // 4. Verify Redirect
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Login", redirectResult.ActionName);
-        }
-
-        #endregion
     }
 }

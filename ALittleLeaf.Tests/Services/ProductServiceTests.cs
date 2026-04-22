@@ -1,114 +1,100 @@
-﻿using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
-using ALittleLeaf.Services.Product; // Namespace của bạn
-using ALittleLeaf.Tests.Helpers;    // DbContextFactory
-using ALittleLeaf.ViewModels;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
+using ALittleLeaf.Api.Data;
+using ALittleLeaf.Api.Models;
+using ALittleLeaf.Api.Repositories.Product;
+using ALittleLeaf.Api.Services.Product;
+using ALittleLeaf.Tests.Helpers;
 
 namespace ALittleLeaf.Tests.Services
 {
     public class ProductServiceTests : IDisposable
     {
         private readonly AlittleLeafDecorContext _context;
-        private readonly ProductService _service;
+        private readonly ProductService          _service;
 
         public ProductServiceTests()
         {
             _context = DbContextFactory.Create();
-            _service = new ProductService(_context);
+            var repo = new ProductRepository(_context);
+            _service = new ProductService(repo);
         }
 
-        public void Dispose()
+        public void Dispose() => DbContextFactory.Destroy(_context);
+
+        // ── Catalog ───────────────────────────────────────────────────────────
+
+        // TC-01/02: Tìm kiếm theo keyword
+        [Fact]
+        public async Task GetPaginated_SearchKeyword_ReturnsMatchingProducts()
         {
-            DbContextFactory.Destroy(_context);
+            // "Bếp" should match "Bếp Từ Cao Cấp" and "Ấm Tráng Men" is in category "Bếp"
+            // but keyword search matches ProductName only — "Bếp" matches product 2
+            var found    = await _service.GetPaginatedProductsAsync(null, "Bếp", null, null, 1, 10);
+            var notFound = await _service.GetPaginatedProductsAsync(null, "Mũ",  null, null, 1, 10);
+
+            Assert.True(found.TotalItems >= 1);
+            Assert.All(found.Items, p => Assert.Contains("Bếp", p.ProductName));
+            Assert.Equal(0, notFound.TotalItems);
         }
 
-        #region CATALOG TESTS (TC-01 -> TC-06)
-
-        [Fact] // TC-01 & TC-02: Tìm kiếm
-        public async Task GetPaginatedProductsAsync_SearchKeyword_ReturnsCorrectProducts()
+        // TC-03: Lọc theo danh mục
+        [Fact]
+        public async Task GetPaginated_FilterCategory_ReturnsOnlyThatCategory()
         {
-            // Act 1: Tìm "Bếp" (Có kết quả - xem MockData)
-            var resultFound = await _service.GetPaginatedProductsAsync(null, "Bếp", null, null, 1, 10);
-
-            // Act 2: Tìm "Mũ" (Không có kết quả)
-            var resultNotFound = await _service.GetPaginatedProductsAsync(null, "Mũ", null, null, 1, 10);
-
-            // Assert
-            Assert.Contains(resultFound.Products, p => p.ProductName.Contains("Bếp") || p.ProductName.Contains("Ấm"));
-            Assert.Empty(resultNotFound.Products);
-            Assert.Equal("Bếp", resultFound.PageTitle);
-        }
-
-        [Fact] // TC-03: Lọc danh mục
-        public async Task GetPaginatedProductsAsync_FilterCategory_ReturnsProductsInCategory()
-        {
-            // Act: Lọc danh mục ID 2 (Cây cảnh - xem MockData)
             var result = await _service.GetPaginatedProductsAsync(2, null, null, null, 1, 10);
 
-            // Assert
-            Assert.NotEmpty(result.Products);
-            Assert.All(result.Products, p => Assert.Equal(2, p.IdCategory));
-            Assert.Equal("Cây cảnh", result.PageTitle);
+            Assert.NotEmpty(result.Items);
+            Assert.All(result.Items, p => Assert.Equal(2, p.IdCategory));
         }
 
-        [Fact] // TC-04: Lọc giá
-        public async Task GetPaginatedProductsAsync_FilterPrice_ReturnsProductsInRange()
+        // TC-04: Lọc theo giá tối thiểu
+        [Fact]
+        public async Task GetPaginated_MinPrice_FiltersCorrectly()
         {
-            // Act: Giá > 2.000.000 (Chỉ có Bếp Từ Cao Cấp)
             var result = await _service.GetPaginatedProductsAsync(null, null, 2000000, null, 1, 10);
 
-            // Assert
-            Assert.Single(result.Products);
-            Assert.Equal("Bếp Từ Cao Cấp", result.Products.First().ProductName);
+            Assert.Single(result.Items);
+            Assert.Equal("Bếp Từ Cao Cấp", result.Items.First().ProductName);
         }
 
-        [Fact] // TC-06: Phân trang
-        public async Task GetPaginatedProductsAsync_Pagination_ReturnsCorrectMetaData()
+        // TC-06: Phân trang
+        [Fact]
+        public async Task GetPaginated_PageTwo_ReturnsCorrectSlice()
         {
-            // Arrange: Thêm nhiều sản phẩm giả
             for (int i = 0; i < 20; i++)
             {
                 _context.Products.Add(new Product
                 {
-                    ProductName = $"Prod {i}",
-                    ProductPrice = 100,
-                    IdCategory = 1,
-                    QuantityInStock = 10,
-                    IsOnSale = true
+                    ProductName = $"Extra Prod {i}", ProductPrice = 100,
+                    IdCategory = 1, QuantityInStock = 10, IsOnSale = true
                 });
             }
             await _context.SaveChangesAsync();
 
-            // Act: Lấy trang 2, pageSize = 5
             var result = await _service.GetPaginatedProductsAsync(null, null, null, null, 2, 5);
 
-            // Assert
-            Assert.Equal(2, result.Pagination.CurrentPage);
-            Assert.Equal(5, result.Products.Count);
-            Assert.True(result.Pagination.TotalItems >= 20);
+            Assert.Equal(2,  result.Page);
+            Assert.Equal(5,  result.Items.Count());
+            Assert.True(result.TotalItems >= 20);
         }
 
-        #endregion
-
-        #region DETAIL TESTS (TC-07)
-
+        // TC-07: Chi tiết sản phẩm
         [Fact]
-        public async Task GetProductDetailAsync_ValidId_ReturnsViewModel()
+        public async Task GetProductDetail_ValidId_ReturnsDto()
         {
-            // Act
-            var result = await _service.GetProductDetailAsync(1); // ID 1 = Ấm Tráng Men
+            var result = await _service.GetProductDetailAsync(1);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal(1, result.ProductId);
-            Assert.NotNull(result.CategoryName); // Kiểm tra Include Category hoạt động
+            Assert.Equal("Ấm Tráng Men", result.ProductName);
+            // CategoryName populated via Include
+            Assert.NotNull(result.CategoryName);
         }
 
-        #endregion
+        [Fact]
+        public async Task GetProductDetail_InvalidId_ReturnsNull()
+        {
+            var result = await _service.GetProductDetailAsync(9999);
+            Assert.Null(result);
+        }
     }
 }

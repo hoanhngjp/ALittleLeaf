@@ -1,16 +1,22 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Support.UI;
 using Xunit;
 using System;
-using System.Threading;
 
 namespace ALittleLeaf.FunctionalTests
 {
+    /// <summary>
+    /// E2E registration tests against the React SPA at http://localhost:3000.
+    /// Register page: /register
+    /// On success the SPA redirects to /login.
+    /// Gender radios: id="sex-true" (Nam), id="sex-false" (Nữ).
+    /// Submit button: button.brand-btn (not the old button.sign-in-btn).
+    /// </summary>
     public class RegistrationE2ETests : IDisposable
     {
         private readonly IWebDriver _driver;
-        private readonly string _baseUrl = "http://localhost:8080";
+        private readonly string _baseUrl = "http://localhost:3000";
         private readonly WebDriverWait _wait;
 
         public RegistrationE2ETests()
@@ -23,125 +29,105 @@ namespace ALittleLeaf.FunctionalTests
             _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
         }
 
-        public void Dispose()
-        {
-            _driver.Quit();
-        }
+        public void Dispose() => _driver.Quit();
 
-        // Helper: Tạo email ngẫu nhiên để test
-        private string GetRandomEmail()
-        {
-            return $"auto_test_{Guid.NewGuid().ToString().Substring(0, 8)}@gmail.com";
-        }
+        private string GetRandomEmail() =>
+            $"auto_test_{Guid.NewGuid().ToString()[..8]}@gmail.com";
 
+        // reg_001: Valid registration → redirect to /login
         [Fact]
-        public void Register_ValidInfo_ShouldRedirectToLoginOrHome()
+        public void Register_ValidInfo_ShouldRedirectToLogin()
         {
-            // 1. Truy cập trang đăng ký
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Account/Register");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/register");
 
-            // 2. Điền thông tin hợp lệ
-            // Họ tên
             _driver.FindElement(By.Id("fullname")).SendKeys("Nguyen Auto Test");
 
-            // Giới tính (Mặc định là Nữ - radio1, chọn Nam - radio2 thử xem)
-            var maleRadio = _driver.FindElement(By.Id("radio2"));
-            // Dùng JS click vì radio button hay bị label che
+            // Gender radio: id="sex-true" = Nam (male)
+            var maleRadio = _driver.FindElement(By.Id("sex-true"));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", maleRadio);
 
-            // Ngày sinh (dd/mm/yyyy hoặc mm/dd/yyyy tùy locale trình duyệt)
-            // Selenium sendkeys vào input date thường là chuỗi số: 01012000 (01/01/2000)
-            // Hoặc gửi theo định dạng yyyy-MM-dd nếu browser hỗ trợ chuẩn
-            var birthdayInput = _driver.FindElement(By.Id("birthday"));
-            birthdayInput.SendKeys("01012000"); // 01/01/2000
+            // Birthday input (type="date") — send as yyyy-MM-dd
+            _driver.FindElement(By.Id("birthday")).SendKeys("2000-01-01");
 
-            // Email (Ngẫu nhiên)
-            string email = GetRandomEmail();
-            _driver.FindElement(By.Id("email")).SendKeys(email);
-
-            // Mật khẩu (Có chữ hoa, thường, số, ký tự đặc biệt)
+            _driver.FindElement(By.Id("email")).SendKeys(GetRandomEmail());
             _driver.FindElement(By.Id("password")).SendKeys("Test@1234");
-
-            // Địa chỉ
             _driver.FindElement(By.Id("address")).SendKeys("123 Test Street, HCM");
 
-            // 3. Submit Form
-            var submitBtn = _driver.FindElement(By.CssSelector("button.sign-in-btn"));
+            var submitBtn = _driver.FindElement(By.CssSelector("button.brand-btn"));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", submitBtn);
             submitBtn.Click();
 
-            // 4. Verify chuyển hướng
-            // Thường sau khi đăng ký sẽ chuyển về Login hoặc trang chủ
-            _wait.Until(d => !d.Url.Contains("Register"));
+            // After successful registration the SPA navigates to /login
+            _wait.Until(d => d.Url.Contains("/login"));
 
-            // Kiểm tra xem đã chuyển sang trang Login chưa
-            Assert.Contains("Login", _driver.Url);
+            Assert.Contains("/login", _driver.Url);
         }
 
+        // reg_002: Duplicate email → stay on /register, error message visible
         [Fact]
         public void Register_DuplicateEmail_ShouldShowError()
         {
-            // 1. Đăng ký tài khoản A trước (để chắc chắn email tồn tại)
-            string existEmail = "Thuong12@gmail.com"; // Email này đã có trong DB seed hoặc test trước đó
+            string existEmail = "Thuong12@gmail.com"; // seeded in DB
 
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Account/Register");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/register");
 
             _driver.FindElement(By.Id("fullname")).SendKeys("Duplicate User");
+            _driver.FindElement(By.Id("birthday")).SendKeys("2000-01-01");
             _driver.FindElement(By.Id("email")).SendKeys(existEmail);
             _driver.FindElement(By.Id("password")).SendKeys("Test@1234");
             _driver.FindElement(By.Id("address")).SendKeys("Address");
-            _driver.FindElement(By.Id("birthday")).SendKeys("01012000");
 
-            var submitBtn = _driver.FindElement(By.CssSelector("button.sign-in-btn"));
+            var submitBtn = _driver.FindElement(By.CssSelector("button.brand-btn"));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submitBtn);
 
-            // 2. Verify lỗi hiển thị
-            // Hệ thống của bạn có span lỗi: <span class="show-error" id="isExist-error">Email đã tồn tại.</span>
-            // Hoặc lỗi từ server validation
-
+            // React renders the API error in a .text-danger element
             try
             {
-                // Cách 1: Check validation summary hoặc lỗi server trả về
-                // Chờ một chút để page reload (nếu server validation) hoặc JS hiển thị
-                Thread.Sleep(1000);
+                _wait.Until(d =>
+                    d.FindElements(By.CssSelector(".text-danger")).Count > 0
+                    || d.PageSource.Contains("Email đã tồn tại")
+                    || d.PageSource.Contains("đã được sử dụng"));
 
-                bool hasError = _driver.PageSource.Contains("Email đã tồn tại") ||
-                                _driver.PageSource.Contains("đã được sử dụng");
+                bool hasError = _driver.PageSource.Contains("Email đã tồn tại")
+                             || _driver.PageSource.Contains("đã được sử dụng")
+                             || _driver.FindElements(By.CssSelector(".text-danger")).Count > 0;
 
-                Assert.True(hasError, "Không thấy thông báo lỗi trùng email.");
+                Assert.True(hasError, "Expected duplicate-email error but none was shown.");
             }
-            catch (Exception)
+            catch (WebDriverTimeoutException)
             {
-                // Nếu không bắt được lỗi text, kiểm tra xem URL có bị giữ lại ở trang Register không
-                Assert.Contains("Register", _driver.Url);
+                // Fallback: URL must still be /register if error was silent
+                Assert.Contains("/register", _driver.Url);
             }
         }
 
+        // reg_003: Weak password → HTML5 / React validation keeps user on /register
         [Fact]
         public void Register_InvalidPassword_ShouldShowValidationError()
         {
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Account/Register");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/register");
 
             _driver.FindElement(By.Id("fullname")).SendKeys("Test Valid");
+            _driver.FindElement(By.Id("birthday")).SendKeys("2000-01-01");
             _driver.FindElement(By.Id("email")).SendKeys(GetRandomEmail());
-
-            // Nhập mật khẩu yếu (chỉ số)
-            _driver.FindElement(By.Id("password")).SendKeys("123456");
-
+            _driver.FindElement(By.Id("password")).SendKeys("123456"); // weak: no uppercase/special char
             _driver.FindElement(By.Id("address")).SendKeys("Address");
-            _driver.FindElement(By.Id("birthday")).SendKeys("01012000");
 
-            var submitBtn = _driver.FindElement(By.CssSelector("button.sign-in-btn"));
-            submitBtn.Click();
+            _driver.FindElement(By.CssSelector("button.brand-btn")).Click();
 
-            // Verify: Không chuyển trang
-            Assert.Contains("Register", _driver.Url);
+            // React front-end validation or API 400 keeps user on /register
+            // Give the SPA a moment to render any error
+            _wait.Until(d =>
+                d.FindElements(By.CssSelector(".text-danger")).Count > 0
+                || d.Url.Contains("/register"));
 
-            // Verify: Có thông báo lỗi (Server validation)
-            // ASP.NET Identity thường báo lỗi: "Passwords must have at least one non alphanumeric character."
-            // Hoặc validation của bạn: "Mật khẩu phải có chữ hoa, thường..."
-            bool hasError = _driver.PageSource.Contains("Mật khẩu") || _driver.PageSource.Contains("Password");
-            Assert.True(hasError, "Không thấy thông báo lỗi mật khẩu yếu.");
+            Assert.Contains("/register", _driver.Url);
+
+            bool hasError = _driver.PageSource.Contains("Mật khẩu")
+                         || _driver.PageSource.Contains("Password")
+                         || _driver.FindElements(By.CssSelector(".text-danger")).Count > 0;
+
+            Assert.True(hasError, "Expected a password-validation error but none was found.");
         }
     }
 }

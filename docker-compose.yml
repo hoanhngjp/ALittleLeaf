@@ -1,27 +1,4 @@
-﻿
 services:
-  webapp:
-    build:
-      context: .              # Đứng từ gốc
-      dockerfile: ALittleLeaf/Dockerfile # Trỏ vào file Dockerfile nằm trong thư mục con
-    container_name: myaspnetapp
-    ports:
-      - "8080:8080"
-    env_file:
-      - ./.env                # File .env giờ nằm ngay cạnh docker-compose
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION_STRING=Server=db;Database=ALittleLeafDecor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
-    volumes:
-      # SỬA ĐƯỜNG DẪN: Phải đi vào thư mục ALittleLeaf trước
-      - ./ALittleLeaf/wwwroot/img:/app/wwwroot/img
-    networks:
-      - alittleleaf-network
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
@@ -33,25 +10,94 @@ services:
       - MSSQL_PID=Developer
     volumes:
       - mssqldata:/var/opt/mssql
-      - ./ALittleLeaf/SQL:/docker-entrypoint-initdb.d
     networks:
       - alittleleaf-network
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD} -C -Q 'SELECT 1' || exit 1"]
+      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD} -C -Q 'SELECT 1' || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
     restart: unless-stopped
 
+  # Runs once on first boot to seed the database with demo data.
+  # Exits with code 0 on success; compose ignores it after that.
+  # NOTE: SQL Server does not support /docker-entrypoint-initdb.d — this
+  # dedicated service is the correct pattern for one-time sqlcmd seeding.
+  db-seed:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: alittleleaf-db-seed
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - alittleleaf-network
+    volumes:
+      - ./Backend/ALittleLeaf.Api/SQL:/sql:ro
+    environment:
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
+    # Guard: only seed if the database does not already exist, so re-running
+    # `docker compose up` never clobbers live data.
+    command: >
+      /bin/bash -c "
+        DB_EXISTS=$$(/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P \"$$MSSQL_SA_PASSWORD\" -C
+          -Q \"SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name='ALittleLeafDecor'\"
+          -h -1 2>/dev/null | tr -d ' \r\n');
+        if [ \"$$DB_EXISTS\" = \"0\" ]; then
+          echo '[db-seed] Database not found — running seed script...';
+          /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P \"$$MSSQL_SA_PASSWORD\" -C
+            -i /sql/ALittleLeaf_DataOnly.sql && echo '[db-seed] Seed complete.';
+        else
+          echo '[db-seed] Database already exists — skipping seed.';
+        fi
+      "
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Backend/ALittleLeaf.Api/Dockerfile
+      provenance: false
+    container_name: alittleleaf-api
+    ports:
+      - "8081:8080"
+    env_file:
+      - ./.env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DB_CONNECTION_STRING=Server=db;Database=ALittleLeafDecor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      - Vnpay__PaymentBackReturnUrl=http://localhost:3000/payment-result
+      - Vnpay__IpnUrl=https://idiocratical-linh-unreprehensibly.ngrok-free.dev/api/payment/vnpay-ipn
+    networks:
+      - alittleleaf-network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+      provenance: false
+    container_name: alittleleaf-frontend
+    ports:
+      - "3000:80"
+    networks:
+      - alittleleaf-network
+    depends_on:
+      - api
+    restart: unless-stopped
+
   unit-tests:
     build:
-      context: .             
-      dockerfile: Dockerfile.test
+      context: .
+      dockerfile: Dockerfile.test.api
     container_name: alittleleaf-unit-tests
-    profiles: ["testing"]
+    profiles: [ "testing" ]
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - alittleleaf-network
     environment:

@@ -1,175 +1,136 @@
-﻿using ALittleLeaf.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
-using ALittleLeaf.Services.Cart;
+using ALittleLeaf.Api.Controllers;
+using ALittleLeaf.Api.DTOs.Cart;
+using ALittleLeaf.Api.Services.Cart;
 using ALittleLeaf.Tests.Helpers;
-using ALittleLeaf.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
-using System;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Xunit;
+using System.Security.Claims;
+using ALittleLeaf.Api.Data;
 
 namespace ALittleLeaf.Tests.Controllers
 {
     public class CartControllerTests : IDisposable
     {
         private readonly AlittleLeafDecorContext _context;
-        private readonly Mock<ICartService> _mockCartService;
-        private readonly CartController _controller;
+        private readonly Mock<ICartService>      _mockCartService;
+        private readonly CartController          _controller;
+
+        private const long UserId = 42;
 
         public CartControllerTests()
         {
-            // 1. Setup InMemory DB (Để Controller check tồn kho từ _context.Products)
-            _context = DbContextFactory.Create();
-
-            // 2. Setup Mock Service
+            _context         = DbContextFactory.Create();
             _mockCartService = new Mock<ICartService>();
+            _controller      = BuildController(_mockCartService.Object);
+        }
 
-            // 3. Setup Controller
-            _controller = new CartController(_mockCartService.Object, _context)
+        public void Dispose() => DbContextFactory.Destroy(_context);
+
+        private static CartController BuildController(ICartService svc)
+        {
+            var user = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, UserId.ToString()) }, "mock"));
+
+            return new CartController(svc)
             {
-                // Setup TempData để check thông báo lỗi
-                TempData = new TempDataDictionary(new Microsoft.AspNetCore.Http.DefaultHttpContext(), Mock.Of<ITempDataProvider>())
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext { User = user }
+                }
             };
         }
 
-        public void Dispose()
+        // ── GET /api/cart ─────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetCart_ValidJwt_ReturnsOkWithCartDto()
         {
-            DbContextFactory.Destroy(_context);
+            var expected = new CartDto { CartId = 1 };
+            _mockCartService.Setup(s => s.GetCartAsync(UserId)).ReturnsAsync(expected);
+
+            var result = await _controller.GetCart();
+
+            var dto = ApiAssert.OkValue<CartDto>(result);
+            Assert.Equal(1, dto.CartId);
         }
 
-        // TC01: Thêm vào giỏ thành công
+        // ── POST /api/cart/items ──────────────────────────────────────────────
+
         [Fact]
-        public async Task AddToCart_ValidStock_RedirectsToCart()
+        public async Task AddItem_ValidDto_ReturnsOkWithUpdatedCart()
         {
-            // Arrange (SP ID 1, Tồn kho 100)
-            int productId = 1;
-            int quantity = 2;
+            var dto      = new AddToCartDto { ProductId = 1, Quantity = 2 };
+            var expected = new CartDto { CartId = 1 };
+            _mockCartService.Setup(s => s.AddItemAsync(UserId, 1, 2)).ReturnsAsync(expected);
 
-            _mockCartService.Setup(s => s.AddToCartAsync(productId, quantity))
-                .ReturnsAsync(new CartUpdateResult { Success = true });
+            var result = await _controller.AddItem(dto);
 
-            // Act
-            var result = await _controller.AddToCart(productId, quantity);
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Cart", redirectResult.ControllerName);
+            ApiAssert.OkValue<CartDto>(result);
+            _mockCartService.Verify(s => s.AddItemAsync(UserId, 1, 2), Times.Once);
         }
 
-        // TC01 (Stock): Thêm quá số lượng tồn kho
+        // ── PUT /api/cart/items/{productId} ───────────────────────────────────
+
         [Fact]
-        public async Task AddToCart_ExceedStock_RedirectsToProductWithTempData()
+        public async Task UpdateItem_ItemExists_ReturnsOk()
         {
-            // Arrange (SP ID 2, Tồn kho 10 - xem DbMock)
-            int productId = 2;
-            int quantity = 11; // Mua 11 > 10
+            var dto      = new UpdateCartItemDto { Quantity = 5 };
+            var expected = new CartDto { CartId = 1 };
+            _mockCartService.Setup(s => s.UpdateItemAsync(UserId, 1, 5)).ReturnsAsync(expected);
 
-            // Act
-            var result = await _controller.AddToCart(productId, quantity);
+            var result = await _controller.UpdateItem(1, dto);
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            // Check redirect về trang Product
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Product", redirectResult.ControllerName);
-
-            // Check TempData hiển thị lỗi
-            Assert.True(_controller.TempData.ContainsKey("Error"));
-            Assert.Contains("Kho chỉ còn 10 sản phẩm", _controller.TempData["Error"].ToString());
-
-            // Đảm bảo Service KHÔNG được gọi
-            _mockCartService.Verify(s => s.AddToCartAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+            ApiAssert.OkValue<CartDto>(result);
         }
 
-        // TC02: Update số lượng thành công -> Trả JSON
         [Fact]
-        public void UpdateCartItem_ValidQty_ReturnsJsonSuccess()
+        public async Task UpdateItem_ItemNotInCart_ReturnsNotFound()
         {
-            // Arrange
-            int productId = 1;
-            int quantity = 5;
+            var dto = new UpdateCartItemDto { Quantity = 5 };
+            _mockCartService.Setup(s => s.UpdateItemAsync(UserId, 999, 5))
+                .ReturnsAsync((CartDto?)null);
 
-            _mockCartService.Setup(s => s.UpdateCartItem(productId, quantity))
-                .Returns(new CartUpdateResult { Success = true, TotalPrice = 500 });
+            var result = await _controller.UpdateItem(999, dto);
 
-            // Act
-            var result = _controller.UpdateCartItem(productId, quantity);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            dynamic data = jsonResult.Value;
-            // Lưu ý: data ở đây là CartUpdateResult object
-            // Dùng Reflection hoặc cast để check nếu cần thiết, hoặc tin tưởng type JsonResult
-            Assert.True(data.Success);
+            ApiAssert.IsNotFound(result);
         }
 
-        // TC03: Update số lượng < 1 -> Trả JSON lỗi
+        // ── DELETE /api/cart/items/{productId} ────────────────────────────────
+
         [Fact]
-        public void UpdateCartItem_QuantityLessThanOne_ReturnsJsonError()
+        public async Task RemoveItem_ItemExists_ReturnsOk()
         {
-            // Act
-            var result = _controller.UpdateCartItem(1, 0);
+            var expected = new CartDto { CartId = 1 };
+            _mockCartService.Setup(s => s.RemoveItemAsync(UserId, 1)).ReturnsAsync(expected);
 
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
+            var result = await _controller.RemoveItem(1);
 
-            // --- SỬA ĐOẠN NÀY ---
-            var options = new JsonSerializerOptions
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Cho phép hiển thị tiếng Việt
-            };
-            var jsonString = JsonSerializer.Serialize(jsonResult.Value, options);
-            // --------------------
-
-            Assert.Contains("Số lượng phải lớn hơn 0", jsonString);
+            ApiAssert.OkValue<CartDto>(result);
         }
 
-        // Check Stock khi Update
         [Fact]
-        public void UpdateCartItem_ExceedStock_ReturnsJsonError()
+        public async Task RemoveItem_ItemNotInCart_ReturnsNotFound()
         {
-            // Arrange
-            int productId = 2;
-            int quantity = 20;
+            _mockCartService.Setup(s => s.RemoveItemAsync(UserId, 999))
+                .ReturnsAsync((CartDto?)null);
 
-            // Act
-            var result = _controller.UpdateCartItem(productId, quantity);
+            var result = await _controller.RemoveItem(999);
 
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-
-            // --- SỬA ĐOẠN NÀY ---
-            var options = new JsonSerializerOptions
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Cho phép hiển thị tiếng Việt
-            };
-            var jsonString = JsonSerializer.Serialize(jsonResult.Value, options);
-            // --------------------
-
-            Assert.Contains("Kho chỉ còn 10 sản phẩm", jsonString);
+            ApiAssert.IsNotFound(result);
         }
 
-        // TC04: Xóa sản phẩm
+        // ── DELETE /api/cart ──────────────────────────────────────────────────
+
         [Fact]
-        public void RemoveFromCart_CallsService_ReturnsJson()
+        public async Task ClearCart_ReturnsOkWithEmptyCart()
         {
-            // Arrange
-            _mockCartService.Setup(s => s.RemoveFromCart(1))
-                .Returns(new CartUpdateResult { Success = true });
+            var expected = new CartDto { CartId = 1 };
+            _mockCartService.Setup(s => s.ClearCartAsync(UserId)).ReturnsAsync(expected);
 
-            // Act
-            var result = _controller.RemoveFromCart(1);
+            var result = await _controller.ClearCart();
 
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            dynamic data = jsonResult.Value;
-            Assert.True(data.Success);
+            ApiAssert.OkValue<CartDto>(result);
         }
     }
 }

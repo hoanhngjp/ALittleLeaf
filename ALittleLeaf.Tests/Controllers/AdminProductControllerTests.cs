@@ -1,155 +1,157 @@
-﻿using ALittleLeaf.Areas.Admin.Controllers;
-using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
+using ALittleLeaf.Api.Controllers.Admin;
+using ALittleLeaf.Api.DTOs.Admin;
+using ALittleLeaf.Api.Services.Admin;
 using ALittleLeaf.Tests.Helpers;
-using ALittleLeaf.ViewModels;
-using Microsoft.AspNetCore.Hosting; // Cần cài package Microsoft.AspNetCore.Hosting.Abstractions
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace ALittleLeaf.Tests.Controllers
 {
-    public class AdminProductControllerTests : IDisposable
+    /// <summary>
+    /// Tests for AdminProductsController.
+    /// Image uploads now go through IAdminService → ICloudinaryService.
+    /// No IWebHostEnvironment — Cloudinary is handled entirely in the service layer.
+    /// </summary>
+    public class AdminProductControllerTests
     {
-        private readonly AlittleLeafDecorContext _context;
-        private readonly Mock<IWebHostEnvironment> _mockEnv;
-        private readonly ProductsController _controller;
-        private readonly string _tempPath;
+        private readonly Mock<IAdminService>     _mockAdminService;
+        private readonly AdminProductsController _controller;
 
         public AdminProductControllerTests()
         {
-            // 1. Setup DB
-            _context = DbContextFactory.Create();
-
-            // 2. Setup File Environment (Giả lập thư mục upload)
-            _mockEnv = new Mock<IWebHostEnvironment>();
-
-            // Tạo thư mục tạm để test việc lưu file
-            _tempPath = Path.Combine(Path.GetTempPath(), "ALittleLeafTest_" + Guid.NewGuid());
-            Directory.CreateDirectory(_tempPath);
-            _mockEnv.Setup(e => e.WebRootPath).Returns(_tempPath);
-
-            _controller = new ProductsController(_context, _mockEnv.Object);
+            _mockAdminService = new Mock<IAdminService>();
+            _controller       = new AdminProductsController(_mockAdminService.Object);
         }
 
-        public void Dispose()
-        {
-            DbContextFactory.Destroy(_context);
-            // Xóa thư mục tạm
-            if (Directory.Exists(_tempPath)) Directory.Delete(_tempPath, true);
-        }
-
-        // TC-01: Thêm sản phẩm thành công
+        // GET /api/admin/products — returns paginated list
         [Fact]
-        public void Create_Post_ValidModel_AddsProductToDb()
+        public async Task GetProducts_ReturnsOkWithPagedResult()
         {
-            // Arrange
-            var model = new AddProductViewModel
+            var paged = new PaginatedAdminResultDto<AdminProductDto>
             {
-                ProductName = "Admin Product",
-                ProductPrice = 50000,
-                IdCategory = 1,
-                ProductDescription = "Desc",
-                QuantityInStock = 10,
-                ProductImages = new List<IFormFile>() // Để trống ảnh để test logic DB trước
+                Items      = new List<AdminProductDto>
+                {
+                    new() { ProductId = 1, ProductName = "Ấm Tráng Men" },
+                    new() { ProductId = 2, ProductName = "Bếp Từ Cao Cấp" }
+                },
+                TotalItems = 2,
+                Page       = 1,
+                PageSize   = 20
             };
+            _mockAdminService
+                .Setup(s => s.GetProductsAsync(null, null, null, "createdAt", true, 1, 20))
+                .ReturnsAsync(paged);
 
-            // Act
-            var result = _controller.Create(model);
+            var result = await _controller.GetProducts(null, null, null);
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-
-            // Kiểm tra DB xem có sản phẩm chưa
-            var productInDb = _context.Products.FirstOrDefault(p => p.ProductName == "Admin Product");
-            Assert.NotNull(productInDb);
-            Assert.Equal(50000, productInDb.ProductPrice);
+            var dto = ApiAssert.OkValue<PaginatedAdminResultDto<AdminProductDto>>(result);
+            Assert.Equal(2, dto.Items.Count());
         }
 
-        // TC-04: Sửa sản phẩm thành công
+        // GET /api/admin/products/{id} — found
         [Fact]
-        public async Task Edit_Post_ValidModel_UpdatesProduct()
+        public async Task GetProduct_ValidId_ReturnsOkWithDetail()
         {
-            // Arrange
-            // Để chắc chắn, ta detach (ngắt theo dõi) các entity cũ để tránh lỗi "Tracking" khi update
-            _context.ChangeTracker.Clear();
+            var product = new AdminProductDto { ProductId = 1, ProductName = "Ấm Tráng Men" };
+            _mockAdminService.Setup(s => s.GetProductByIdAsync(1)).ReturnsAsync(product);
 
-            var model = new EditProductViewModel
+            var result = await _controller.GetProduct(1);
+
+            var dto = ApiAssert.OkValue<AdminProductDto>(result);
+            Assert.Equal(1, dto.ProductId);
+        }
+
+        // GET /api/admin/products/{id} — not found → 404
+        [Fact]
+        public async Task GetProduct_InvalidId_ReturnsNotFound()
+        {
+            _mockAdminService.Setup(s => s.GetProductByIdAsync(999))
+                .ReturnsAsync((AdminProductDto?)null);
+
+            var result = await _controller.GetProduct(999);
+
+            ApiAssert.IsNotFound(result);
+        }
+
+        // POST /api/admin/products — TC-01: create product → 201 Created
+        // Cloudinary upload is handled inside IAdminService.CreateProductAsync;
+        // the controller only passes the DTO — no file system involved here.
+        [Fact]
+        public async Task CreateProduct_ValidDto_Returns201WithCreatedProduct()
+        {
+            var dto = new CreateProductDto
             {
-                ProductId = 1, // ID này phải có trong DbMock
-                ProductName = "Updated Name",
-                ProductPrice = 99999,
-                IdCategory = 1,
-                QuantityInStock = 5,
-                IsOnSale = true
+                ProductName     = "New Plant",
+                ProductPrice    = 80000,
+                IdCategory      = 2,
+                QuantityInStock = 15,
+                IsOnSale        = true
             };
+            var created = new AdminProductDto
+            {
+                ProductId   = 10,
+                ProductName = "New Plant",
+                ProductPrice = 80000
+            };
+            _mockAdminService.Setup(s => s.CreateProductAsync(dto)).ReturnsAsync(created);
 
-            // Act
-            var result = await _controller.Edit(model, null, null);
+            var result = await _controller.CreateProduct(dto);
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Edit", redirectResult.ActionName);
-
-            // Kiểm tra DB
-            var updatedProduct = await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.ProductId == 1);
-            Assert.Equal("Updated Name", updatedProduct.ProductName);
-            Assert.Equal(99999, updatedProduct.ProductPrice);
+            var createdAt = Assert.IsType<CreatedAtActionResult>(result);
+            var product   = Assert.IsType<AdminProductDto>(createdAt.Value);
+            Assert.Equal(10, product.ProductId);
+            Assert.Equal("New Plant", product.ProductName);
         }
 
-        // TC-05: Xóa sản phẩm (Soft Delete)
+        // PUT /api/admin/products/{id} — TC-04: edit product → 200 OK
         [Fact]
-        public void Delete_Post_ValidId_SoftDeletes()
+        public async Task UpdateProduct_ValidId_ReturnsOkWithUpdatedProduct()
         {
-            // Act (Xóa ID 1)
-            var result = _controller.Delete(1);
+            var dto = new UpdateProductDto { ProductName = "Updated Name", ProductPrice = 99999 };
+            var updated = new AdminProductDto { ProductId = 1, ProductName = "Updated Name", ProductPrice = 99999 };
+            _mockAdminService.Setup(s => s.UpdateProductAsync(1, dto)).ReturnsAsync(updated);
 
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            var result = await _controller.UpdateProduct(1, dto);
 
-            // Kiểm tra IsOnSale = false
-            var deletedProduct = _context.Products.FirstOrDefault(p => p.ProductId == 1);
-            Assert.NotNull(deletedProduct);
-            Assert.False(deletedProduct.IsOnSale);
+            var product = ApiAssert.OkValue<AdminProductDto>(result);
+            Assert.Equal("Updated Name", product.ProductName);
+            Assert.Equal(99999, product.ProductPrice);
         }
 
-        // TC-06: Lọc sản phẩm trong Admin
+        // PUT /api/admin/products/{id} — not found → 404
         [Fact]
-        public void SearchProduct_ByName_ReturnsResults()
+        public async Task UpdateProduct_InvalidId_ReturnsNotFound()
         {
-            // Act
-            var result = _controller.SearchProduct("findByProductName", "Bếp");
+            var dto = new UpdateProductDto { ProductName = "X" };
+            _mockAdminService.Setup(s => s.UpdateProductAsync(999, dto))
+                .ReturnsAsync((AdminProductDto?)null);
 
-            // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<ProductSearchViewModel>(partialViewResult.Model);
-            Assert.Contains(model.Products, p => p.ProductName.Contains("Bếp"));
+            var result = await _controller.UpdateProduct(999, dto);
+
+            ApiAssert.IsNotFound(result);
         }
 
-        // Test Statistics (Biểu đồ)
+        // DELETE /api/admin/products/{id} — TC-05: soft/hard delete → 204 NoContent
         [Fact]
-        public async Task Statistics_ReturnsViewModelWithData()
+        public async Task DeleteProduct_ValidId_Returns204()
         {
-            // Act
-            var result = await _controller.Statistics();
+            _mockAdminService.Setup(s => s.DeleteProductAsync(1)).ReturnsAsync(true);
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProductStatisticsViewModel>(viewResult.Model);
+            var result = await _controller.DeleteProduct(1);
 
-            Assert.True(model.TotalProducts > 0);
-            Assert.NotNull(model.TopSellingProducts);
-            Assert.NotNull(model.LowStockProducts);
+            Assert.IsType<NoContentResult>(result);
+            _mockAdminService.Verify(s => s.DeleteProductAsync(1), Times.Once);
+        }
+
+        // DELETE /api/admin/products/{id} — not found → 404
+        [Fact]
+        public async Task DeleteProduct_InvalidId_ReturnsNotFound()
+        {
+            _mockAdminService.Setup(s => s.DeleteProductAsync(999)).ReturnsAsync(false);
+
+            var result = await _controller.DeleteProduct(999);
+
+            ApiAssert.IsNotFound(result);
         }
     }
 }

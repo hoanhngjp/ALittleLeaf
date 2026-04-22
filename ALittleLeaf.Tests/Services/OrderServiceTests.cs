@@ -1,188 +1,215 @@
-﻿using ALittleLeaf.Models;
-using ALittleLeaf.Repository;
-using ALittleLeaf.Services.Order;
+using ALittleLeaf.Api.Data;
+using ALittleLeaf.Api.DTOs.Order;
+using ALittleLeaf.Api.Models;
+using ALittleLeaf.Api.Repositories.Order;
+using ALittleLeaf.Api.Services.Cart;
+using ALittleLeaf.Api.Services.Order;
+using ALittleLeaf.Api.Services.VNPay;
+using ALittleLeaf.Api.Repositories.Cart;
 using ALittleLeaf.Tests.Helpers;
-using ALittleLeaf.ViewModels;
-using Microsoft.AspNetCore.Http;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims; // Cần để Mock User ID
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace ALittleLeaf.Tests.Services
 {
     public class OrderServiceTests : IDisposable
     {
         private readonly AlittleLeafDecorContext _context;
-        private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
-        private readonly Mock<ISession> _mockSession;
-        private readonly OrderService _service;
-        private Dictionary<string, byte[]> _sessionStore;
+        private readonly OrderService            _service;
+        private readonly Mock<IVnPayService>     _mockVnPay;
 
         public OrderServiceTests()
         {
             _context = DbContextFactory.Create();
-            _sessionStore = new Dictionary<string, byte[]>();
-            _mockSession = new Mock<ISession>();
 
-            // 1. Setup Mock Session
-            _mockSession.Setup(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()))
-                .Callback<string, byte[]>((key, value) => _sessionStore[key] = value);
-            _mockSession.Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<byte[]>.IsAny))
-                .Returns((string key, out byte[] value) => _sessionStore.TryGetValue(key, out value));
-            _mockSession.Setup(s => s.Remove(It.IsAny<string>()))
-                .Callback<string>(key => _sessionStore.Remove(key));
+            var orderRepo = new OrderRepository(_context);
+            var cartRepo  = new CartRepository(_context);
+            var cartSvc   = new CartService(cartRepo);
+            _mockVnPay    = new Mock<IVnPayService>();
 
-            // 2. Setup Mock User (Để hàm GetUserId() hoạt động)
-            var claims = new List<Claim>
-            {
-                new Claim("Id", "1"), // Giả sử User ID = 1
-                new Claim(ClaimTypes.NameIdentifier, "1")
-            };
-            var identity = new ClaimsIdentity(claims, "TestAuthType");
-            var claimsPrincipal = new ClaimsPrincipal(identity);
-
-            // 3. Setup HttpContext
-            var mockContext = new Mock<HttpContext>();
-            mockContext.Setup(c => c.Session).Returns(_mockSession.Object);
-            mockContext.Setup(c => c.User).Returns(claimsPrincipal); // Gán User giả vào Context
-
-            _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-            _mockHttpContextAccessor.Setup(a => a.HttpContext).Returns(mockContext.Object);
-
-            _service = new OrderService(_context, _mockHttpContextAccessor.Object);
+            _service = new OrderService(orderRepo, cartSvc, _mockVnPay.Object);
         }
 
-        public void Dispose()
+        public void Dispose() => DbContextFactory.Destroy(_context);
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        private async Task SeedCartForUser(long userId)
         {
-            DbContextFactory.Destroy(_context);
-        }
-
-        // Helper: Ghi dữ liệu vào Session giả
-        private void SeedSessionData()
-        {
-            // Cart Data
-            var cart = new List<CartItemViewModel>
+            // Product ID 1 (Ấm Tráng Men, price=50000, stock=100) is already seeded by DbContextFactory
+            var cart = new Api.Models.Cart
             {
-                new CartItemViewModel { ProductId = 1, Quantity = 2, ProductPrice = 50000 }
+                UserId    = userId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
-            _sessionStore["Cart"] = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(cart));
+            _context.Carts.Add(cart);
+            await _context.SaveChangesAsync();
 
-            // Billing Data
-            _sessionStore["BillingAdrsId"] = Encoding.UTF8.GetBytes("new"); // Case tạo địa chỉ mới
-            _sessionStore["BillingFullName"] = Encoding.UTF8.GetBytes("Test User");
-            _sessionStore["BillingAddress"] = Encoding.UTF8.GetBytes("123 Street");
-            _sessionStore["BillingPhone"] = Encoding.UTF8.GetBytes("0909000111");
-            _sessionStore["BillNote"] = Encoding.UTF8.GetBytes("Test Note");
+            _context.CartItems.Add(new CartItem
+            {
+                CartId    = cart.CartId,
+                ProductId = 1,
+                Quantity  = 2,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
         }
+
+        private async Task<int> SeedAddressForUser(long userId)
+        {
+            var adrs = new AddressList
+            {
+                IdUser        = userId,
+                AdrsFullname  = "Test User",
+                AdrsAddress   = "123 Street",
+                AdrsPhone     = "0909000111",
+                AdrsIsDefault = true,
+                CreatedAt     = DateTime.UtcNow,
+                UpdatedAt     = DateTime.UtcNow
+            };
+            _context.AddressLists.Add(adrs);
+            await _context.SaveChangesAsync();
+            return adrs.AdrsId;
+        }
+
+        // ── CreateOrder ───────────────────────────────────────────────────────
 
         [Fact]
-        public async Task CreateOrderFromSessionAsync_ValidSession_CreatesBillAndDetails()
+        public async Task CreateOrder_COD_CreatesBillAndClearsCart()
         {
-            // Arrange
-            SeedSessionData();
+            long userId = 10;
+            await SeedCartForUser(userId);
+            int adrsId  = await SeedAddressForUser(userId);
 
-            // Act
-            var bill = await _service.CreateOrderFromSessionAsync("COD", "Pending");
+            var dto = new CreateOrderDto
+            {
+                AddressId     = adrsId,
+                PaymentMethod = "COD"
+            };
 
-            // Assert
-            Assert.NotNull(bill);
-            Assert.Equal(100000, bill.TotalAmount); // 50k * 2
-            Assert.Equal("COD", bill.PaymentMethod);
+            var result = await _service.CreateOrderAsync(userId, dto);
 
-            // Kiểm tra DB
-            var savedBill = _context.Bills.FirstOrDefault(b => b.BillId == bill.BillId);
+            Assert.NotNull(result);
+            Assert.Equal(100000, result.TotalAmount); // 50000 * 2
+            Assert.Equal("COD", result.PaymentMethod);
+
+            // Bill persisted
+            var savedBill = _context.Bills.FirstOrDefault(b => b.BillId == result.BillId);
             Assert.NotNull(savedBill);
+            Assert.True(savedBill.IsConfirmed);
 
-            var savedDetails = _context.BillDetails.Where(bd => bd.IdBill == bill.BillId).ToList();
-            Assert.Single(savedDetails);
-            Assert.Equal(1, savedDetails[0].IdProduct);
-
-            // Kiểm tra Address được tạo mới (vì BillingAdrsId = "new")
-            var savedAddress = _context.AddressLists.FirstOrDefault(a => a.AdrsAddress == "123 Street");
-            Assert.NotNull(savedAddress);
+            // Cart cleared after COD
+            var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
+            Assert.NotNull(cart);
+            Assert.Empty(_context.CartItems.Where(ci => ci.CartId == cart.CartId));
         }
 
         [Fact]
-        public async Task FulfillOrderAsync_ValidBill_DeductsStockAndClearsSession()
+        public async Task CreateOrder_VnPay_CreatesBillAsPending()
         {
-            // Arrange
-            // 1. Tạo Bill & Detail trong DB
+            long userId = 11;
+            await SeedCartForUser(userId);
+            int adrsId  = await SeedAddressForUser(userId);
+
+            var dto = new CreateOrderDto { AddressId = adrsId, PaymentMethod = "VNPAY" };
+            var result = await _service.CreateOrderAsync(userId, dto);
+
+            Assert.Equal("pending_vnpay", result.PaymentStatus);
+            Assert.False(result.IsConfirmed);
+
+            // Cart NOT cleared — user must pay first
+            var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
+            Assert.NotNull(cart);
+            Assert.NotEmpty(_context.CartItems.Where(ci => ci.CartId == cart.CartId));
+        }
+
+        [Fact]
+        public async Task CreateOrder_EmptyCart_ThrowsException()
+        {
+            long userId = 12;
+            int adrsId  = await SeedAddressForUser(userId);
+            // No cart seeded → GetCartAsync will create an empty one
+
+            var dto = new CreateOrderDto { AddressId = adrsId, PaymentMethod = "COD" };
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _service.CreateOrderAsync(userId, dto));
+        }
+
+        // ── FulfillOrder ──────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task FulfillOrder_DeductsStock()
+        {
+            long userId = 20;
+            int adrsId  = await SeedAddressForUser(userId);
+
             var bill = new Bill
             {
-                IdUser = 1,
-                TotalAmount = 100000,
-                DateCreated = DateOnly.FromDateTime(DateTime.Now),
-
-                // --- THÊM CÁC DÒNG NÀY ---
-                PaymentMethod = "COD",
-                PaymentStatus = "Pending",
-                ShippingStatus = "Unfulfilled",
-                IdAdrs = 1
+                IdUser         = userId,
+                IdAdrs         = adrsId,
+                TotalAmount    = 100000,
+                DateCreated    = DateOnly.FromDateTime(DateTime.Now),
+                PaymentMethod  = "COD",
+                PaymentStatus  = "pending",
+                ShippingStatus = "not_fulfilled",
+                UpdatedAt      = DateTime.Now
             };
             _context.Bills.Add(bill);
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
 
             _context.BillDetails.Add(new BillDetail
             {
-                IdBill = bill.BillId,
-                IdProduct = 1, // Ấm Tráng Men (Tồn kho 100 - từ DbMock)
-                Quantity = 10
+                IdBill    = bill.BillId,
+                IdProduct = 1,
+                Quantity  = 10,
+                UnitPrice = 50000,
+                TotalPrice = 500000
             });
             await _context.SaveChangesAsync();
 
-            // 2. Setup Session có dữ liệu (để check xem có bị xóa không)
-            SeedSessionData();
-
-            // Act
             await _service.FulfillOrderAsync(bill.BillId);
 
-            // Assert
-            // 1. Kiểm tra tồn kho
             var product = await _context.Products.FindAsync(1);
-            Assert.Equal(90, product.QuantityInStock); // 100 - 10 = 90
-
-            // 2. Kiểm tra Session bị xóa
-            Assert.False(_sessionStore.ContainsKey("Cart"));
-            Assert.False(_sessionStore.ContainsKey("BillingFullName"));
+            Assert.Equal(90, product!.QuantityInStock); // 100 - 10
         }
 
         [Fact]
-        public async Task FulfillOrderAsync_NotEnoughStock_ThrowsException()
+        public async Task FulfillOrder_InsufficientStock_ThrowsException()
         {
-            // Arrange
-            // SP ID 2 (Bếp Từ) có tồn kho = 10 (theo DbMock)
+            long userId = 21;
+            int adrsId  = await SeedAddressForUser(userId);
+
+            // Product 2 has stock = 10
             var bill = new Bill
             {
-                IdUser = 1,
-                TotalAmount = 5000000,
-                DateCreated = DateOnly.FromDateTime(DateTime.Now),
-
-                // --- THÊM CÁC DÒNG NÀY ---
-                PaymentMethod = "Online",
-                PaymentStatus = "Paid",
-                ShippingStatus = "Unfulfilled",
-                IdAdrs = 1
+                IdUser         = userId,
+                IdAdrs         = adrsId,
+                TotalAmount    = 5000000,
+                DateCreated    = DateOnly.FromDateTime(DateTime.Now),
+                PaymentMethod  = "COD",
+                PaymentStatus  = "pending",
+                ShippingStatus = "not_fulfilled",
+                UpdatedAt      = DateTime.Now
             };
             _context.Bills.Add(bill);
             await _context.SaveChangesAsync();
 
             _context.BillDetails.Add(new BillDetail
             {
-                IdBill = bill.BillId,
-                IdProduct = 2,
-                Quantity = 20 // Mua 20 > 10
+                IdBill     = bill.BillId,
+                IdProduct  = 2,
+                Quantity   = 20,   // > 10 in stock
+                UnitPrice  = 2500000,
+                TotalPrice = 50000000
             });
             await _context.SaveChangesAsync();
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<Exception>(() => _service.FulfillOrderAsync(bill.BillId));
-            Assert.Contains("không đủ hàng", ex.Message);
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _service.FulfillOrderAsync(bill.BillId));
+
+            Assert.Contains("out of stock", ex.Message);
         }
     }
 }

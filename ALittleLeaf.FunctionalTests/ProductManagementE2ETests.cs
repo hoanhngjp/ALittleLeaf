@@ -1,214 +1,227 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Support.UI;
 using Xunit;
 using System;
 using System.IO;
-using System.Threading;
 
 namespace ALittleLeaf.FunctionalTests
 {
+    /// <summary>
+    /// E2E admin product management tests against the React SPA at http://localhost:3000.
+    ///
+    /// URL map (legacy MVC → React SPA):
+    ///   /Admin/Account/Login    → /login  (unified; role-based redirect to /admin)
+    ///   /Admin/Products         → /admin/products
+    ///   /Admin/Products/Create  → /admin/products/new
+    ///   /Admin/Products/Edit/n  → /admin/products/:id
+    ///
+    /// Delete confirmation: window.confirm() (native browser alert), NOT a Bootstrap modal.
+    /// </summary>
     public class ProductManagementE2ETests : IDisposable
     {
         private readonly IWebDriver _driver;
-        private readonly string _baseUrl = "http://localhost:8080";
-        private readonly WebDriverWait _wait;
+        private readonly string     _baseUrl = "http://localhost:3000";
 
         public ProductManagementE2ETests()
         {
             var options = new EdgeOptions();
             options.AddArgument("start-maximized");
             options.AddArgument("--ignore-certificate-errors");
-
             _driver = new EdgeDriver(options);
-            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15)); // Tăng timeout lên 15s cho an toàn
         }
 
-        public void Dispose()
+        public void Dispose() => _driver.Quit();
+
+        /// <summary>
+        /// Returns a wait that silently retries on NoSuchElement and StaleElement instead of
+        /// aborting the polling loop.
+        /// </summary>
+        private WebDriverWait MakeWait(int seconds = 15)
         {
-            _driver.Quit();
+            var w = new WebDriverWait(_driver, TimeSpan.FromSeconds(seconds));
+            w.IgnoreExceptionTypes(
+                typeof(NoSuchElementException),
+                typeof(StaleElementReferenceException));
+            return w;
         }
 
+        /// <summary>
+        /// Navigates to /login, fills the form, and presses Enter to submit.
+        /// Using Keys.Return on the password field fires React's synthetic onSubmit
+        /// reliably regardless of whether the click event would be intercepted.
+        /// </summary>
         private void LoginAsAdmin()
         {
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Admin/Account/Login");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/login");
 
-            _driver.FindElement(By.Id("email")).SendKeys("hoanhnghiep2704@gmail.com");
-            _driver.FindElement(By.Id("password")).SendKeys("4L27hN04Aa@");
+            var wait = MakeWait(20);
 
-            var loginBtn = _driver.FindElement(By.CssSelector("button.sign-in-btn"));
-            // Dùng JS Click cho chắc ăn ngay từ Login
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", loginBtn);
+            var emailInput = wait.Until(d =>
+            {
+                var el = d.FindElement(By.CssSelector("input[type='email']"));
+                return el.Displayed && el.Enabled ? el : null;
+            });
+            emailInput!.SendKeys("hoanhnghiep2704@gmail.com");
 
-            // Chờ redirect
-            _wait.Until(d => d.Url.Contains("Admin") && !d.Url.Contains("Login"));
+            // Type password then press Enter — triggers React's onSubmit synchronously
+            var pwInput = _driver.FindElement(By.CssSelector("input[type='password']"));
+            pwInput.SendKeys("4L27hN04Aa@");
+            pwInput.SendKeys(Keys.Return);
+
+            // useLogin's onSuccess calls navigate('/admin') for role="admin"
+            wait.Until(d => d.Url.Contains("/admin") && !d.Url.Contains("/login"));
         }
 
+        // pm_001: Create product with valid data → appears in the list after search
         [Fact]
         public void CreateProduct_ValidData_ShouldAppearInList()
         {
-            // 1. Login Admin
             LoginAsAdmin();
 
-            // 2. Vào trang Create Product
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Admin/Products/Create");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/admin/products/new");
 
-            // 3. Điền thông tin
-            string productName = "AutoTest Product " + Guid.NewGuid().ToString().Substring(0, 8);
+            string productName = "AutoTest Product " + Guid.NewGuid().ToString()[..8];
 
-            _driver.FindElement(By.Id("product_name")).SendKeys(productName);
+            var wait = MakeWait();
 
-            var categorySelect = new SelectElement(_driver.FindElement(By.Id("id_category")));
-            categorySelect.SelectByIndex(0);
+            // Wait for the form to mount before typing
+            wait.Until(d => d.FindElement(By.Id("productName")).Displayed);
 
-            _driver.FindElement(By.Id("product_price")).SendKeys("100000");
-            _driver.FindElement(By.Id("product_description")).SendKeys("Mô tả sản phẩm tự động");
-            _driver.FindElement(By.Id("quantity_in_stock")).SendKeys("50");
+            _driver.FindElement(By.Id("productName")).SendKeys(productName);
 
-            // 4. Upload ảnh
-            var fileInput = _wait.Until(d => d.FindElement(By.CssSelector("input[name='ProductImages']")));
-            string imagePath = @"C:\Users\User\Downloads\download (26).png"; // Đường dẫn file của bạn
+            new OpenQA.Selenium.Support.UI.SelectElement(
+                _driver.FindElement(By.Id("idCategory")))
+                .SelectByIndex(0);
 
-            if (!File.Exists(imagePath)) throw new FileNotFoundException($"File ảnh không tồn tại: {imagePath}");
+            _driver.FindElement(By.Id("productPrice")).SendKeys("100000");
+            _driver.FindElement(By.Id("productDescription")).SendKeys("Mô tả sản phẩm tự động");
+            _driver.FindElement(By.Id("quantityInStock")).SendKeys("50");
+
+            var fileInput = wait.Until(d => d.FindElement(By.CssSelector("input[type='file']")));
+            string imagePath = @"C:\Users\User\Downloads\download (26).png";
+            if (!File.Exists(imagePath))
+                throw new FileNotFoundException($"Test image not found: {imagePath}");
             fileInput.SendKeys(imagePath);
 
-            // 5. Submit Form
-            var submitBtn = _driver.FindElement(By.CssSelector("button[type='submit']"));
+            // Submit — scroll into view then JS-click to avoid any overlay blocking
+            var submitBtn = wait.Until(d =>
+            {
+                var el = d.FindElement(By.CssSelector("button.btn-primary[type='submit']"));
+                return el.Displayed ? el : null;
+            });
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", submitBtn);
-            Thread.Sleep(500);
+            Thread.Sleep(400);
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submitBtn);
 
-            // --- FIX LỖI Ở ĐÂY ---
+            // After save the SPA navigates back to /admin/products
+            wait.Until(d => d.Url.Contains("/admin/products") && !d.Url.Contains("/new"));
 
-            // 1. Đợi thoát khỏi trang Create (Quan trọng!)
-            _wait.Until(d => !d.Url.Contains("Create"));
-
-            // 2. Đợi quay về trang Index
-            _wait.Until(d => d.Url.EndsWith("Products") || d.Url.EndsWith("Products/"));
-
-            // 3. Sử dụng tính năng Tìm kiếm để tìm sản phẩm (Xử lý vấn đề phân trang)
-            // Chọn loại tìm kiếm: Theo tên
-            var searchType = new SelectElement(_driver.FindElement(By.Id("searchType")));
-            searchType.SelectByValue("findByProductName");
-
-            // Nhập tên vào ô tìm kiếm
-            var searchInput = _driver.FindElement(By.Id("searchKey"));
+            // Type into the search input; React filters on keystroke — no search button needed
+            var searchInput = wait.Until(d =>
+                d.FindElement(By.CssSelector("input.form-control[placeholder*='Tìm']")));
             searchInput.Clear();
             searchInput.SendKeys(productName);
 
-            // Bấm nút Tìm (Nút có icon search và chữ Tìm)
-            // XPath tìm nút chứa text 'Tìm'
-            var searchBtn = _driver.FindElement(By.XPath("//button[contains(.,'Tìm')]"));
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", searchBtn);
-
-            // 4. Đợi kết quả AJAX tải về
-            // Chúng ta đợi cho đến khi tên sản phẩm xuất hiện trong PageSource
-            try
-            {
-                _wait.Until(d => d.PageSource.Contains(productName));
-            }
-            catch (WebDriverTimeoutException)
-            {
-                // Nếu timeout nghĩa là không tìm thấy
-            }
-
-            // 5. Verify cuối cùng
-            bool isFound = _driver.PageSource.Contains(productName);
-            Assert.True(isFound, $"Sản phẩm '{productName}' không tìm thấy trong danh sách sau khi tạo và tìm kiếm.");
+            wait.Until(d => d.PageSource.Contains(productName));
+            Assert.True(_driver.PageSource.Contains(productName),
+                $"Product '{productName}' not found in list after creation.");
         }
 
+        // pm_002: Edit an existing product → updated name persists in the list
         [Fact]
         public void EditProduct_ChangePrice_ShouldUpdate()
         {
-            // 1. Login Admin
             LoginAsAdmin();
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Admin/Products");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/admin/products");
 
-            // 2. Tìm sản phẩm đầu tiên để sửa
-            var firstRow = _wait.Until(d => d.FindElement(By.CssSelector("#userTable tbody tr:first-child")));
+            var wait = MakeWait();
 
-            // SỬA LỖI 2: Dùng nth-of-type(2) thay vì nth-child(2)
-            // Vì HTML của bạn có thẻ <input> chen giữa các thẻ <td>
-            var nameCell = firstRow.FindElement(By.CssSelector("td:nth-of-type(2)"));
-            string oldName = nameCell.Text;
+            // Wait for at least one row to appear
+            wait.Until(d => d.FindElements(By.CssSelector(".table tbody tr")).Count > 0);
 
-            // Click nút "Sửa thông tin sản phẩm"
-            var editBtn = firstRow.FindElement(By.CssSelector("a.btn-outline-primary"));
-            // Dùng JS click luôn cho an toàn
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editBtn);
+            // Read the product name and click edit — both in a single fresh query to avoid
+            // StaleElementReferenceException caused by React Query re-renders between calls
+            string oldName = _driver
+                .FindElement(By.CssSelector(".table tbody tr:first-child td:nth-of-type(2)"))
+                .Text.Trim();
 
-            // 3. Verify đang ở trang Edit
-            _wait.Until(d => d.Url.Contains("/Edit"));
+            _driver
+                .FindElement(By.CssSelector(".table tbody tr:first-child button.btn-outline-primary"))
+                .Click();
 
-            // 4. Sửa giá tiền
-            var priceInput = _driver.FindElement(By.Id("product_price"));
-            priceInput.Clear();
-            string newPrice = "99999";
-            priceInput.SendKeys(newPrice);
+            // Now on /admin/products/:id (edit mode)
+            wait.Until(d => d.Url.Contains("/admin/products/") && !d.Url.EndsWith("/new"));
 
-            // Sửa tên
-            var nameInput = _driver.FindElement(By.Id("product_name"));
+            // Clear and update price
+            var priceInput = wait.Until(d =>
+            {
+                var el = d.FindElement(By.Id("productPrice"));
+                return el.Displayed && el.Enabled ? el : null;
+            });
+            priceInput!.Clear();
+            priceInput.SendKeys("99999");
+
+            // Clear and update name
             string newName = oldName + " Updated";
+            var nameInput = _driver.FindElement(By.Id("productName"));
             nameInput.Clear();
             nameInput.SendKeys(newName);
 
-            // 5. Submit (Dùng JS Click)
-            // Tìm nút theo XPath chứa text
-            var submitBtn = _driver.FindElement(By.XPath("//button[contains(text(),'Sửa thông tin sản phẩm')]"));
+            // Submit
+            var submitBtn = wait.Until(d =>
+            {
+                var el = d.FindElement(By.CssSelector("button.btn-primary[type='submit']"));
+                return el.Displayed ? el : null;
+            });
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", submitBtn);
-            Thread.Sleep(500);
+            Thread.Sleep(400);
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submitBtn);
 
-            // 6. Verify quay lại trang Index
-            _wait.Until(d => d.Url.Contains("/Admin/Products"));
+            // After save, SPA navigates back to the list
+            wait.Until(d => d.Url.Contains("/admin/products") && !d.Url.Contains("/admin/products/"));
 
-            // Xử lý trường hợp redirect về Edit thay vì Index
-            if (_driver.Url.Contains("/Edit"))
-            {
-                _driver.Navigate().GoToUrl($"{_baseUrl}/Admin/Products");
-            }
-
-            // 7. Check giá trị mới trong bảng
-            _wait.Until(d => d.PageSource.Contains(newName));
+            // Re-locate the updated name — do NOT use any cached element from before navigation
+            wait.Until(d => d.PageSource.Contains(newName));
             Assert.Contains(newName, _driver.PageSource);
         }
 
+        // pm_003: Delete a product — AdminProductsPage uses window.confirm() (native browser alert)
         [Fact]
         public void DeleteProduct_ClickDelete_ShouldRemoveFromList()
         {
-            // 1. Login
             LoginAsAdmin();
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Admin/Products");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/admin/products");
 
-            // 2. Chọn row đầu tiên
-            var firstRow = _wait.Until(d => d.FindElement(By.CssSelector("#userTable tbody tr:first-child")));
-            var editBtn = firstRow.FindElement(By.CssSelector("a.btn-outline-primary"));
+            var wait = MakeWait();
+            wait.Until(d => d.FindElements(By.CssSelector(".table tbody tr")).Count > 0);
 
-            // Vào trang Edit
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", editBtn);
+            // Capture the product name before deleting (single fresh query)
+            string deletedName = _driver
+                .FindElement(By.CssSelector(".table tbody tr:first-child td:nth-of-type(2)"))
+                .Text.Trim();
 
-            // 3. Tìm nút Xóa
-            var deleteBtn = _wait.Until(d => d.FindElement(By.CssSelector("button.btn-danger")));
+            // Click "Xóa" — AdminProductsPage calls window.confirm(), producing a native alert
+            _driver
+                .FindElement(By.CssSelector(".table tbody tr:first-child button.btn-outline-danger"))
+                .Click();
 
-            // 4. Click Xóa & Handle Confirm Alert
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", deleteBtn);
-            Thread.Sleep(500);
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", deleteBtn);
-
-            try
+            // Accept the native browser alert immediately — any delay risks UnhandledAlertException
+            wait.Until(d =>
             {
-                var alert = _wait.Until(d => d.SwitchTo().Alert());
-                alert.Accept(); // Bấm OK
-            }
-            catch (WebDriverTimeoutException)
+                try { d.SwitchTo().Alert(); return true; }
+                catch (NoAlertPresentException) { return false; }
+            });
+            _driver.SwitchTo().Alert().Accept();
+
+            // React Query refetches the list; the deleted product should disappear
+            wait.Until(d =>
             {
-                // Bỏ qua nếu không có alert
-            }
+                try { return !d.PageSource.Contains(deletedName); }
+                catch (UnhandledAlertException) { return false; }
+            });
 
-            // 5. Verify quay về Index
-            _wait.Until(d => d.Url.Contains("/Admin/Products"));
-
-            Assert.Contains("Admin/Products", _driver.Url);
+            Assert.DoesNotContain(deletedName, _driver.PageSource);
         }
     }
 }

@@ -1,107 +1,113 @@
-﻿using Xunit;
-using Moq;
+using ALittleLeaf.Api.Controllers;
+using ALittleLeaf.Api.DTOs.Product;
+using ALittleLeaf.Api.Services.Product;
+using ALittleLeaf.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using ALittleLeaf.Controllers;
-using ALittleLeaf.Services.Product;
-using ALittleLeaf.ViewModels;
-using ALittleLeaf.Models;
+using Moq;
 
 namespace ALittleLeaf.Tests.Controllers
 {
     public class CustomerProductControllerTests
     {
         private readonly Mock<IProductService> _mockService;
+        private readonly ProductsController    _controller;
 
         public CustomerProductControllerTests()
         {
             _mockService = new Mock<IProductService>();
+            _controller  = new ProductsController(_mockService.Object);
         }
 
-        // --- PRODUCT CONTROLLER (Xem chi tiết) ---
+        // ── GET /api/products/{id} ────────────────────────────────────────────
 
         [Fact]
-        public async Task Product_Index_ValidId_ReturnsView()
+        public async Task GetProduct_ValidId_ReturnsOkWithDetail()
         {
-            // Arrange
-            var controller = new ProductController(_mockService.Object);
             _mockService.Setup(s => s.GetProductDetailAsync(1))
-                        .ReturnsAsync(new ProductDetailViewModel { ProductId = 1 });
+                .ReturnsAsync(new ProductDetailDto { ProductId = 1, ProductName = "Ấm Tráng Men" });
 
-            // Act
-            var result = await controller.Index(1);
+            var result = await _controller.GetProduct(1);
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProductDetailViewModel>(viewResult.Model);
-            Assert.Equal(1, model.ProductId);
+            var dto = ApiAssert.OkValue<ProductDetailDto>(result);
+            Assert.Equal(1, dto.ProductId);
         }
 
         [Fact]
-        public async Task Product_Index_InvalidId_ReturnsNotFound()
+        public async Task GetProduct_InvalidId_ReturnsNotFound()
         {
-            // Arrange
-            var controller = new ProductController(_mockService.Object);
             _mockService.Setup(s => s.GetProductDetailAsync(999))
-                        .ReturnsAsync((ProductDetailViewModel)null);
+                .ReturnsAsync((ProductDetailDto?)null);
 
-            // Act
-            var result = await controller.Index(999);
+            var result = await _controller.GetProduct(999);
 
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
+            ApiAssert.IsNotFound(result);
         }
 
-        // --- SEARCH CONTROLLER (Tìm kiếm) ---
+        // ── GET /api/products (search / paginate) ─────────────────────────────
 
         [Fact]
-        public async Task Search_Index_WithKeyword_ReturnsResults()
+        public async Task GetProducts_WithKeyword_ReturnsOkWithResults()
         {
-            // Arrange
-            var controller = new SearchController(_mockService.Object);
-            var mockResult = new ProductServiceResult
+            var mockResult = new PaginatedResultDto<ProductDto>
             {
-                Products = new List<ProductViewModel> { new ProductViewModel { ProductName = "Bếp" } },
-                Pagination = new Paginate(1, 1, 10)
+                Items      = new List<ProductDto> { new() { ProductName = "Bếp Từ Cao Cấp" } },
+                TotalItems = 1,
+                Page       = 1,
+                PageSize   = 12
             };
+            _mockService.Setup(s => s.GetPaginatedProductsAsync(null, "Bếp", null, null, 1, 12))
+                .ReturnsAsync(mockResult);
 
-            _mockService.Setup(s => s.GetPaginatedProductsAsync(null, "Bếp", null, null, 1, 15))
-                        .ReturnsAsync(mockResult);
+            var result = await _controller.GetProducts(keyword: "Bếp");
 
-            // Act
-            var result = await controller.Index("Bếp");
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<List<ProductViewModel>>(viewResult.Model);
-            Assert.Single(model);
+            var page = ApiAssert.OkValue<PaginatedResultDto<ProductDto>>(result);
+            Assert.Single(page.Items);
         }
 
-        // --- COLLECTIONS CONTROLLER (Lọc) ---
+        [Fact]
+        public async Task GetProducts_WithCategoryFilter_ReturnsOkWithFilteredResults()
+        {
+            var mockResult = new PaginatedResultDto<ProductDto>
+            {
+                Items      = new List<ProductDto> { new() { ProductName = "Cây Xương Rồng", IdCategory = 2 } },
+                TotalItems = 1,
+                Page       = 1,
+                PageSize   = 12
+            };
+            _mockService.Setup(s => s.GetPaginatedProductsAsync(2, null, null, null, 1, 12))
+                .ReturnsAsync(mockResult);
+
+            var result = await _controller.GetProducts(categoryId: 2);
+
+            var page = ApiAssert.OkValue<PaginatedResultDto<ProductDto>>(result);
+            Assert.All(page.Items, p => Assert.Equal(2, p.IdCategory));
+        }
+
+        // ── GET /api/products/{id}/related ────────────────────────────────────
 
         [Fact]
-        public async Task Collections_Index_WithFilter_ReturnsView()
+        public async Task GetRelated_ValidId_ReturnsOkWithList()
         {
-            // Arrange
-            var controller = new CollectionsController(_mockService.Object);
-            var mockResult = new ProductServiceResult
-            {
-                Products = new List<ProductViewModel>(),
-                Pagination = new Paginate(0, 1, 12),
-                PageTitle = "Bộ lọc"
-            };
+            _mockService.Setup(s => s.GetProductDetailAsync(1))
+                .ReturnsAsync(new ProductDetailDto { ProductId = 1 });
+            _mockService.Setup(s => s.GetRelatedProductsAsync(1, 4))
+                .ReturnsAsync(new List<ProductDto> { new() { ProductId = 2 }, new() { ProductId = 3 } });
+            var result = await _controller.GetRelated(1);
 
-            _mockService.Setup(s => s.GetPaginatedProductsAsync(1, null, 100, 200, 1, 12))
-                        .ReturnsAsync(mockResult);
+            var list = ApiAssert.OkValue<List<ProductDto>>(result);
+            Assert.Equal(2, list.Count);
 
-            // Act
-            var result = await controller.Index(1, 100, 200);
+        }
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Equal("Bộ lọc", controller.ViewBag.CategoryName);
-            Assert.Equal(100, controller.ViewBag.MinPrice);
+        [Fact]
+        public async Task GetRelated_InvalidId_ReturnsNotFound()
+        {
+            _mockService.Setup(s => s.GetProductDetailAsync(999))
+                .ReturnsAsync((ProductDetailDto?)null);
+
+            var result = await _controller.GetRelated(999);
+
+            ApiAssert.IsNotFound(result);
         }
     }
 }
