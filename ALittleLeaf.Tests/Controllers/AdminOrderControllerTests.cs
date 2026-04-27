@@ -30,7 +30,7 @@ namespace ALittleLeaf.Tests.Controllers
                 PageSize   = 10
             };
             _mockAdminService
-                .Setup(s => s.GetOrdersAsync(null, null, null, null, null, "dateCreated", true, 1, 10))
+                .Setup(s => s.GetOrdersAsync(null, null, null, null, null, null, "dateCreated", true, 1, 10))
                 .ReturnsAsync(paged);
 
             var result = await _controller.GetOrders();

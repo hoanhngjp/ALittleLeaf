@@ -125,7 +125,7 @@ namespace ALittleLeaf.Tests.Services
 
         // REGISTER-01: Đăng ký hợp lệ
         [Fact]
-        public async Task Register_ValidData_CreatesUserAndAddress()
+        public async Task Register_ValidData_CreatesUser()
         {
             var dto = new RegisterRequestDto
             {
@@ -134,7 +134,6 @@ namespace ALittleLeaf.Tests.Services
                 FullName = "New User",
                 Sex      = true,
                 Birthday = new DateOnly(2000, 1, 1),
-                Address  = "123 Test Street"
             };
 
             var result = await _authService.RegisterAsync(dto);
@@ -145,9 +144,9 @@ namespace ALittleLeaf.Tests.Services
             Assert.NotNull(dbUser);
             Assert.NotEqual("Password123!", dbUser.UserPassword); // must be hashed
 
+            // Address is no longer created at registration — users add addresses from their profile
             var dbAddress = _context.AddressLists.FirstOrDefault(a => a.IdUser == dbUser.UserId);
-            Assert.NotNull(dbAddress);
-            Assert.Equal("123 Test Street", dbAddress.AdrsAddress);
+            Assert.Null(dbAddress);
         }
 
         // REGISTER-05: Email đã tồn tại
@@ -166,7 +165,7 @@ namespace ALittleLeaf.Tests.Services
             });
             await _context.SaveChangesAsync();
 
-            var dto    = new RegisterRequestDto { Email = "exists@test.com", Password = "Abc1@xyz", FullName = "X", Address = "Y" };
+            var dto    = new RegisterRequestDto { Email = "exists@test.com", Password = "Abc1@xyz", FullName = "X" };
             var result = await _authService.RegisterAsync(dto);
 
             Assert.False(result.Succeeded);

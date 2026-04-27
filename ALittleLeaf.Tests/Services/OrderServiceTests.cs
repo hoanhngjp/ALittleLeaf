@@ -6,6 +6,7 @@ using ALittleLeaf.Api.Services.Cart;
 using ALittleLeaf.Api.Services.Order;
 using ALittleLeaf.Api.Services.VNPay;
 using ALittleLeaf.Api.Repositories.Cart;
+using ALittleLeaf.Api.Services.Shipping;
 using ALittleLeaf.Tests.Helpers;
 using Moq;
 
@@ -16,6 +17,7 @@ namespace ALittleLeaf.Tests.Services
         private readonly AlittleLeafDecorContext _context;
         private readonly OrderService            _service;
         private readonly Mock<IVnPayService>     _mockVnPay;
+        private readonly Mock<IGhnService>       _mockGhn;
 
         public OrderServiceTests()
         {
@@ -25,8 +27,10 @@ namespace ALittleLeaf.Tests.Services
             var cartRepo  = new CartRepository(_context);
             var cartSvc   = new CartService(cartRepo);
             _mockVnPay    = new Mock<IVnPayService>();
+            _mockGhn      = new Mock<IGhnService>();
 
-            _service = new OrderService(orderRepo, cartSvc, _mockVnPay.Object);
+            _service = new OrderService(orderRepo, cartSvc, _mockVnPay.Object, _mockGhn.Object,
+                                        Microsoft.Extensions.Logging.Abstractions.NullLogger<OrderService>.Instance);
         }
 
         public void Dispose() => DbContextFactory.Destroy(_context);
@@ -94,12 +98,13 @@ namespace ALittleLeaf.Tests.Services
             Assert.Equal(100000, result.TotalAmount); // 50000 * 2
             Assert.Equal("COD", result.PaymentMethod);
 
-            // Bill persisted
+            // Bill persisted — admin must confirm manually, so IsConfirmed starts false
             var savedBill = _context.Bills.FirstOrDefault(b => b.BillId == result.BillId);
             Assert.NotNull(savedBill);
-            Assert.True(savedBill.IsConfirmed);
+            Assert.False(savedBill.IsConfirmed);
+            Assert.Equal("PENDING", savedBill.OrderStatus);
 
-            // Cart cleared after COD
+            // Cart cleared immediately on order creation
             var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
             Assert.NotNull(cart);
             Assert.Empty(_context.CartItems.Where(ci => ci.CartId == cart.CartId));
@@ -118,10 +123,10 @@ namespace ALittleLeaf.Tests.Services
             Assert.Equal("pending_vnpay", result.PaymentStatus);
             Assert.False(result.IsConfirmed);
 
-            // Cart NOT cleared — user must pay first
+            // Cart is cleared immediately on order creation (payment confirmation happens via VNPay IPN)
             var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
             Assert.NotNull(cart);
-            Assert.NotEmpty(_context.CartItems.Where(ci => ci.CartId == cart.CartId));
+            Assert.Empty(_context.CartItems.Where(ci => ci.CartId == cart.CartId));
         }
 
         [Fact]

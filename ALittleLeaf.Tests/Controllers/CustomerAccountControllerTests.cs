@@ -75,7 +75,6 @@ namespace ALittleLeaf.Tests.Controllers
                 Email    = "new@test.com",
                 Password = "Password123!",
                 FullName = "New User",
-                Address  = "123 Street"
             };
             var authResult = new AuthServiceResult
             {
@@ -97,7 +96,7 @@ namespace ALittleLeaf.Tests.Controllers
         [Fact]
         public async Task Register_DuplicateEmail_Returns409()
         {
-            var dto = new RegisterRequestDto { Email = "exists@test.com", Password = "Abc1@xyz", FullName = "X", Address = "Y" };
+            var dto = new RegisterRequestDto { Email = "exists@test.com", Password = "Abc1@xyz", FullName = "X" };
             _mockAuthService.Setup(s => s.RegisterAsync(dto))
                 .ReturnsAsync(new AuthServiceResult { Succeeded = false, ErrorMessage = "Email đã tồn tại." });
 
