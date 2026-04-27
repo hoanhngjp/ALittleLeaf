@@ -15,6 +15,8 @@ namespace ALittleLeaf.Api.Models
 
         public int TotalAmount { get; set; }
 
+        public int ShippingFee { get; set; }
+
         public string PaymentMethod { get; set; } = null!;
 
         public string PaymentStatus { get; set; } = null!;
@@ -22,6 +24,14 @@ namespace ALittleLeaf.Api.Models
         public bool IsConfirmed { get; set; }
 
         public string ShippingStatus { get; set; } = null!;
+
+        public string? GhnOrderCode { get; set; }
+
+        // Internal lifecycle: PENDING → CONFIRMED → SHIPPING → COMPLETED / CANCELLED
+        public string OrderStatus { get; set; } = "PENDING";
+
+        // Last human-readable tracking update from GHN webhook (message_display field)
+        public string? TrackingMessage { get; set; }
 
         public string? Note { get; set; }
 

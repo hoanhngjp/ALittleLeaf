@@ -43,7 +43,6 @@ const INITIAL = {
   birthday: '',
   email:    '',
   password: '',
-  address:  '',
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -57,7 +56,6 @@ export default function RegisterPage() {
   const birthdayRef = useRef(null)
   const emailRef    = useRef(null)
   const passwordRef = useRef(null)
-  const addressRef  = useRef(null)
 
   const onChange = (e) => {
     const { name, value, type } = e.target
@@ -88,9 +86,6 @@ export default function RegisterPage() {
     if (passError) {
       next.password = passError
     }
-    if (!form.address.trim()) {
-      next.address = '*Vui lòng nhập Địa chỉ của bạn'
-    }
 
     return next
   }
@@ -105,7 +100,6 @@ export default function RegisterPage() {
       else if (next.birthday) birthdayRef.current?.focus()
       else if (next.email)    emailRef.current?.focus()
       else if (next.password) passwordRef.current?.focus()
-      else if (next.address)  addressRef.current?.focus()
       return
     }
     register(form)
@@ -233,24 +227,6 @@ export default function RegisterPage() {
                   />
                   {errors.password && (
                     <div className="text-danger mt-1" style={{ fontSize: '13px' }}>{errors.password}</div>
-                  )}
-                </div>
-
-                {/* 6. Địa chỉ */}
-                <div className="mb-4">
-                  <label className="brand-label" htmlFor="address">Địa chỉ*</label>
-                  <input
-                    ref={addressRef}
-                    type="text"
-                    name="address"
-                    id="address"
-                    value={form.address}
-                    onChange={onChange}
-                    placeholder="Địa chỉ"
-                    className={`form-control brand-input${errors.address ? ' error' : ''}`}
-                  />
-                  {errors.address && (
-                    <div className="text-danger mt-1" style={{ fontSize: '13px' }}>{errors.address}</div>
                   )}
                 </div>
 

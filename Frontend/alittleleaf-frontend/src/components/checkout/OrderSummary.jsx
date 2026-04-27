@@ -1,12 +1,16 @@
 import { useCartStore } from '../../store/useCartStore'
+import { useCartQuery } from '../../hooks/useCart'
 
 /**
  * Sidebar order summary — mirrors _SideBarContent.cshtml.
- * Reads directly from Zustand cart store (already populated by useCartQuery).
+ * Calls useCartQuery so the cart is always fetched on hard reload,
+ * even on checkout routes that bypass MainLayout.
  */
-export default function OrderSummary() {
-  const items = useCartStore((s) => s.items)
+export default function OrderSummary({ shippingFee = null }) {
+  useCartQuery()
+  const items    = useCartStore((s) => s.items)
   const subtotal = items.reduce((sum, i) => sum + i.productPrice * i.quantity, 0)
+  const total    = subtotal + (shippingFee ?? 0)
 
   return (
     <div className="sidebar-content">
@@ -65,7 +69,13 @@ export default function OrderSummary() {
               <tr className="total-line total-line-shipping">
                 <td className="total-line-name">Phí vận chuyển</td>
                 <td className="total-line-price">
-                  <span className="order-summary-emphasis">Miễn phí</span>
+                  <span className="order-summary-emphasis">
+                    {shippingFee == null
+                      ? 'Đang tính...'
+                      : shippingFee === 0
+                        ? 'Miễn phí'
+                        : `${shippingFee.toLocaleString('vi-VN')}₫`}
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -77,7 +87,7 @@ export default function OrderSummary() {
                 <td className="total-line-name payment-due">
                   <span className="payment-due-currency">VND</span>
                   <span className="payment-due-price">
-                    {subtotal.toLocaleString('vi-VN')}₫
+                    {total.toLocaleString('vi-VN')}₫
                   </span>
                 </td>
               </tr>

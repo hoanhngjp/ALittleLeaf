@@ -59,15 +59,28 @@ namespace ALittleLeaf.Api.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<int?>("DistrictId")
+                        .HasColumnType("int")
+                        .HasColumnName("district_id");
+
                     b.Property<long>("IdUser")
                         .HasColumnType("bigint")
                         .HasColumnName("id_user");
+
+                    b.Property<int?>("ProvinceId")
+                        .HasColumnType("int")
+                        .HasColumnName("province_id");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("WardCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("ward_code");
 
                     b.HasKey("AdrsId")
                         .HasName("PK__Address___3D4B39253A6153A6");
@@ -95,6 +108,11 @@ namespace ALittleLeaf.Api.Migrations
                         .HasColumnType("date")
                         .HasColumnName("date_created");
 
+                    b.Property<string>("GhnOrderCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ghn_order_code");
+
                     b.Property<int>("IdAdrs")
                         .HasColumnType("int")
                         .HasColumnName("id_adrs");
@@ -112,6 +130,14 @@ namespace ALittleLeaf.Api.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("note");
 
+                    b.Property<string>("OrderStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("PENDING")
+                        .HasColumnName("order_status");
+
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -124,6 +150,12 @@ namespace ALittleLeaf.Api.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("payment_status");
 
+                    b.Property<int>("ShippingFee")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("shipping_fee");
+
                     b.Property<string>("ShippingStatus")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -133,6 +165,10 @@ namespace ALittleLeaf.Api.Migrations
                     b.Property<int>("TotalAmount")
                         .HasColumnType("int")
                         .HasColumnName("total_amount");
+
+                    b.Property<string>("TrackingMessage")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("tracking_message");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAdd()

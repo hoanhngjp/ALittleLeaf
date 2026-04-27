@@ -5,6 +5,7 @@ export function useAdminOrders({
   page = 1,
   pageSize = 20,
   keyword,
+  orderStatus,
   shippingStatus,
   paymentStatus,
   startDate,
@@ -16,6 +17,7 @@ export function useAdminOrders({
     page,
     pageSize,
     ...(keyword        ? { keyword }                             : {}),
+    ...(orderStatus    ? { orderStatus }                         : {}),
     ...(shippingStatus ? { shippingStatus }                      : {}),
     ...(paymentStatus  ? { paymentStatus }                       : {}),
     // Send ISO date strings (yyyy-MM-dd) so .NET DateOnly.TryParseExact("yyyy-MM-dd") binds correctly
@@ -46,6 +48,30 @@ export function useUpdateOrderStatus(id) {
   return useMutation({
     mutationFn: (dto) =>
       apiClient.patch(`/api/admin/orders/${id}/status`, dto).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      qc.invalidateQueries({ queryKey: ['admin-order', id] })
+    },
+  })
+}
+
+export function useConfirmOrder(id) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient.post(`/api/admin/orders/${id}/confirm`).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      qc.invalidateQueries({ queryKey: ['admin-order', id] })
+    },
+  })
+}
+
+export function useSyncOrderToGhn(id) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiClient.post(`/api/admin/orders/${id}/sync-ghn`).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-orders'] })
       qc.invalidateQueries({ queryKey: ['admin-order', id] })

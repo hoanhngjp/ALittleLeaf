@@ -17,13 +17,15 @@ namespace ALittleLeaf.Api.Services.Admin
 
         // ── Orders ────────────────────────────────────────────────────────────
         Task<PaginatedAdminResultDto<AdminOrderDto>> GetOrdersAsync(
-            string? keyword, string? shippingStatus, string? paymentStatus,
+            string? keyword, string? orderStatus, string? shippingStatus, string? paymentStatus,
             DateOnly? startDate, DateOnly? endDate,
             string? sortBy, bool isDescending,
             int page, int pageSize);
 
         Task<AdminOrderDetailDto?> GetOrderByIdAsync(int billId);
         Task<AdminOrderDto?>       UpdateOrderStatusAsync(int billId, UpdateOrderStatusDto dto);
+        Task<AdminOrderDto?>       ConfirmOrderAsync(int billId);
+        Task<string?>              SyncOrderToGhnAsync(int billId);
 
         // ── Users ─────────────────────────────────────────────────────────────
         Task<PaginatedAdminResultDto<AdminUserDto>> GetUsersAsync(

@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { useAdminOrder, useUpdateOrderStatus } from '../../hooks/useAdminOrders'
+import { useAdminOrder, useUpdateOrderStatus, useConfirmOrder, useSyncOrderToGhn } from '../../hooks/useAdminOrders'
+import ShippingBadge     from '../../components/common/ShippingBadge'
+import PaymentBadge      from '../../components/common/PaymentBadge'
+import OrderStatusBadge  from '../../components/common/OrderStatusBadge'
+import {
+  ORDER_STATUS_OPTIONS,
+  PAYMENT_STATUS_OPTIONS,
+} from '../../constants/orderConstants'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -10,33 +17,6 @@ const FMT_DATE = new Intl.DateTimeFormat('vi-VN', {
 })
 const FMT_CURRENCY = new Intl.NumberFormat('vi-VN')
 
-const PAYMENT_STATUS_OPTIONS = [
-  { value: 'pending', label: 'Chưa thanh toán' },
-  { value: 'paid',    label: 'Đã thanh toán'   },
-]
-
-const SHIPPING_STATUS_OPTIONS = [
-  { value: 'not_fulfilled', label: 'Chưa giao hàng' },
-  { value: 'fulfilled',     label: 'Đã giao hàng'   },
-]
-
-// ── Badges ───────────────────────────────────────────────────────────────────
-
-function ShippingBadge({ status }) {
-  const map = {
-    fulfilled:     'bg-success',
-    not_fulfilled: 'bg-warning text-dark',
-  }
-  const labels = { fulfilled: 'Đã giao hàng', not_fulfilled: 'Chưa giao hàng' }
-  return <span className={`badge ${map[status] ?? 'bg-secondary'}`}>{labels[status] ?? status}</span>
-}
-
-function PaymentBadge({ status }) {
-  return status === 'paid'
-    ? <span className="badge bg-success">Đã thanh toán</span>
-    : <span className="badge bg-danger">Chưa thanh toán</span>
-}
-
 // ── AdminOrderDetailPage ──────────────────────────────────────────────────────
 
 export default function AdminOrderDetailPage() {
@@ -44,23 +24,23 @@ export default function AdminOrderDetailPage() {
   const navigate  = useNavigate()
 
   const { data: order, isLoading, isError } = useAdminOrder(Number(id))
-  const updateMutation = useUpdateOrderStatus(Number(id))
+  const updateMutation  = useUpdateOrderStatus(Number(id))
+  const confirmMutation = useConfirmOrder(Number(id))
+  const syncGhnMutation = useSyncOrderToGhn(Number(id))
 
-  const [paymentStatus,  setPaymentStatus]  = useState('')
-  const [shippingStatus, setShippingStatus] = useState('')
-  const [isConfirmed,    setIsConfirmed]    = useState(false)
+  const [paymentStatus, setPaymentStatus] = useState('')
+  const [orderStatus,   setOrderStatus]   = useState('')
 
   useEffect(() => {
     if (order) {
       setPaymentStatus(order.paymentStatus)
-      setShippingStatus(order.shippingStatus)
-      setIsConfirmed(order.isConfirmed)
+      setOrderStatus(order.orderStatus ?? 'PENDING')
     }
   }, [order])
 
   function handleUpdate() {
     updateMutation.mutate(
-      { paymentStatus, shippingStatus, isConfirmed },
+      { orderStatus, paymentStatus },
       {
         onSuccess: () => toast.success('Cập nhật trạng thái thành công!'),
         onError:   () => toast.error('Cập nhật thất bại. Vui lòng thử lại.'),
@@ -133,11 +113,29 @@ export default function AdminOrderDetailPage() {
                       {FMT_DATE.format(new Date(order.dateCreated))}
                     </dd>
 
+                    <dt className="col-sm-5">Trạng thái đơn</dt>
+                    <dd className="col-sm-7">
+                      <OrderStatusBadge status={order.orderStatus} />
+                    </dd>
+
                     <dt className="col-sm-5">Phương thức TT</dt>
                     <dd className="col-sm-7">{order.paymentMethod}</dd>
 
-                    <dt className="col-sm-5">Địa chỉ giao</dt>
-                    <dd className="col-sm-7">{order.shippingAddress || '—'}</dd>
+                    <dt className="col-sm-5">Người nhận</dt>
+                    <dd className="col-sm-7">{order.recipientName || '—'}</dd>
+
+                    <dt className="col-sm-5">Điện thoại</dt>
+                    <dd className="col-sm-7">{order.recipientPhone || '—'}</dd>
+
+                    <dt className="col-sm-5">Địa chỉ</dt>
+                    <dd className="col-sm-7">
+                      {[
+                        order.streetAddress,
+                        order.wardName,
+                        order.districtName,
+                        order.provinceName,
+                      ].filter(Boolean).join(', ') || '—'}
+                    </dd>
 
                     {order.note && (
                       <>
@@ -145,7 +143,71 @@ export default function AdminOrderDetailPage() {
                         <dd className="col-sm-7">{order.note}</dd>
                       </>
                     )}
+
+                    <dt className="col-sm-5">Mã vận đơn GHN</dt>
+                    <dd className="col-sm-7">
+                      {order.ghnOrderCode ? (
+                        <a
+                          href={`https://donhang.ghn.vn/?order_code=${order.ghnOrderCode}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="fw-semibold"
+                        >
+                          {order.ghnOrderCode}
+                        </a>
+                      ) : (
+                        <span className="text-muted">Chưa có</span>
+                      )}
+                    </dd>
+
+                    {order.trackingMessage && (
+                      <>
+                        <dt className="col-sm-5">Cập nhật vận chuyển</dt>
+                        <dd className="col-sm-7 text-muted fst-italic">{order.trackingMessage}</dd>
+                      </>
+                    )}
                   </dl>
+
+                  {/* Action buttons */}
+                  <div className="d-flex flex-wrap gap-2 mt-3">
+                    {/* Confirm button — only when PENDING */}
+                    {order.orderStatus === 'PENDING' && (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() =>
+                          confirmMutation.mutate(undefined, {
+                            onSuccess: () => toast.success('Đã xác nhận đơn hàng!'),
+                            onError:   (e) => toast.error(e?.response?.data?.error ?? 'Xác nhận thất bại.'),
+                          })
+                        }
+                        disabled={confirmMutation.isPending}
+                      >
+                        {confirmMutation.isPending
+                          ? <><span className="spinner-border spinner-border-sm me-2" />Đang xử lý…</>
+                          : <><i className="bi bi-check-circle me-2" />Xác nhận đơn hàng</>
+                        }
+                      </button>
+                    )}
+
+                    {/* Push to GHN — only when CONFIRMED and not yet synced */}
+                    {order.orderStatus === 'CONFIRMED' && !order.ghnOrderCode && (
+                      <button
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={() =>
+                          syncGhnMutation.mutate(undefined, {
+                            onSuccess: () => toast.success('Đã đẩy đơn sang GHN thành công!'),
+                            onError:   (e) => toast.error(e?.response?.data?.error ?? 'Đẩy đơn sang GHN thất bại.'),
+                          })
+                        }
+                        disabled={syncGhnMutation.isPending}
+                      >
+                        {syncGhnMutation.isPending
+                          ? <><span className="spinner-border spinner-border-sm me-2" />Đang xử lý…</>
+                          : <><i className="bi bi-truck me-2" />Đẩy đơn sang GHN</>
+                        }
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -155,6 +217,21 @@ export default function AdminOrderDetailPage() {
                   <h5 className="mb-0"><i className="bi bi-pencil-square me-2" />Cập nhật trạng thái</h5>
                 </div>
                 <div className="card-body">
+                  {/* OrderStatus — manually overridable by admin in edge cases */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Trạng thái đơn hàng</label>
+                    <select
+                      className="form-select"
+                      value={orderStatus}
+                      onChange={(e) => setOrderStatus(e.target.value)}
+                    >
+                      {ORDER_STATUS_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* PaymentStatus — admin can manually mark COD as paid, etc. */}
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Trạng thái thanh toán</label>
                     <select
@@ -168,29 +245,27 @@ export default function AdminOrderDetailPage() {
                     </select>
                   </div>
 
+                  {/* ShippingStatus — read-only, controlled exclusively by GHN webhooks */}
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Trạng thái giao hàng</label>
-                    <select
-                      className="form-select"
-                      value={shippingStatus}
-                      onChange={(e) => setShippingStatus(e.target.value)}
-                    >
-                      {SHIPPING_STATUS_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold">Tình trạng xác nhận</label>
-                    <select
-                      className="form-select"
-                      value={isConfirmed ? 'true' : 'false'}
-                      onChange={(e) => setIsConfirmed(e.target.value === 'true')}
-                    >
-                      <option value="false">Chưa xác nhận</option>
-                      <option value="true">Đã xác nhận</option>
-                    </select>
+                    <label className="form-label fw-semibold">
+                      Trạng thái vận chuyển GHN
+                      <span
+                        className="ms-2 badge bg-secondary"
+                        style={{ fontSize: '0.7rem', verticalAlign: 'middle' }}
+                      >
+                        Chỉ đọc
+                      </span>
+                    </label>
+                    <div className="form-control d-flex align-items-center gap-2" style={{ background: '#f8f9fa', cursor: 'not-allowed' }}>
+                      <ShippingBadge status={order.shippingStatus} />
+                      {order.trackingMessage && (
+                        <small className="text-muted fst-italic">{order.trackingMessage}</small>
+                      )}
+                    </div>
+                    <div className="form-text">
+                      <i className="bi bi-info-circle me-1" />
+                      Trạng thái này được cập nhật tự động bởi GHN Webhook.
+                    </div>
                   </div>
 
                   <div className="d-flex gap-2">
@@ -293,8 +368,22 @@ export default function AdminOrderDetailPage() {
                             <td className="text-end"><PaymentBadge status={order.paymentStatus} /></td>
                           </tr>
                           <tr>
-                            <td className="text-muted">Trạng thái giao hàng</td>
-                            <td className="text-end"><ShippingBadge status={order.shippingStatus} /></td>
+                            <td className="text-muted">Trạng thái đơn</td>
+                            <td className="text-end"><OrderStatusBadge status={order.orderStatus} /></td>
+                          </tr>
+                          <tr>
+                            <td className="text-muted">Vận chuyển GHN</td>
+                            <td className="text-end">
+                              <ShippingBadge status={order.shippingStatus} />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="text-muted">Phí vận chuyển</td>
+                            <td className="text-end" style={{ whiteSpace: 'nowrap' }}>
+                              {order.shippingFee > 0
+                                ? `${FMT_CURRENCY.format(order.shippingFee)}₫`
+                                : 'Miễn phí'}
+                            </td>
                           </tr>
                           <tr className="fw-bold">
                             <td>Tổng thanh toán</td>

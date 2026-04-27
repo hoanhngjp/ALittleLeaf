@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useOrderDetail } from '../hooks/useOrders'
 import AccountSidebar from '../components/account/AccountSidebar'
+import { SHIPPING_STATUS_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '../constants/orderConstants'
 
 const FORMAT_VND = (n) =>
   new Intl.NumberFormat('vi-VN').format(n) + '₫'
@@ -18,7 +19,7 @@ function PaymentMethodLabel({ method }) {
 }
 
 function PaymentStatusBadge({ status }) {
-  if (status === 'paid')         return <span className="status-paid">Đã thanh toán</span>
+  if (status === 'paid')          return <span className="status-paid">Đã thanh toán</span>
   if (status === 'pending_vnpay') return <span className="status-pending_vnpay">Chờ VNPAY</span>
   return <span className="status-cod">Chờ thanh toán</span>
 }
@@ -71,6 +72,24 @@ export default function OrderDetailPage() {
                   <span className="od-meta-label">Phương thức:</span>
                   <span className="od-meta-value"><PaymentMethodLabel method={order.paymentMethod} /></span>
                 </div>
+                <div className="od-meta-item">
+                  <span className="od-meta-label">Trạng thái đơn:</span>
+                  <span
+                    className={`badge ${ORDER_STATUS_COLOR[order.orderStatus] ?? 'bg-secondary'}`}
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    {ORDER_STATUS_LABEL[order.orderStatus] ?? order.orderStatus}
+                  </span>
+                </div>
+                <div className="od-meta-item">
+                  <span className="od-meta-label">Vận chuyển:</span>
+                  <span className="od-meta-value">
+                    {SHIPPING_STATUS_LABEL[order.shippingStatus] ?? order.shippingStatus}
+                    {order.trackingMessage && (
+                      <span className="text-muted fst-italic ms-2">— {order.trackingMessage}</span>
+                    )}
+                  </span>
+                </div>
               </div>
 
               {/* ── Shipping address ────────────────────────────────── */}
@@ -78,7 +97,14 @@ export default function OrderDetailPage() {
                 <div className="od-address-block">
                   <h3 className="od-section-title">Địa chỉ giao hàng</h3>
                   <p><strong>{order.shippingAddress.adrsFullname}</strong></p>
-                  <p>{order.shippingAddress.adrsAddress}</p>
+                  <p>
+                    {[
+                      order.shippingAddress.adrsAddress,
+                      order.shippingAddress.wardName,
+                      order.shippingAddress.districtName,
+                      order.shippingAddress.provinceName,
+                    ].filter(Boolean).join(', ')}
+                  </p>
                   <p>Điện thoại: {order.shippingAddress.adrsPhone}</p>
                 </div>
               )}
@@ -132,8 +158,27 @@ export default function OrderDetailPage() {
               </div>
 
               {/* ── Grand total ─────────────────────────────────────── */}
+              {order.ghnOrderCode && (
+                <div className="od-note-block">
+                  <span className="od-meta-label">Mã vận đơn GHN:</span>{' '}
+                  <a
+                    href={`https://donhang.ghn.vn/?order_code=${order.ghnOrderCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {order.ghnOrderCode}
+                  </a>
+                </div>
+              )}
+
               <div className="od-cart-others">
                 <div className="od-order-actions">
+                  {order.shippingFee > 0 && (
+                    <p className="od-order-infor">
+                      Phí vận chuyển
+                      <span className="od-total-price">{FORMAT_VND(order.shippingFee)}</span>
+                    </p>
+                  )}
                   <p className="od-order-infor">
                     Tổng tiền
                     <span className="od-total-price">

@@ -62,6 +62,10 @@ namespace ALittleLeaf.Api.Repositories.Order
                        .Include(b => b.BillDetails)
                        .FirstOrDefaultAsync(b => b.BillId == billId);
 
+        public Task<Bill?> GetBillByGhnOrderCodeAsync(string ghnOrderCode)
+            => _context.Bills
+                       .FirstOrDefaultAsync(b => b.GhnOrderCode == ghnOrderCode);
+
         public Task<Bill?> GetBillByIdForUserAsync(int billId, long userId)
             => _context.Bills
                        .Include(b => b.IdAdrsNavigation)

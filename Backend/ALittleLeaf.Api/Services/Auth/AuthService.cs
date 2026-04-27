@@ -79,21 +79,6 @@ namespace ALittleLeaf.Api.Services.Auth
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                // Create a default address for the new user (mirrors legacy behaviour)
-                var address = new AddressList
-                {
-                    IdUser       = user.UserId,
-                    AdrsFullname = user.UserFullname,
-                    AdrsAddress  = dto.Address,
-                    AdrsPhone    = "N/A",
-                    AdrsIsDefault = true,
-                    CreatedAt    = DateTime.UtcNow,
-                    UpdatedAt    = DateTime.UtcNow
-                };
-
-                _context.AddressLists.Add(address);
-                await _context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
 
                 return await IssueTokenPairAsync(user);

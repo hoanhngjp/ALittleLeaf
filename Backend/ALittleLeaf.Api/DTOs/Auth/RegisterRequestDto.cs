@@ -27,8 +27,5 @@ namespace ALittleLeaf.Api.DTOs.Auth
 
         [Required(ErrorMessage = "Vui lòng nhập ngày sinh.")]
         public DateOnly Birthday { get; set; }
-
-        [Required(ErrorMessage = "Vui lòng nhập địa chỉ của bạn.")]
-        public required string Address { get; set; }
     }
 }

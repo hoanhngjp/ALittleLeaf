@@ -55,6 +55,9 @@ namespace ALittleLeaf.Api.Data
                 entity.Property(e => e.AdrsPhone)
                     .HasMaxLength(10)
                     .HasColumnName("adrs_phone");
+                entity.Property(e => e.ProvinceId).HasColumnName("province_id");
+                entity.Property(e => e.DistrictId).HasColumnName("district_id");
+                entity.Property(e => e.WardCode).HasMaxLength(20).HasColumnName("ward_code");
                 entity.Property(e => e.CreatedAt)
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime")
@@ -95,6 +98,10 @@ namespace ALittleLeaf.Api.Data
                     .HasMaxLength(50)
                     .HasColumnName("shipping_status");
                 entity.Property(e => e.TotalAmount).HasColumnName("total_amount");
+                entity.Property(e => e.ShippingFee).HasColumnName("shipping_fee").HasDefaultValue(0);
+                entity.Property(e => e.GhnOrderCode).HasMaxLength(50).HasColumnName("ghn_order_code");
+                entity.Property(e => e.OrderStatus).HasMaxLength(20).HasColumnName("order_status").HasDefaultValue("PENDING");
+                entity.Property(e => e.TrackingMessage).HasColumnName("tracking_message");
                 entity.Property(e => e.UpdatedAt)
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime")

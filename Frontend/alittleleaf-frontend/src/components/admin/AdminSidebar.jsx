@@ -38,6 +38,12 @@ const NAV_ITEMS = [
       { label: 'Xem đơn hàng', icon: 'fas fa-eye', to: '/admin/orders' },
     ],
   },
+  {
+    id: 'ghn-simulator',
+    label: 'GHN Webhook Test',
+    icon: 'fas fa-truck',
+    to: '/admin/ghn-simulator',
+  },
 ]
 
 export default function AdminSidebar({ openMenu, onToggleMenu }) {

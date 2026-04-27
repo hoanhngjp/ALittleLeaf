@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAddresses } from '../hooks/useOrders'
+import { useProvinces, useDistricts, useWards } from '../hooks/useShipping'
 import CheckoutLayout from '../components/checkout/CheckoutLayout'
 
 export default function CheckoutPage() {
@@ -15,10 +16,18 @@ export default function CheckoutPage() {
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [selectedAdrsId, setSelectedAdrsId] = useState('add')
-  const [fullName,  setFullName]  = useState('')
-  const [phone,     setPhone]     = useState('')
-  const [address,   setAddress]   = useState('')
-  const [errors,    setErrors]    = useState({})
+  const [fullName,    setFullName]    = useState('')
+  const [phone,       setPhone]       = useState('')
+  const [address,     setAddress]     = useState('')
+  const [provinceId,  setProvinceId]  = useState(null)
+  const [districtId,  setDistrictId]  = useState(null)
+  const [wardCode,    setWardCode]    = useState('')
+  const [errors,      setErrors]      = useState({})
+
+  // ── GHN master data ────────────────────────────────────────────────────────
+  const { data: provinces = [] } = useProvinces()
+  const { data: districts = [] } = useDistricts(provinceId)
+  const { data: wards     = [] } = useWards(districtId)
 
   // Pre-fill default saved address on load
   useEffect(() => {
@@ -28,29 +37,36 @@ export default function CheckoutPage() {
       setFullName(def.adrsFullname)
       setPhone(def.adrsPhone)
       setAddress(def.adrsAddress)
+      setProvinceId(def.provinceId ?? null)
+      setDistrictId(def.districtId ?? null)
+      setWardCode(def.wardCode ?? '')
     }
   }, [addresses])
 
   // ── Derived: is the form currently valid? (used by CheckoutLayout) ─────────
+  const isNewAddress = selectedAdrsId === 'add'
   const isFormValid =
     fullName.trim().length > 0 &&
     phone.trim().length > 0 &&
-    address.trim().length > 0
+    address.trim().length > 0 &&
+    (!isNewAddress || (!!provinceId && !!districtId && !!wardCode))
 
   // ── Handle saved address selection ────────────────────────────────────────
   const handleSelectAddress = (e) => {
     const val = e.target.value
     setSelectedAdrsId(val)
     if (val === 'add') {
-      setFullName('')
-      setPhone('')
-      setAddress('')
+      setFullName(''); setPhone(''); setAddress('')
+      setProvinceId(null); setDistrictId(null); setWardCode('')
     } else {
       const found = addresses.find((a) => String(a.adrsId) === val)
       if (found) {
         setFullName(found.adrsFullname)
         setPhone(found.adrsPhone)
         setAddress(found.adrsAddress)
+        setProvinceId(found.provinceId ?? null)
+        setDistrictId(found.districtId ?? null)
+        setWardCode(found.wardCode ?? '')
       }
     }
     setErrors({})
@@ -61,7 +77,10 @@ export default function CheckoutPage() {
     const errs = {}
     if (!fullName.trim()) errs.fullName = 'Vui lòng không bỏ trống Họ tên'
     if (!phone.trim())    errs.phone    = 'Vui lòng không bỏ trống Số điện thoại'
-    if (!address.trim())  errs.address  = 'Vui lòng không bỏ trống địa chỉ'
+    if (!address.trim())  errs.address  = 'Vui lòng không bỏ trống số nhà, tên đường'
+    if (isNewAddress && !provinceId)   errs.province = 'Vui lòng chọn Tỉnh/Thành phố'
+    if (isNewAddress && !districtId)   errs.district = 'Vui lòng chọn Quận/Huyện'
+    if (isNewAddress && !wardCode)     errs.ward     = 'Vui lòng chọn Phường/Xã'
     return errs
   }
 
@@ -75,17 +94,24 @@ export default function CheckoutPage() {
     }
     navigate('/checkout/payment', {
       state: {
-        note:        noteFromCart,
-        addressId:   selectedAdrsId !== 'add' ? Number(selectedAdrsId) : null,
-        newFullName: fullName,
-        newPhone:    phone,
-        newAddress:  address,
+        note:           noteFromCart,
+        addressId:      selectedAdrsId !== 'add' ? Number(selectedAdrsId) : null,
+        newFullName:    fullName,
+        newPhone:       phone,
+        newAddress:     address,
+        newProvinceId:  selectedAdrsId === 'add' ? provinceId : null,
+        newDistrictId:  selectedAdrsId === 'add' ? districtId : null,
+        newWardCode:    selectedAdrsId === 'add' ? wardCode   : null,
+        // Always forwarded for fee calculation — districtId/wardCode are populated
+        // from the saved address form state even when addressId is set.
+        feeDistrictId:  districtId,
+        feeWardCode:    wardCode,
       },
     })
   }
 
   return (
-    <CheckoutLayout step={1} canGoPayment={isFormValid}>
+    <CheckoutLayout step={1}>
       <div className="step">
         <div className="step-actions">
           <div id="section-shipping-rate" className="section">
@@ -172,15 +198,97 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Address — standard input matching legacy .cshtml (not a textarea) */}
+                  {/* Province */}
+                  <div className="field field-required field-show-floating-label">
+                    <div className="field-input-wrapper">
+                      <label className="field-label">Tỉnh/Thành phố</label>
+                      <select
+                        className="field-input"
+                        value={provinceId ?? ''}
+                        onChange={(e) => {
+                          const id = e.target.value ? Number(e.target.value) : null
+                          setProvinceId(id); setDistrictId(null); setWardCode('')
+                          setErrors((p) => ({ ...p, province: '' }))
+                        }}
+                        style={errors.province ? { borderColor: 'red' } : {}}
+                      >
+                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                        {provinces.map((p) => (
+                          <option key={p.provinceId} value={p.provinceId}>{p.provinceName}</option>
+                        ))}
+                      </select>
+                      {errors.province && (
+                        <p className="error-show" style={{ display: 'block', color: 'red', marginTop: '4px' }}>
+                          {errors.province}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* District */}
+                  <div className="field field-required field-show-floating-label">
+                    <div className="field-input-wrapper">
+                      <label className="field-label">Quận/Huyện</label>
+                      <select
+                        className="field-input"
+                        value={districtId ?? ''}
+                        disabled={!provinceId}
+                        onChange={(e) => {
+                          const id = e.target.value ? Number(e.target.value) : null
+                          setDistrictId(id); setWardCode('')
+                          setErrors((p) => ({ ...p, district: '' }))
+                        }}
+                        style={errors.district ? { borderColor: 'red' } : {}}
+                      >
+                        <option value="">-- Chọn Quận/Huyện --</option>
+                        {districts.map((d) => (
+                          <option key={d.districtId} value={d.districtId}>{d.districtName}</option>
+                        ))}
+                      </select>
+                      {errors.district && (
+                        <p className="error-show" style={{ display: 'block', color: 'red', marginTop: '4px' }}>
+                          {errors.district}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ward */}
+                  <div className="field field-required field-show-floating-label">
+                    <div className="field-input-wrapper">
+                      <label className="field-label">Phường/Xã</label>
+                      <select
+                        className="field-input"
+                        value={wardCode}
+                        disabled={!districtId}
+                        onChange={(e) => {
+                          setWardCode(e.target.value)
+                          setErrors((p) => ({ ...p, ward: '' }))
+                        }}
+                        style={errors.ward ? { borderColor: 'red' } : {}}
+                      >
+                        <option value="">-- Chọn Phường/Xã --</option>
+                        {wards.map((w) => (
+                          <option key={w.wardCode} value={w.wardCode}>{w.wardName}</option>
+                        ))}
+                      </select>
+                      {errors.ward && (
+                        <p className="error-show" style={{ display: 'block', color: 'red', marginTop: '4px' }}>
+                          {errors.ward}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Street / house number */}
                   <div className="field field-required field-show-floating-label">
                     <div className="field-input-wrapper">
                       <label htmlFor="billing_address_address" className="field-label">
-                        Địa chỉ
+                        Số nhà, tên đường
                       </label>
                       <input
                         type="text"
-                        placeholder="Địa chỉ"
+                        placeholder="Số nhà, tên đường"
                         className="field-input"
                         id="billing_address_address"
                         name="billing_address_address"

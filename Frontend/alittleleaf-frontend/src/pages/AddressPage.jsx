@@ -6,6 +6,7 @@ import {
   useUpdateAddress,
   useDeleteAddress,
 } from '../hooks/useOrders'
+import { useProvinces, useDistricts, useWards } from '../hooks/useShipping'
 
 // ── Empty form factory ──────────────────────────────────────────────────────────
 const emptyForm = () => ({
@@ -13,6 +14,9 @@ const emptyForm = () => ({
   adrsAddress:   '',
   adrsPhone:     '',
   adrsIsDefault: false,
+  provinceId:    null,
+  districtId:    null,
+  wardCode:      '',
 })
 
 // ── Single address row ──────────────────────────────────────────────────────────
@@ -76,9 +80,23 @@ function AddressRow({ address, onEdit, onDelete }) {
 function AddressForm({ initialValues = emptyForm(), onSubmit, onCancel, submitLabel, isPending }) {
   const [form, setForm] = useState(initialValues)
 
+  const { data: provinces = [] } = useProvinces()
+  const { data: districts = [] } = useDistricts(form.provinceId)
+  const { data: wards     = [] } = useWards(form.districtId)
+
   const set = (field) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleProvinceChange = (e) => {
+    const id = e.target.value ? Number(e.target.value) : null
+    setForm((prev) => ({ ...prev, provinceId: id, districtId: null, wardCode: '' }))
+  }
+
+  const handleDistrictChange = (e) => {
+    const id = e.target.value ? Number(e.target.value) : null
+    setForm((prev) => ({ ...prev, districtId: id, wardCode: '' }))
   }
 
   const handleSubmit = (e) => {
@@ -102,6 +120,64 @@ function AddressForm({ initialValues = emptyForm(), onSubmit, onCancel, submitLa
             required
           />
         </div>
+
+        {/* Province */}
+        <div className="addr-input-group">
+          <span className="addr-input-addon">
+            <i className="fa fa-map-marker" aria-hidden="true" />
+          </span>
+          <select
+            className="addr-form-control addr-textbox"
+            value={form.provinceId ?? ''}
+            onChange={handleProvinceChange}
+            required
+          >
+            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+            {provinces.map((p) => (
+              <option key={p.provinceId} value={p.provinceId}>{p.provinceName}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* District */}
+        <div className="addr-input-group">
+          <span className="addr-input-addon">
+            <i className="fa fa-map-marker" aria-hidden="true" />
+          </span>
+          <select
+            className="addr-form-control addr-textbox"
+            value={form.districtId ?? ''}
+            onChange={handleDistrictChange}
+            disabled={!form.provinceId}
+            required
+          >
+            <option value="">-- Chọn Quận/Huyện --</option>
+            {districts.map((d) => (
+              <option key={d.districtId} value={d.districtId}>{d.districtName}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Ward */}
+        <div className="addr-input-group">
+          <span className="addr-input-addon">
+            <i className="fa fa-map-marker" aria-hidden="true" />
+          </span>
+          <select
+            className="addr-form-control addr-textbox"
+            value={form.wardCode}
+            onChange={set('wardCode')}
+            disabled={!form.districtId}
+            required
+          >
+            <option value="">-- Chọn Phường/Xã --</option>
+            {wards.map((w) => (
+              <option key={w.wardCode} value={w.wardCode}>{w.wardName}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Street / house number */}
         <div className="addr-input-group">
           <span className="addr-input-addon">
             <i className="fa fa-home" aria-hidden="true" />
@@ -109,12 +185,13 @@ function AddressForm({ initialValues = emptyForm(), onSubmit, onCancel, submitLa
           <input
             className="addr-form-control addr-textbox"
             type="text"
-            placeholder="Địa chỉ"
+            placeholder="Số nhà, tên đường"
             value={form.adrsAddress}
             onChange={set('adrsAddress')}
             required
           />
         </div>
+
         <div className="addr-input-group">
           <span className="addr-input-addon">
             <i className="fa fa-phone" aria-hidden="true" />
@@ -236,6 +313,9 @@ export default function AddressPage() {
                               adrsAddress:   address.adrsAddress,
                               adrsPhone:     address.adrsPhone,
                               adrsIsDefault: address.adrsIsDefault ?? false,
+                              provinceId:    address.provinceId   ?? null,
+                              districtId:    address.districtId   ?? null,
+                              wardCode:      address.wardCode     ?? '',
                             }}
                             onSubmit={(form) => handleUpdate(address.adrsId, form)}
                             onCancel={() => setEditingId(null)}

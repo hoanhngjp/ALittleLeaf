@@ -116,7 +116,7 @@ namespace ALittleLeaf.Api.Repositories.Admin
         // ── Orders ────────────────────────────────────────────────────────────
 
         public async Task<(int Total, IEnumerable<Bill> Items)> GetOrdersPagedAsync(
-            string? keyword, string? shippingStatus, string? paymentStatus,
+            string? keyword, string? orderStatus, string? shippingStatus, string? paymentStatus,
             DateOnly? startDate, DateOnly? endDate,
             string? sortBy, bool isDescending,
             int page, int pageSize)
@@ -130,6 +130,9 @@ namespace ALittleLeaf.Api.Repositories.Admin
                 query = query.Where(b =>
                     b.BillId.ToString().Contains(keyword) ||
                     (b.IdUserNavigation != null && b.IdUserNavigation.UserFullname.Contains(keyword)));
+
+            if (!string.IsNullOrWhiteSpace(orderStatus))
+                query = query.Where(b => b.OrderStatus == orderStatus);
 
             if (!string.IsNullOrWhiteSpace(shippingStatus))
                 query = query.Where(b => b.ShippingStatus == shippingStatus);

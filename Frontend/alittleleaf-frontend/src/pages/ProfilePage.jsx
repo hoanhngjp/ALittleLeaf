@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 import { useOrders, useRetryPayment } from '../hooks/useOrders'
 import AccountSidebar from '../components/account/AccountSidebar'
+import ShippingBadge from '../components/common/ShippingBadge'
 
 const FORMAT_VND = (n) =>
   new Intl.NumberFormat('vi-VN').format(n) + '₫'
@@ -22,11 +23,6 @@ function PaymentStatusBadge({ status, method }) {
   return <span className="status-pending">{status}</span>
 }
 
-function ShippingStatusBadge({ status }) {
-  if (status === 'fulfilled')
-    return <span className="status-fulfilled">Đã giao hàng</span>
-  return <span className="status-not_fulfilled">Chưa giao hàng</span>
-}
 
 const PAGE_SIZE = 5
 
@@ -101,7 +97,7 @@ export default function ProfilePage() {
                                   <PaymentStatusBadge status={bill.paymentStatus} method={bill.paymentMethod} />
                                 </td>
                                 <td className="text-center">
-                                  <ShippingStatusBadge status={bill.shippingStatus} />
+                                  <ShippingBadge status={bill.shippingStatus} />
                                 </td>
                                 <td className="text-center">
                                   {bill.paymentStatus === 'pending_vnpay' && (

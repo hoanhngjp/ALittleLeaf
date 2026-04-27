@@ -21,7 +21,7 @@ namespace ALittleLeaf.Api.Repositories.Admin
 
         // ── Orders ────────────────────────────────────────────────────────────
         Task<(int Total, IEnumerable<Bill> Items)> GetOrdersPagedAsync(
-            string? keyword, string? shippingStatus, string? paymentStatus,
+            string? keyword, string? orderStatus, string? shippingStatus, string? paymentStatus,
             DateOnly? startDate, DateOnly? endDate,
             string? sortBy, bool isDescending,
             int page, int pageSize);

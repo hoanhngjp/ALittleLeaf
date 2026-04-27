@@ -14,6 +14,7 @@ namespace ALittleLeaf.Api.Repositories.Order
         // ── Bill ──────────────────────────────────────────────────────────────
         Task<Bill> CreateBillAsync(Bill bill);
         Task<Bill?> GetBillByIdAsync(int billId);
+        Task<Bill?> GetBillByGhnOrderCodeAsync(string ghnOrderCode);
         Task<Bill?> GetBillByIdForUserAsync(int billId, long userId);
         Task<List<Bill>> GetBillsByUserIdAsync(long userId);
         Task AddBillDetailsAsync(IEnumerable<BillDetail> details);

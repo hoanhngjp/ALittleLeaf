@@ -17,6 +17,14 @@ namespace ALittleLeaf.Api.DTOs.Order
         [MaxLength(255)] public string? NewAddress  { get; set; }
         [MaxLength(10)]  public string? NewPhone    { get; set; }
 
+        // GHN structured fields for inline address (populated in Phase 3)
+        public int?    NewProvinceId { get; set; }
+        public int?    NewDistrictId { get; set; }
+        public string? NewWardCode   { get; set; }
+
+        /// <summary>Shipping fee in VND as calculated by GHN. 0 if not provided.</summary>
+        public int ShippingFee { get; set; }
+
         /// <summary>"COD" or "VNPAY".</summary>
         [Required]
         public string PaymentMethod { get; set; } = "COD";

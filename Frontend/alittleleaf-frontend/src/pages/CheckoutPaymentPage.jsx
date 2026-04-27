@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { usePlaceOrder, useCreateVnPayUrl } from '../hooks/useOrders'
+import { useShippingFee, FALLBACK_SHIPPING_FEE } from '../hooks/useShipping'
+import { useCartStore } from '../store/useCartStore'
 import CheckoutLayout from '../components/checkout/CheckoutLayout'
 
 // Payment method icons — served from project Cloudinary account
@@ -13,7 +15,26 @@ export default function CheckoutPaymentPage() {
   const state     = location.state ?? {}
 
   // Shipping data forwarded from CheckoutPage
-  const { note, addressId, newFullName, newPhone, newAddress } = state
+  const {
+    note, addressId,
+    newFullName, newPhone, newAddress, newProvinceId, newDistrictId, newWardCode,
+    feeDistrictId, feeWardCode,
+  } = state
+
+  // ── Cart subtotal (for insurance_value sent to GHN) ───────────────────────
+  const items        = useCartStore((s) => s.items)
+  const cartSubtotal = items.reduce((sum, i) => sum + i.productPrice * i.quantity, 0)
+
+  // ── Shipping fee (null = calculating, number = resolved) ──────────────────
+  const { data: feeData, isError: feeError } = useShippingFee({
+    districtId:     feeDistrictId,
+    wardCode:       feeWardCode,
+    weight:         500,
+    insuranceValue: cartSubtotal,
+  })
+
+  // Fall back to a flat rate when GHN returns an error so the user isn't blocked
+  const shippingFee = feeError ? FALLBACK_SHIPPING_FEE : (feeData ?? null)
 
   // ── Selected payment method ────────────────────────────────────────────────
   const [method, setMethod] = useState('VNPAY')
@@ -33,10 +54,11 @@ export default function CheckoutPaymentPage() {
 
     const orderDto = {
       paymentMethod: method,
-      note: note ?? '',
+      note:          note ?? '',
+      shippingFee:   shippingFee ?? 0,
       ...(addressId
         ? { addressId }
-        : { newFullName, newPhone, newAddress }),
+        : { newFullName, newPhone, newAddress, newProvinceId, newDistrictId, newWardCode }),
     }
 
     placeOrder.mutate(orderDto, {
@@ -62,7 +84,7 @@ export default function CheckoutPaymentPage() {
   }
 
   return (
-    <CheckoutLayout step={2}>
+    <CheckoutLayout step={2} shippingFee={shippingFee}>
       <div className="step">
         <div className="step-actions">
 
@@ -79,9 +101,18 @@ export default function CheckoutPaymentPage() {
                       <div className="radio-input">
                         <input className="input-radio" type="radio" defaultChecked readOnly />
                       </div>
-                      <span className="radio-label-primary">
-                        Để phí vận chuyển được chính xác nhất, tụi mình sẽ liên hệ báo phí vận chuyển sau khi xác nhận đơn hàng ạ
-                      </span>
+                      <div className="radio-content-input">
+                        <div className="content-wrapper">
+                          <span className="radio-label-primary">Giao hàng tiêu chuẩn (GHN)</span>
+                          <span className="radio-label-secondary">
+                            {shippingFee == null
+                              ? 'Đang tính...'
+                              : feeError
+                                ? `${FALLBACK_SHIPPING_FEE.toLocaleString('vi-VN')}₫ (dự kiến)`
+                                : `${shippingFee.toLocaleString('vi-VN')}₫`}
+                          </span>
+                        </div>
+                      </div>
                     </label>
                   </div>
                 </div>

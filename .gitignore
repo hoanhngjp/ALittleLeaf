@@ -363,6 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 *.env
+*.env.local
 
 # Frontend (Vite / React)
 Frontend/alittleleaf-frontend/node_modules/

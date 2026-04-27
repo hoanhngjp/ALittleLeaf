@@ -13,9 +13,12 @@ using ALittleLeaf.Api.Services.Product;
 using ALittleLeaf.Api.Services.VNPay;
 using ALittleLeaf.Api.Repositories.Admin;
 using ALittleLeaf.Api.Services.Admin;
+using ALittleLeaf.Api.Services.Shipping;
+using ALittleLeaf.Api.Options;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -80,6 +83,18 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ── GHN config: bridge flat env vars → Ghn:* section ─────────────────────
+var ghnApiKey  = Environment.GetEnvironmentVariable("GHN_API_KEY");
+var ghnShopId  = Environment.GetEnvironmentVariable("GHN_SHOP_ID");
+var ghnBaseUrl = Environment.GetEnvironmentVariable("GHN_BASE_URL");
+
+if (!string.IsNullOrWhiteSpace(ghnApiKey))
+    builder.Configuration["Ghn:ApiKey"]  = ghnApiKey;
+if (!string.IsNullOrWhiteSpace(ghnShopId))
+    builder.Configuration["Ghn:ShopId"] = ghnShopId;
+if (!string.IsNullOrWhiteSpace(ghnBaseUrl))
+    builder.Configuration["Ghn:BaseUrl"] = ghnBaseUrl;
+
 // ── Application Services ───────────────────────────────────────────────────
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -102,6 +117,16 @@ builder.Services.AddScoped<IVnPayService, VnPayService>();
 // ── Admin (Phase 7) ────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+
+// GHN Logistics
+builder.Services.AddMemoryCache();
+builder.Services.Configure<GhnOptions>(builder.Configuration.GetSection(GhnOptions.Section));
+builder.Services.AddHttpClient<IGhnService, GhnService>((sp, client) =>
+{
+    var opts = sp.GetRequiredService<IOptions<GhnOptions>>().Value;
+    client.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
+    client.DefaultRequestHeaders.Add("Token", opts.ApiKey);
+});
 
 // ── Controllers ────────────────────────────────────────────────────────────
 builder.Services.AddControllers();

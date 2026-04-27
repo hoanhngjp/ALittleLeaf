@@ -2,19 +2,30 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdminOrders } from '../../hooks/useAdminOrders'
 import { useDebounce } from '../../hooks/useDebounce'
+import ShippingBadge    from '../../components/common/ShippingBadge'
+import PaymentBadge     from '../../components/common/PaymentBadge'
+import OrderStatusBadge from '../../components/common/OrderStatusBadge'
+import {
+  SHIPPING_STATUS_OPTIONS,
+  PAYMENT_STATUS_OPTIONS,
+  ORDER_STATUS_OPTIONS,
+} from '../../constants/orderConstants'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
+const ORDER_STATUS_FILTER = [
+  { value: '', label: 'Tất cả trạng thái đơn' },
+  ...ORDER_STATUS_OPTIONS,
+]
+
 const SHIPPING_OPTIONS = [
-  { value: '',              label: 'Tất cả trạng thái giao hàng' },
-  { value: 'not_fulfilled', label: 'Chưa giao hàng' },
-  { value: 'fulfilled',     label: 'Đã giao hàng' },
+  { value: '', label: 'Tất cả vận chuyển GHN' },
+  ...SHIPPING_STATUS_OPTIONS,
 ]
 
 const PAYMENT_OPTIONS = [
-  { value: '',       label: 'Tất cả thanh toán' },
-  { value: 'pending', label: 'Chưa thanh toán' },
-  { value: 'paid',    label: 'Đã thanh toán' },
+  { value: '', label: 'Tất cả thanh toán' },
+  ...PAYMENT_STATUS_OPTIONS,
 ]
 
 const FMT_DATE = new Intl.DateTimeFormat('vi-VN', {
@@ -44,25 +55,7 @@ function SortTh({ col, label, sortCol, sortOrder, onSort }) {
   )
 }
 
-// ── Status badges ─────────────────────────────────────────────────────────────
-
-function ShippingBadge({ status }) {
-  const map = {
-    fulfilled:     ['bg-success', 'Đã giao hàng'],
-    not_fulfilled: ['bg-warning text-dark', 'Chưa giao hàng'],
-  }
-  const [cls, label] = map[status] ?? ['bg-secondary', status]
-  return <span className={`badge ${cls}`}>{label}</span>
-}
-
-function PaymentBadge({ status }) {
-  const map = {
-    paid:    ['bg-success', 'Đã thanh toán'],
-    pending: ['bg-danger',  'Chưa thanh toán'],
-  }
-  const [cls, label] = map[status] ?? ['bg-secondary', status]
-  return <span className={`badge ${cls}`}>{label}</span>
-}
+// ── Badges ─────────────────────────────────────────────────────────────────────
 
 function ConfirmedBadge({ isConfirmed }) {
   return isConfirmed
@@ -89,8 +82,9 @@ function pageNumbers(current, total) {
 export default function AdminOrdersPage() {
   const [page, setPage]             = useState(1)
   const [search, setSearch]         = useState('')
-  const [shippingStatus, setShip]   = useState('')
-  const [paymentStatus, setPay]     = useState('')
+  const [orderStatus,    setOrderStatus] = useState('')
+  const [shippingStatus, setShip]       = useState('')
+  const [paymentStatus,  setPay]        = useState('')
   const [startDate, setStart]       = useState('')
   const [endDate, setEnd]           = useState('')
   const [sortCol, setSortCol]       = useState('dateCreated')
@@ -101,7 +95,8 @@ export default function AdminOrdersPage() {
   const { data, isLoading, isError } = useAdminOrders({
     page,
     pageSize: 10,
-    keyword:        keyword || undefined,
+    keyword:        keyword        || undefined,
+    orderStatus:    orderStatus    || undefined,
     shippingStatus: shippingStatus || undefined,
     paymentStatus:  paymentStatus  || undefined,
     startDate:      startDate      || undefined,
@@ -126,7 +121,7 @@ export default function AdminOrdersPage() {
   }
 
   function handleReset() {
-    setSearch(''); setShip(''); setPay('')
+    setSearch(''); setOrderStatus(''); setShip(''); setPay('')
     setStart(''); setEnd('')
     setSortCol('dateCreated'); setSortOrder('desc')
     setPage(1)
@@ -181,9 +176,20 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
+                {/* Order status */}
+                <div className="col-md-2">
+                  <label className="form-label">Trạng thái đơn</label>
+                  <select className="form-select" value={orderStatus}
+                    onChange={(e) => { setOrderStatus(e.target.value); setPage(1) }}>
+                    {ORDER_STATUS_FILTER.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Shipping status */}
                 <div className="col-md-2">
-                  <label className="form-label">Giao hàng</label>
+                  <label className="form-label">Vận chuyển GHN</label>
                   <select className="form-select" value={shippingStatus}
                     onChange={(e) => { setShip(e.target.value); setPage(1) }}>
                     {SHIPPING_OPTIONS.map((o) => (
@@ -247,9 +253,10 @@ export default function AdminOrdersPage() {
                         <SortTh col="customername" label="Khách hàng" {...sortProps} />
                         <SortTh col="dateCreated"   label="Ngày đặt"   {...sortProps} />
                         <SortTh col="totalamount"   label="Tổng tiền"  {...sortProps} />
+                        <th>Trạng thái đơn</th>
                         <th>Thanh toán</th>
-                        <th>Xác nhận</th>
-                        <th>Giao hàng</th>
+                        <th>Vận chuyển GHN</th>
+                        <th>Mã GHN</th>
                         <th className="text-center">Chi tiết</th>
                       </tr>
                     </thead>
@@ -267,9 +274,35 @@ export default function AdminOrdersPage() {
                           <td style={{ whiteSpace: 'nowrap' }}>
                             {FMT_CURRENCY.format(o.totalAmount)}₫
                           </td>
+                          <td><OrderStatusBadge status={o.orderStatus} /></td>
                           <td><PaymentBadge status={o.paymentStatus} /></td>
-                          <td><ConfirmedBadge isConfirmed={o.isConfirmed} /></td>
                           <td><ShippingBadge status={o.shippingStatus} /></td>
+                          <td>
+                            {o.ghnOrderCode
+                              ? (
+                                <div className="d-flex align-items-center gap-1">
+                                  <a
+                                    href={`https://donhang.ghn.vn/?order_code=${o.ghnOrderCode}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-monospace small text-primary"
+                                    style={{ whiteSpace: 'nowrap' }}
+                                  >
+                                    {o.ghnOrderCode}
+                                  </a>
+                                  <button
+                                    type="button"
+                                    className="btn btn-link btn-sm p-0 text-muted"
+                                    title="Sao chép mã"
+                                    onClick={() => navigator.clipboard.writeText(o.ghnOrderCode)}
+                                  >
+                                    <i className="bi bi-copy" style={{ fontSize: 12 }} />
+                                  </button>
+                                </div>
+                              )
+                              : <span className="text-muted small">—</span>
+                            }
+                          </td>
                           <td className="text-center">
                             <Link
                               to={`/admin/orders/${o.billId}`}

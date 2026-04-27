@@ -15,6 +15,10 @@ namespace ALittleLeaf.Api.Models
 
         public string AdrsPhone { get; set; } = null!;
 
+        public int?    ProvinceId { get; set; }
+        public int?    DistrictId { get; set; }
+        public string? WardCode   { get; set; }
+
         public bool AdrsIsDefault { get; set; }
 
         public DateTime? CreatedAt { get; set; }

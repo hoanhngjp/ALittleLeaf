@@ -2,6 +2,7 @@ using ALittleLeaf.Api.DTOs.Admin;
 using ALittleLeaf.Api.Models;
 using ALittleLeaf.Api.Repositories.Admin;
 using ALittleLeaf.Api.Services.Cloudinary;
+using ALittleLeaf.Api.Services.Shipping;
 using Microsoft.AspNetCore.Identity;
 
 namespace ALittleLeaf.Api.Services.Admin
@@ -10,11 +11,13 @@ namespace ALittleLeaf.Api.Services.Admin
     {
         private readonly IAdminRepository   _adminRepo;
         private readonly ICloudinaryService _cloudinary;
+        private readonly IGhnService        _ghn;
 
-        public AdminService(IAdminRepository adminRepo, ICloudinaryService cloudinary)
+        public AdminService(IAdminRepository adminRepo, ICloudinaryService cloudinary, IGhnService ghn)
         {
             _adminRepo  = adminRepo;
             _cloudinary = cloudinary;
+            _ghn        = ghn;
         }
 
         // ── Mapping helpers ───────────────────────────────────────────────────
@@ -48,12 +51,16 @@ namespace ALittleLeaf.Api.Services.Admin
             CustomerEmail  = b.IdUserNavigation?.UserEmail    ?? string.Empty,
             DateCreated    = b.DateCreated,
             TotalAmount    = b.TotalAmount,
+            ShippingFee    = b.ShippingFee,
             PaymentMethod  = b.PaymentMethod,
             PaymentStatus  = b.PaymentStatus,
             IsConfirmed    = b.IsConfirmed,
-            ShippingStatus = b.ShippingStatus,
-            Note           = b.Note,
-            ItemCount      = b.BillDetails?.Count ?? 0
+            OrderStatus     = b.OrderStatus,
+            ShippingStatus  = b.ShippingStatus,
+            TrackingMessage = b.TrackingMessage,
+            Note            = b.Note,
+            GhnOrderCode    = b.GhnOrderCode,
+            ItemCount       = b.BillDetails?.Count ?? 0
         };
 
         private static AdminUserDto MapUser(User u) => new()
@@ -260,13 +267,13 @@ namespace ALittleLeaf.Api.Services.Admin
         // ── Orders ────────────────────────────────────────────────────────────
 
         public async Task<PaginatedAdminResultDto<AdminOrderDto>> GetOrdersAsync(
-            string? keyword, string? shippingStatus, string? paymentStatus,
+            string? keyword, string? orderStatus, string? shippingStatus, string? paymentStatus,
             DateOnly? startDate, DateOnly? endDate,
             string? sortBy, bool isDescending,
             int page, int pageSize)
         {
             var (total, items) = await _adminRepo.GetOrdersPagedAsync(
-                keyword, shippingStatus, paymentStatus,
+                keyword, orderStatus, shippingStatus, paymentStatus,
                 startDate, endDate,
                 sortBy, isDescending,
                 page, pageSize);
@@ -286,9 +293,31 @@ namespace ALittleLeaf.Api.Services.Admin
             if (bill == null) return null;
 
             var adrs = bill.IdAdrsNavigation;
-            var shippingAddress = adrs == null
-                ? string.Empty
-                : $"{adrs.AdrsFullname} | {adrs.AdrsPhone} | {adrs.AdrsAddress}";
+
+            // Resolve GHN display names from cached master data (non-fatal)
+            string? wardName = null, districtName = null, provinceName = null;
+            if (adrs != null)
+            {
+                try
+                {
+                    if (adrs.ProvinceId.HasValue)
+                    {
+                        var provinces = await _ghn.GetProvincesAsync();
+                        provinceName = provinces.FirstOrDefault(p => p.ProvinceId == adrs.ProvinceId)?.ProvinceName;
+                    }
+                    if (adrs.DistrictId.HasValue)
+                    {
+                        var districts = await _ghn.GetDistrictsAsync(adrs.ProvinceId ?? 0);
+                        districtName = districts.FirstOrDefault(d => d.DistrictId == adrs.DistrictId)?.DistrictName;
+                    }
+                    if (!string.IsNullOrEmpty(adrs.WardCode) && adrs.DistrictId.HasValue)
+                    {
+                        var wards = await _ghn.GetWardsAsync(adrs.DistrictId.Value);
+                        wardName = wards.FirstOrDefault(w => w.WardCode == adrs.WardCode)?.WardName;
+                    }
+                }
+                catch { /* cache miss — names stay null, IDs still available */ }
+            }
 
             return new AdminOrderDetailDto
             {
@@ -298,13 +327,22 @@ namespace ALittleLeaf.Api.Services.Admin
                 CustomerEmail   = bill.IdUserNavigation?.UserEmail    ?? string.Empty,
                 DateCreated     = bill.DateCreated,
                 TotalAmount     = bill.TotalAmount,
+                ShippingFee     = bill.ShippingFee,
                 PaymentMethod   = bill.PaymentMethod,
                 PaymentStatus   = bill.PaymentStatus,
                 IsConfirmed     = bill.IsConfirmed,
+                OrderStatus     = bill.OrderStatus,
                 ShippingStatus  = bill.ShippingStatus,
+                TrackingMessage = bill.TrackingMessage,
                 Note            = bill.Note,
+                GhnOrderCode    = bill.GhnOrderCode,
                 ItemCount       = bill.BillDetails?.Count ?? 0,
-                ShippingAddress = shippingAddress,
+                RecipientName   = adrs?.AdrsFullname  ?? string.Empty,
+                RecipientPhone  = adrs?.AdrsPhone     ?? string.Empty,
+                StreetAddress   = adrs?.AdrsAddress   ?? string.Empty,
+                WardName        = wardName,
+                DistrictName    = districtName,
+                ProvinceName    = provinceName,
                 Items           = (bill.BillDetails ?? []).Select(bd => new AdminOrderLineItemDto
                 {
                     BillDetailId = bd.BillDetailId,
@@ -324,6 +362,7 @@ namespace ALittleLeaf.Api.Services.Admin
             var bill = await _adminRepo.GetOrderByIdAsync(billId);
             if (bill == null) return null;
 
+            if (dto.OrderStatus    != null) bill.OrderStatus    = dto.OrderStatus;
             if (dto.ShippingStatus != null) bill.ShippingStatus = dto.ShippingStatus;
             if (dto.PaymentStatus  != null) bill.PaymentStatus  = dto.PaymentStatus;
             if (dto.IsConfirmed    != null) bill.IsConfirmed     = dto.IsConfirmed.Value;
@@ -332,6 +371,49 @@ namespace ALittleLeaf.Api.Services.Admin
             await _adminRepo.UpdateOrderAsync(bill);
             await _adminRepo.SaveChangesAsync();
             return MapOrder(bill);
+        }
+
+        public async Task<AdminOrderDto?> ConfirmOrderAsync(int billId)
+        {
+            var bill = await _adminRepo.GetOrderByIdAsync(billId);
+            if (bill == null) return null;
+
+            if (bill.OrderStatus is "COMPLETED" or "CANCELLED")
+                throw new InvalidOperationException($"Cannot confirm an order with status '{bill.OrderStatus}'.");
+
+            bill.IsConfirmed = true;
+            bill.OrderStatus = "CONFIRMED";
+            bill.UpdatedAt   = DateTime.UtcNow;
+
+            await _adminRepo.UpdateOrderAsync(bill);
+            await _adminRepo.SaveChangesAsync();
+            return MapOrder(bill);
+        }
+
+        public async Task<string?> SyncOrderToGhnAsync(int billId)
+        {
+            var bill = await _adminRepo.GetOrderByIdAsync(billId);
+            if (bill == null) return null;
+
+            if (!bill.IsConfirmed || bill.OrderStatus != "CONFIRMED")
+                throw new InvalidOperationException("Order must be confirmed by admin before pushing to GHN.");
+
+            if (!string.IsNullOrEmpty(bill.GhnOrderCode))
+                return bill.GhnOrderCode; // already synced — idempotent
+
+            if (bill.OrderStatus is "COMPLETED" or "CANCELLED")
+                throw new InvalidOperationException(
+                    $"Cannot sync order to GHN — order is '{bill.OrderStatus}'.");
+
+            var ghnCode = await _ghn.CreateShippingOrderAsync(bill);
+            bill.GhnOrderCode   = ghnCode;
+            bill.OrderStatus    = "SHIPPING";
+            bill.ShippingStatus = "ready_to_pick";
+            bill.UpdatedAt      = DateTime.UtcNow;
+
+            await _adminRepo.UpdateOrderAsync(bill);
+            await _adminRepo.SaveChangesAsync();
+            return ghnCode;
         }
 
         // ── Users ─────────────────────────────────────────────────────────────

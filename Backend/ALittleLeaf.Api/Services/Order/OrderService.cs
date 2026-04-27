@@ -2,6 +2,7 @@ using ALittleLeaf.Api.DTOs.Order;
 using ALittleLeaf.Api.Models;
 using ALittleLeaf.Api.Repositories.Order;
 using ALittleLeaf.Api.Services.Cart;
+using ALittleLeaf.Api.Services.Shipping;
 using ALittleLeaf.Api.Services.VNPay;
 
 namespace ALittleLeaf.Api.Services.Order
@@ -11,12 +12,21 @@ namespace ALittleLeaf.Api.Services.Order
         private readonly IOrderRepository _orderRepo;
         private readonly ICartService     _cartService;
         private readonly IVnPayService    _vnPayService;
+        private readonly IGhnService      _ghn;
+        private readonly ILogger<OrderService> _logger;
 
-        public OrderService(IOrderRepository orderRepo, ICartService cartService, IVnPayService vnPayService)
+        public OrderService(
+            IOrderRepository orderRepo,
+            ICartService cartService,
+            IVnPayService vnPayService,
+            IGhnService ghn,
+            ILogger<OrderService> logger)
         {
             _orderRepo    = orderRepo;
             _cartService  = cartService;
             _vnPayService = vnPayService;
+            _ghn          = ghn;
+            _logger       = logger;
         }
 
         // ── Payment confirmation (idempotent) ─────────────────────────────────
@@ -46,8 +56,8 @@ namespace ALittleLeaf.Api.Services.Order
                 return new PaymentResultDto { BillId = billId, VnpResponseCode = response.VnPayResponseCode,
                     Message = "Payment was not successful." };
 
+            // Mark payment received — admin must still manually confirm before GHN push
             bill.PaymentStatus = "paid";
-            bill.IsConfirmed   = true;
             bill.UpdatedAt     = DateTime.Now;
             await _orderRepo.SaveChangesAsync();
 
@@ -88,13 +98,16 @@ namespace ALittleLeaf.Api.Services.Order
 
             var address = new AddressList
             {
-                IdUser       = userId,
-                AdrsFullname = dto.AdrsFullname,
-                AdrsAddress  = dto.AdrsAddress,
-                AdrsPhone    = dto.AdrsPhone,
+                IdUser        = userId,
+                AdrsFullname  = dto.AdrsFullname,
+                AdrsAddress   = dto.AdrsAddress,
+                AdrsPhone     = dto.AdrsPhone,
                 AdrsIsDefault = dto.AdrsIsDefault,
-                CreatedAt    = DateTime.UtcNow,
-                UpdatedAt    = DateTime.UtcNow
+                ProvinceId    = dto.ProvinceId,
+                DistrictId    = dto.DistrictId,
+                WardCode      = dto.WardCode,
+                CreatedAt     = DateTime.UtcNow,
+                UpdatedAt     = DateTime.UtcNow
             };
 
             var saved = await _orderRepo.AddAddressAsync(address);
@@ -120,6 +133,9 @@ namespace ALittleLeaf.Api.Services.Order
             address.AdrsAddress   = dto.AdrsAddress;
             address.AdrsPhone     = dto.AdrsPhone;
             address.AdrsIsDefault = dto.AdrsIsDefault;
+            address.ProvinceId    = dto.ProvinceId;
+            address.DistrictId    = dto.DistrictId;
+            address.WardCode      = dto.WardCode;
             address.UpdatedAt     = DateTime.UtcNow;
 
             await _orderRepo.UpdateAddressAsync(address);
@@ -160,11 +176,14 @@ namespace ALittleLeaf.Api.Services.Order
 
                 var newAdrs = new AddressList
                 {
-                    IdUser       = userId,
-                    AdrsFullname = dto.NewFullName,
-                    AdrsAddress  = dto.NewAddress,
-                    AdrsPhone    = dto.NewPhone,
+                    IdUser        = userId,
+                    AdrsFullname  = dto.NewFullName,
+                    AdrsAddress   = dto.NewAddress,
+                    AdrsPhone     = dto.NewPhone,
                     AdrsIsDefault = false,
+                    ProvinceId    = dto.NewProvinceId,
+                    DistrictId    = dto.NewDistrictId,
+                    WardCode      = dto.NewWardCode,
                     CreatedAt    = DateTime.UtcNow,
                     UpdatedAt    = DateTime.UtcNow
                 };
@@ -177,7 +196,8 @@ namespace ALittleLeaf.Api.Services.Order
             if (!cart.Items.Any())
                 throw new InvalidOperationException("Cart is empty.");
 
-            int totalAmount = cart.Items.Sum(i => i.LineTotal);
+            int cartSubtotal = cart.Items.Sum(i => i.LineTotal);
+            int totalAmount  = cartSubtotal + dto.ShippingFee;
 
             string paymentStatus = dto.PaymentMethod.ToUpper() == "VNPAY"
                 ? "pending_vnpay"
@@ -186,16 +206,18 @@ namespace ALittleLeaf.Api.Services.Order
             // 3. Create Bill inside a transaction via repository
             var bill = new Bill
             {
-                IdUser        = userId,
-                IdAdrs        = adrsId,
-                DateCreated   = DateOnly.FromDateTime(DateTime.Now),
-                TotalAmount   = totalAmount,
-                PaymentMethod = dto.PaymentMethod.ToUpper(),
-                PaymentStatus = paymentStatus,
-                IsConfirmed   = false,
+                IdUser         = userId,
+                IdAdrs         = adrsId,
+                DateCreated    = DateOnly.FromDateTime(DateTime.Now),
+                TotalAmount    = totalAmount,
+                ShippingFee    = dto.ShippingFee,
+                PaymentMethod  = dto.PaymentMethod.ToUpper(),
+                PaymentStatus  = paymentStatus,
+                IsConfirmed    = false,
+                OrderStatus    = "PENDING",
                 ShippingStatus = "not_fulfilled",
-                Note          = dto.Note,
-                UpdatedAt     = DateTime.Now
+                Note           = dto.Note,
+                UpdatedAt      = DateTime.Now
             };
 
             var createdBill = await _orderRepo.CreateBillAsync(bill);
@@ -214,12 +236,10 @@ namespace ALittleLeaf.Api.Services.Order
 
             await _orderRepo.AddBillDetailsAsync(details);
 
-            // 5. For COD: fulfill immediately (deduct stock + clear cart)
-            if (dto.PaymentMethod.ToUpper() == "COD")
-            {
-                await FulfillOrderAsync(createdBill.BillId);
-                await _cartService.ClearCartAsync(userId);
-            }
+            // 5. Clear cart immediately for both payment methods.
+            //    Stock is deducted by FulfillOrderAsync which is called by VNPay IPN or admin confirmation.
+            //    COD orders start as pending — admin ships and confirms manually.
+            await _cartService.ClearCartAsync(userId);
 
             // 6. Return the fresh bill with address
             var result = await _orderRepo.GetBillByIdAsync(createdBill.BillId);
@@ -243,11 +263,7 @@ namespace ALittleLeaf.Api.Services.Order
                 product.QuantityInStock -= item.Quantity;
             }
 
-            // Mark the order as confirmed and paid when fulfilled (COD path)
-            bill.IsConfirmed   = true;
-            bill.PaymentStatus = "paid";
-            bill.UpdatedAt     = DateTime.Now;
-
+            bill.UpdatedAt = DateTime.Now;
             await _orderRepo.SaveChangesAsync();
         }
 
@@ -267,14 +283,18 @@ namespace ALittleLeaf.Api.Services.Order
                 BillId         = bill.BillId,
                 DateCreated    = bill.DateCreated,
                 TotalAmount    = bill.TotalAmount,
+                ShippingFee    = bill.ShippingFee,
                 PaymentMethod  = bill.PaymentMethod,
                 PaymentStatus  = bill.PaymentStatus,
-                IsConfirmed    = bill.IsConfirmed,
-                ShippingStatus = bill.ShippingStatus,
-                Note           = bill.Note,
+                IsConfirmed     = bill.IsConfirmed,
+                OrderStatus     = bill.OrderStatus,
+                ShippingStatus  = bill.ShippingStatus,
+                TrackingMessage = bill.TrackingMessage,
+                Note            = bill.Note,
+                GhnOrderCode    = bill.GhnOrderCode,
                 ShippingAddress = bill.IdAdrsNavigation == null
                     ? null
-                    : MapAddressToDto(bill.IdAdrsNavigation),
+                    : await MapAddressWithNamesAsync(bill.IdAdrsNavigation),
                 Items = bill.BillDetails.Select(bd => new OrderLineItemDto
                 {
                     BillDetailId = bd.BillDetailId,
@@ -295,23 +315,59 @@ namespace ALittleLeaf.Api.Services.Order
 
         private static AddressDto MapAddressToDto(AddressList a) => new()
         {
-            AdrsId       = a.AdrsId,
-            AdrsFullname = a.AdrsFullname,
-            AdrsAddress  = a.AdrsAddress,
-            AdrsPhone    = a.AdrsPhone,
-            AdrsIsDefault = a.AdrsIsDefault
+            AdrsId        = a.AdrsId,
+            AdrsFullname  = a.AdrsFullname,
+            AdrsAddress   = a.AdrsAddress,
+            AdrsPhone     = a.AdrsPhone,
+            AdrsIsDefault = a.AdrsIsDefault,
+            ProvinceId    = a.ProvinceId,
+            DistrictId    = a.DistrictId,
+            WardCode      = a.WardCode,
         };
+
+        // Enriches an address DTO with display names from the GHN cached master data.
+        private async Task<AddressDto> MapAddressWithNamesAsync(AddressList a)
+        {
+            var dto = MapAddressToDto(a);
+            try
+            {
+                if (a.ProvinceId.HasValue)
+                {
+                    var provinces = await _ghn.GetProvincesAsync();
+                    dto.ProvinceName = provinces.FirstOrDefault(p => p.ProvinceId == a.ProvinceId)?.ProvinceName;
+                }
+                if (a.DistrictId.HasValue)
+                {
+                    var districts = await _ghn.GetDistrictsAsync(a.ProvinceId ?? 0);
+                    dto.DistrictName = districts.FirstOrDefault(d => d.DistrictId == a.DistrictId)?.DistrictName;
+                }
+                if (!string.IsNullOrEmpty(a.WardCode) && a.DistrictId.HasValue)
+                {
+                    var wards = await _ghn.GetWardsAsync(a.DistrictId.Value);
+                    dto.WardName = wards.FirstOrDefault(w => w.WardCode == a.WardCode)?.WardName;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to resolve GHN address names for address {AdrsId}", a.AdrsId);
+            }
+            return dto;
+        }
 
         private static OrderDto MapBillToDto(Bill b) => new()
         {
-            BillId         = b.BillId,
-            DateCreated    = b.DateCreated,
-            TotalAmount    = b.TotalAmount,
-            PaymentMethod  = b.PaymentMethod,
-            PaymentStatus  = b.PaymentStatus,
-            IsConfirmed    = b.IsConfirmed,
-            ShippingStatus = b.ShippingStatus,
-            Note           = b.Note,
+            BillId          = b.BillId,
+            DateCreated     = b.DateCreated,
+            TotalAmount     = b.TotalAmount,
+            ShippingFee     = b.ShippingFee,
+            PaymentMethod   = b.PaymentMethod,
+            PaymentStatus   = b.PaymentStatus,
+            IsConfirmed     = b.IsConfirmed,
+            OrderStatus     = b.OrderStatus,
+            ShippingStatus  = b.ShippingStatus,
+            TrackingMessage = b.TrackingMessage,
+            Note            = b.Note,
+            GhnOrderCode    = b.GhnOrderCode,
             ShippingAddress = b.IdAdrsNavigation == null
                 ? null
                 : MapAddressToDto(b.IdAdrsNavigation)
