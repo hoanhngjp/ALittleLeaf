@@ -11,10 +11,11 @@ namespace ALittleLeaf.Tests.Services
 {
     public class AuthServiceTests : IDisposable
     {
-        private readonly AlittleLeafDecorContext _context;
-        private readonly Mock<IConfiguration>    _mockConfig;
-        private readonly AuthService             _authService;
-        private readonly PasswordHasher<string>  _hasher;
+        private readonly AlittleLeafDecorContext      _context;
+        private readonly Mock<IConfiguration>         _mockConfig;
+        private readonly Mock<IGoogleTokenValidator>  _mockGoogleValidator;
+        private readonly AuthService                  _authService;
+        private readonly PasswordHasher<string>       _hasher;
 
         public AuthServiceTests()
         {
@@ -25,8 +26,11 @@ namespace ALittleLeaf.Tests.Services
             _mockConfig.Setup(c => c["Jwt:Secret"]).Returns("super_secret_key_for_testing_123456789");
             _mockConfig.Setup(c => c["Jwt:Issuer"]).Returns("TestIssuer");
             _mockConfig.Setup(c => c["Jwt:Audience"]).Returns("TestAudience");
+            _mockConfig.Setup(c => c["Google:ClientId"]).Returns("test-google-client-id");
 
-            _authService = new AuthService(_context, _mockConfig.Object);
+            _mockGoogleValidator = new Mock<IGoogleTokenValidator>();
+
+            _authService = new AuthService(_context, _mockConfig.Object, _mockGoogleValidator.Object);
             _hasher      = new PasswordHasher<string>();
         }
 

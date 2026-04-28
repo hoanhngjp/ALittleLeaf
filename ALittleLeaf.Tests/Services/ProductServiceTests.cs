@@ -65,7 +65,8 @@ namespace ALittleLeaf.Tests.Services
                 _context.Products.Add(new Product
                 {
                     ProductName = $"Extra Prod {i}", ProductPrice = 100,
-                    IdCategory = 1, QuantityInStock = 10, IsOnSale = true
+                    IdCategory = 1, QuantityInStock = 10, IsOnSale = true,
+                    RowVersion = new byte[] { 0, 0, 0, 0, 0, 0, (byte)(i / 256), (byte)(i % 256) }
                 });
             }
             await _context.SaveChangesAsync();

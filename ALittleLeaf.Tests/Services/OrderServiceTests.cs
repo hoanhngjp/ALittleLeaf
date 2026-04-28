@@ -143,9 +143,12 @@ namespace ALittleLeaf.Tests.Services
         }
 
         // ── FulfillOrder ──────────────────────────────────────────────────────
+        // Note (Phase 16): stock deduction was moved to CreateOrderAsync.
+        // FulfillOrderAsync now only updates the bill timestamp; it no longer
+        // validates or modifies stock levels.
 
         [Fact]
-        public async Task FulfillOrder_DeductsStock()
+        public async Task FulfillOrder_UpdatesTimestamp_DoesNotModifyStock()
         {
             long userId = 20;
             int adrsId  = await SeedAddressForUser(userId);
@@ -159,44 +162,7 @@ namespace ALittleLeaf.Tests.Services
                 PaymentMethod  = "COD",
                 PaymentStatus  = "pending",
                 ShippingStatus = "not_fulfilled",
-                UpdatedAt      = DateTime.Now
-            };
-            _context.Bills.Add(bill);
-            await _context.SaveChangesAsync();
-
-            _context.BillDetails.Add(new BillDetail
-            {
-                IdBill    = bill.BillId,
-                IdProduct = 1,
-                Quantity  = 10,
-                UnitPrice = 50000,
-                TotalPrice = 500000
-            });
-            await _context.SaveChangesAsync();
-
-            await _service.FulfillOrderAsync(bill.BillId);
-
-            var product = await _context.Products.FindAsync(1);
-            Assert.Equal(90, product!.QuantityInStock); // 100 - 10
-        }
-
-        [Fact]
-        public async Task FulfillOrder_InsufficientStock_ThrowsException()
-        {
-            long userId = 21;
-            int adrsId  = await SeedAddressForUser(userId);
-
-            // Product 2 has stock = 10
-            var bill = new Bill
-            {
-                IdUser         = userId,
-                IdAdrs         = adrsId,
-                TotalAmount    = 5000000,
-                DateCreated    = DateOnly.FromDateTime(DateTime.Now),
-                PaymentMethod  = "COD",
-                PaymentStatus  = "pending",
-                ShippingStatus = "not_fulfilled",
-                UpdatedAt      = DateTime.Now
+                UpdatedAt      = DateTime.Now.AddHours(-1)   // set in the past so we can detect the update
             };
             _context.Bills.Add(bill);
             await _context.SaveChangesAsync();
@@ -204,17 +170,58 @@ namespace ALittleLeaf.Tests.Services
             _context.BillDetails.Add(new BillDetail
             {
                 IdBill     = bill.BillId,
-                IdProduct  = 2,
-                Quantity   = 20,   // > 10 in stock
-                UnitPrice  = 2500000,
-                TotalPrice = 50000000
+                IdProduct  = 1,
+                Quantity   = 10,
+                UnitPrice  = 50000,
+                TotalPrice = 500000
             });
             await _context.SaveChangesAsync();
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _service.FulfillOrderAsync(bill.BillId));
+            var stockBefore = (await _context.Products.FindAsync(1))!.QuantityInStock;
 
-            Assert.Contains("out of stock", ex.Message);
+            await _service.FulfillOrderAsync(bill.BillId);
+
+            // Stock must be unchanged — deduction happens at order creation now
+            var stockAfter = (await _context.Products.FindAsync(1))!.QuantityInStock;
+            Assert.Equal(stockBefore, stockAfter);
+
+            // Timestamp must have been refreshed
+            var saved = await _context.Bills.FindAsync(bill.BillId);
+            Assert.True(saved!.UpdatedAt > DateTime.Now.AddMinutes(-1));
+        }
+
+        [Fact]
+        public async Task CreateOrder_InsufficientStock_ThrowsException()
+        {
+            long userId = 21;
+            int adrsId  = await SeedAddressForUser(userId);
+
+            // Product 3 has stock = 5; order 10 units → should fail at CreateOrderAsync
+            var cart = new Api.Models.Cart
+            {
+                UserId    = userId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Carts.Add(cart);
+            await _context.SaveChangesAsync();
+
+            _context.CartItems.Add(new CartItem
+            {
+                CartId    = cart.CartId,
+                ProductId = 3,          // stock = 5
+                Quantity  = 10,         // request more than available
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            var dto = new CreateOrderDto { AddressId = adrsId, PaymentMethod = "COD" };
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _service.CreateOrderAsync(userId, dto));
+
+            Assert.Contains("không đủ hàng", ex.Message);
         }
     }
 }

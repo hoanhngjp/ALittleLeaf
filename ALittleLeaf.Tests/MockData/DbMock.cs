@@ -39,25 +39,29 @@ namespace ALittleLeaf.Tests.MockData
             {
                 ProductId = 1, ProductName = "Ấm Tráng Men", ProductPrice = 50000,
                 QuantityInStock = 100, IdCategory = 1, ProductDescription = "Ấm đẹp",
-                IsOnSale = true, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now
+                IsOnSale = true, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now,
+                RowVersion = new byte[] { 0, 0, 0, 0, 0, 0, 0, 1 }
             },
             new Product
             {
                 ProductId = 2, ProductName = "Bếp Từ Cao Cấp", ProductPrice = 2500000,
                 QuantityInStock = 10, IdCategory = 1, ProductDescription = "Bếp xịn",
-                IsOnSale = true, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now
+                IsOnSale = true, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now,
+                RowVersion = new byte[] { 0, 0, 0, 0, 0, 0, 0, 2 }
             },
             new Product
             {
                 ProductId = 3, ProductName = "Cây Xương Rồng", ProductPrice = 20000,
                 QuantityInStock = 5, IdCategory = 2, ProductDescription = "Cây đẹp",
-                IsOnSale = true, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now
+                IsOnSale = true, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now,
+                RowVersion = new byte[] { 0, 0, 0, 0, 0, 0, 0, 3 }
             },
             new Product
             {
                 ProductId = 4, ProductName = "Sản phẩm cũ", ProductPrice = 10000,
                 QuantityInStock = 0, IdCategory = 1, IsOnSale = false,
-                CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now
+                CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now,
+                RowVersion = new byte[] { 0, 0, 0, 0, 0, 0, 0, 4 }
             },
         };
 
