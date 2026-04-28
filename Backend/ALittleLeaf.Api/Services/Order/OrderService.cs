@@ -4,6 +4,7 @@ using ALittleLeaf.Api.Repositories.Order;
 using ALittleLeaf.Api.Services.Cart;
 using ALittleLeaf.Api.Services.Shipping;
 using ALittleLeaf.Api.Services.VNPay;
+using Microsoft.EntityFrameworkCore;
 
 namespace ALittleLeaf.Api.Services.Order
 {
@@ -203,12 +204,36 @@ namespace ALittleLeaf.Api.Services.Order
                 ? "pending_vnpay"
                 : "pending";
 
-            // 3. Create Bill inside a transaction via repository
+            // 3. Reserve inventory: deduct stock at order creation to prevent overselling.
+            //    Wrapped in optimistic concurrency — RowVersion on Product detects concurrent writes.
+            foreach (var item in cart.Items)
+            {
+                var product = await _orderRepo.GetProductByIdAsync(item.ProductId)
+                              ?? throw new InvalidOperationException($"Sản phẩm {item.ProductId} không tìm thấy.");
+                if (product.QuantityInStock < item.Quantity)
+                    throw new InvalidOperationException(
+                        $"Sản phẩm '{product.ProductName}' không đủ hàng.");
+                product.QuantityInStock -= item.Quantity;
+            }
+
+            // 4. Persist stock deductions before creating Bill.
+            //    DbUpdateConcurrencyException fires if RowVersion mismatch (concurrent buyer).
+            try
+            {
+                await _orderRepo.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new InvalidOperationException("Sản phẩm vừa hết hàng do có người khác vừa mua.");
+            }
+
+            // 5. Create Bill
             var bill = new Bill
             {
                 IdUser         = userId,
                 IdAdrs         = adrsId,
                 DateCreated    = DateOnly.FromDateTime(DateTime.Now),
+                CreatedAtTime  = DateTime.UtcNow,
                 TotalAmount    = totalAmount,
                 ShippingFee    = dto.ShippingFee,
                 PaymentMethod  = dto.PaymentMethod.ToUpper(),
@@ -222,7 +247,7 @@ namespace ALittleLeaf.Api.Services.Order
 
             var createdBill = await _orderRepo.CreateBillAsync(bill);
 
-            // 4. Create BillDetails from cart items
+            // 6. Create BillDetails from cart items
             var details = cart.Items.Select(i => new BillDetail
             {
                 IdBill     = createdBill.BillId,
@@ -236,9 +261,7 @@ namespace ALittleLeaf.Api.Services.Order
 
             await _orderRepo.AddBillDetailsAsync(details);
 
-            // 5. Clear cart immediately for both payment methods.
-            //    Stock is deducted by FulfillOrderAsync which is called by VNPay IPN or admin confirmation.
-            //    COD orders start as pending — admin ships and confirms manually.
+            // 7. Clear cart
             await _cartService.ClearCartAsync(userId);
 
             // 6. Return the fresh bill with address
@@ -248,20 +271,10 @@ namespace ALittleLeaf.Api.Services.Order
 
         public async Task FulfillOrderAsync(int billId)
         {
+            // Stock was already reserved at order creation (CreateOrderAsync).
+            // This method only updates the payment timestamp.
             var bill = await _orderRepo.GetBillByIdAsync(billId)
                        ?? throw new InvalidOperationException("Order not found.");
-
-            foreach (var item in bill.BillDetails)
-            {
-                var product = await _orderRepo.GetProductByIdAsync(item.IdProduct)
-                              ?? throw new InvalidOperationException($"Product {item.IdProduct} not found.");
-
-                if (product.QuantityInStock < item.Quantity)
-                    throw new InvalidOperationException(
-                        $"Product '{product.ProductName}' is out of stock.");
-
-                product.QuantityInStock -= item.Quantity;
-            }
 
             bill.UpdatedAt = DateTime.Now;
             await _orderRepo.SaveChangesAsync();

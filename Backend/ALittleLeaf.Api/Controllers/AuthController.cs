@@ -112,6 +112,30 @@ namespace ALittleLeaf.Api.Controllers
             return Ok(new { message = "Bạn đã đăng xuất thành công." });
         }
 
+        // ── POST /api/auth/google-login ───────────────────────────────────────
+
+        /// <summary>
+        /// Verifies a Google ID Token and returns a JWT access token + refresh token.
+        /// Creates a new account or links to an existing account by email.
+        /// </summary>
+        [HttpPost("google-login")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.GoogleLoginAsync(dto.IdToken);
+
+            if (!result.Succeeded)
+                return Unauthorized(new { error = result.ErrorMessage });
+
+            return Ok(BuildLoginResponse(result));
+        }
+
         // ── Private helpers ───────────────────────────────────────────────────
 
         private static LoginResponseDto BuildLoginResponse(AuthServiceResult result) =>

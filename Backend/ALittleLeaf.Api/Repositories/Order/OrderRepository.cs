@@ -93,6 +93,17 @@ namespace ALittleLeaf.Api.Repositories.Order
         public Task<Models.Product?> GetProductByIdAsync(int productId)
             => _context.Products.FindAsync(productId).AsTask();
 
+        // ── Background job ────────────────────────────────────────────────────
+
+        public Task<List<Bill>> GetExpiredPendingVnpayOrdersAsync(DateTime cutoffTime)
+            => _context.Bills
+                       .Include(b => b.BillDetails)
+                       .Where(b => b.PaymentMethod == "VNPAY"
+                                && b.PaymentStatus == "pending_vnpay"
+                                && b.OrderStatus   == "PENDING"
+                                && b.CreatedAtTime < cutoffTime)
+                       .ToListAsync();
+
         // ── Persistence ───────────────────────────────────────────────────────
 
         public Task SaveChangesAsync() => _context.SaveChangesAsync();

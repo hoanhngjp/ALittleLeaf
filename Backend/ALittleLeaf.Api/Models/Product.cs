@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace ALittleLeaf.Api.Models
 {
@@ -22,6 +23,9 @@ namespace ALittleLeaf.Api.Models
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; } = null!;
 
         public virtual ICollection<BillDetail> BillDetails { get; set; } = new List<BillDetail>();
 

@@ -15,5 +15,8 @@ namespace ALittleLeaf.Api.Services.Auth
 
         /// <summary>Revoke the supplied refresh token in the database.</summary>
         Task<bool> LogoutAsync(string refreshToken);
+
+        /// <summary>Verify a Google ID Token and return a JWT pair. Creates or links the account.</summary>
+        Task<AuthServiceResult> GoogleLoginAsync(string idToken);
     }
 }

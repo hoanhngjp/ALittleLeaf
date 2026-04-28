@@ -14,6 +14,7 @@ using ALittleLeaf.Api.Services.VNPay;
 using ALittleLeaf.Api.Repositories.Admin;
 using ALittleLeaf.Api.Services.Admin;
 using ALittleLeaf.Api.Services.Shipping;
+using ALittleLeaf.Api.Services.Background;
 using ALittleLeaf.Api.Options;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -95,8 +96,14 @@ if (!string.IsNullOrWhiteSpace(ghnShopId))
 if (!string.IsNullOrWhiteSpace(ghnBaseUrl))
     builder.Configuration["Ghn:BaseUrl"] = ghnBaseUrl;
 
+// ── Google OAuth config: bridge env var → Google:ClientId section ────────
+var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+if (!string.IsNullOrWhiteSpace(googleClientId))
+    builder.Configuration["Google:ClientId"] = googleClientId;
+
 // ── Application Services ───────────────────────────────────────────────────
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // ── Product & Category (Phase 4) ───────────────────────────────────────────
@@ -127,6 +134,9 @@ builder.Services.AddHttpClient<IGhnService, GhnService>((sp, client) =>
     client.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
     client.DefaultRequestHeaders.Add("Token", opts.ApiKey);
 });
+
+// ── Background Services ────────────────────────────────────────────────────
+builder.Services.AddHostedService<ExpiredOrderCancellationService>();
 
 // ── Controllers ────────────────────────────────────────────────────────────
 builder.Services.AddControllers();

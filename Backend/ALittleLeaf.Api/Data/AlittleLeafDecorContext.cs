@@ -106,6 +106,10 @@ namespace ALittleLeaf.Api.Data
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime")
                     .HasColumnName("updated_at");
+                entity.Property(e => e.CreatedAtTime)
+                    .HasColumnType("datetime")
+                    .HasDefaultValueSql("GETUTCDATE()")
+                    .HasColumnName("created_at_time");
 
                 entity.HasOne(d => d.IdAdrsNavigation).WithMany(p => p.Bills)
                     .HasForeignKey(d => d.IdAdrs)
@@ -262,7 +266,14 @@ namespace ALittleLeaf.Api.Data
                     .HasColumnName("user_isActive");
                 entity.Property(e => e.UserPassword)
                     .HasMaxLength(255)
+                    .IsRequired(false)
                     .HasColumnName("user_password");
+                entity.Property(e => e.AuthProvider)
+                    .HasMaxLength(20)
+                    .HasColumnName("auth_provider");
+                entity.Property(e => e.GoogleId)
+                    .HasMaxLength(128)
+                    .HasColumnName("google_id");
                 entity.Property(e => e.UserRole)
                     .HasMaxLength(20)
                     .IsUnicode(false)

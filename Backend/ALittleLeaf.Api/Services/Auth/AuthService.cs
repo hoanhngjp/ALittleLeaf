@@ -4,6 +4,7 @@ using System.Text;
 using ALittleLeaf.Api.Data;
 using ALittleLeaf.Api.DTOs.Auth;
 using ALittleLeaf.Api.Models;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +16,7 @@ namespace ALittleLeaf.Api.Services.Auth
         private readonly AlittleLeafDecorContext _context;
         private readonly IConfiguration _configuration;
         private readonly PasswordHasher<string> _passwordHasher;
+        private readonly IGoogleTokenValidator _googleTokenValidator;
 
         // Access token lifetime in minutes (default 60, configurable via appsettings)
         private int AccessTokenMinutes =>
@@ -24,11 +26,15 @@ namespace ALittleLeaf.Api.Services.Auth
         private int RefreshTokenDays =>
             int.TryParse(_configuration["Jwt:RefreshTokenExpirationDays"], out var d) ? d : 7;
 
-        public AuthService(AlittleLeafDecorContext context, IConfiguration configuration)
+        public AuthService(
+            AlittleLeafDecorContext context,
+            IConfiguration configuration,
+            IGoogleTokenValidator googleTokenValidator)
         {
             _context = context;
             _configuration = configuration;
             _passwordHasher = new PasswordHasher<string>();
+            _googleTokenValidator = googleTokenValidator;
         }
 
         // ── Login ─────────────────────────────────────────────────────────────
@@ -40,6 +46,9 @@ namespace ALittleLeaf.Api.Services.Auth
 
             if (user == null)
                 return Fail("Tên đăng nhập hoặc mật khẩu không kết nối đến tài khoản nào.");
+
+            if (string.IsNullOrEmpty(user.UserPassword))
+                return Fail("Tài khoản này được đăng ký qua Google. Vui lòng đăng nhập bằng Google.");
 
             var verifyResult = _passwordHasher.VerifyHashedPassword(null!, user.UserPassword, dto.Password);
             if (verifyResult != PasswordVerificationResult.Success)
@@ -181,6 +190,74 @@ namespace ALittleLeaf.Api.Services.Auth
             {
                 return false;
             }
+        }
+
+        // ── Google SSO ────────────────────────────────────────────────────────
+
+        public async Task<AuthServiceResult> GoogleLoginAsync(string idToken)
+        {
+            // 1. Verify the ID Token with Google's public keys
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                var clientId = _configuration["Google:ClientId"]
+                               ?? throw new InvalidOperationException("Google:ClientId is not configured.");
+                payload = await _googleTokenValidator.ValidateAsync(idToken, clientId);
+            }
+            catch (InvalidJwtException ex)
+            {
+                return Fail($"Google token không hợp lệ: {ex.Message}");
+            }
+
+            // 2. Security gate: only accept verified email addresses
+            if (payload.EmailVerified != true)
+                return Fail("Email của tài khoản Google chưa được xác minh.");
+
+            var email    = payload.Email;
+            var googleId = payload.Subject;
+            var fullName = payload.Name ?? email;
+
+            // 3. Look up existing user
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == email);
+
+            if (user == null)
+            {
+                // Case A: New user — create account linked to Google
+                user = new User
+                {
+                    UserEmail    = email,
+                    UserPassword = null,
+                    UserFullname = fullName,
+                    UserSex      = false,
+                    UserBirthday = DateOnly.FromDateTime(DateTime.UtcNow),
+                    UserIsActive = true,
+                    UserRole     = "customer",
+                    AuthProvider = "google",
+                    GoogleId     = googleId,
+                    CreatedAt    = DateTime.UtcNow,
+                    UpdatedAt    = DateTime.UtcNow
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            else if (!user.UserIsActive)
+            {
+                return Fail("Tài khoản của bạn đã bị khóa.");
+            }
+            else
+            {
+                // Case B: Existing Google user OR Case C: Existing local user (account merge)
+                // In both cases: update/set the GoogleId and mark provider
+                user.GoogleId     = googleId;
+                user.AuthProvider ??= "google";   // preserve "local" if already set, otherwise set "google"
+                user.UpdatedAt    = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                // Note: payload.Picture (Google avatar URL) available for future UserAvatarUrl column
+                // _logger.LogInformation("Google login for {Email}, avatar: {Picture}", email, payload.Picture);
+            }
+
+            return await IssueTokenPairAsync(user);
         }
 
         // ── Private helpers ───────────────────────────────────────────────────

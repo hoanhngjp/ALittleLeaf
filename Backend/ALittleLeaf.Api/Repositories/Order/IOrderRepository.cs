@@ -22,6 +22,10 @@ namespace ALittleLeaf.Api.Repositories.Order
         // ── Product (stock deduction) ─────────────────────────────────────────
         Task<Models.Product?> GetProductByIdAsync(int productId);
 
+        // ── Background job ────────────────────────────────────────────────────
+        /// <summary>Returns VNPay bills that are still PENDING and older than <paramref name="cutoffTime"/>.</summary>
+        Task<List<Bill>> GetExpiredPendingVnpayOrdersAsync(DateTime cutoffTime);
+
         Task SaveChangesAsync();
     }
 }

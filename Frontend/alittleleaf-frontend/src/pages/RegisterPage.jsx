@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useRegister } from '../hooks/useAuth'
+import { GoogleLogin } from '@react-oauth/google'
+import { useRegister, useGoogleLogin } from '../hooks/useAuth'
 import Header  from '../components/layout/Header'
 import Footer  from '../components/layout/Footer'
 import Sidebar from '../components/Sidebar'
@@ -51,6 +52,7 @@ export default function RegisterPage() {
   const [form,   setForm]   = useState(INITIAL)
   const [errors, setErrors] = useState({})
   const { mutate: register, isPending, error } = useRegister()
+  const { mutate: googleLogin, isPending: isGooglePending, error: googleError } = useGoogleLogin()
 
   const fullNameRef = useRef(null)
   const birthdayRef = useRef(null)
@@ -249,6 +251,29 @@ export default function RegisterPage() {
                 </div>
 
               </form>
+
+              {/* ── Google SSO ── */}
+              <div className="mt-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <hr className="flex-grow-1" />
+                  <span className="text-muted small">Hoặc đăng ký nhanh với</span>
+                  <hr className="flex-grow-1" />
+                </div>
+                {googleError && (
+                  <div className="alert alert-danger py-2 small mb-3">
+                    {googleError?.response?.data?.error ?? 'Đăng ký Google thất bại.'}
+                  </div>
+                )}
+                <div className="d-flex justify-content-center">
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => googleLogin(credentialResponse.credential)}
+                    onError={() => {}}
+                    text="signup_with"
+                    locale="vi"
+                    disabled={isGooglePending}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

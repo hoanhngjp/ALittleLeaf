@@ -30,6 +30,28 @@ export function useLogin() {
   })
 }
 
+// ── Google Login ──────────────────────────────────────────────────────────────
+
+export function useGoogleLogin() {
+  const login    = useAuthStore((s) => s.login)
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: (idToken) =>
+      apiClient.post('/api/auth/google-login', { idToken }).then((r) => r.data),
+
+    onSuccess: (data) => {
+      login({
+        user:         data.user,
+        accessToken:  data.accessToken,
+        refreshToken: data.refreshToken,
+      })
+      const role = data.user?.role?.toLowerCase()
+      navigate(role === 'admin' ? '/admin' : '/', { replace: true })
+    },
+  })
+}
+
 // ── Register ──────────────────────────────────────────────────────────────────
 
 export function useRegister() {

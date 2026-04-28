@@ -37,6 +37,8 @@ namespace ALittleLeaf.Api.Models
 
         public DateTime? UpdatedAt { get; set; }
 
+        public DateTime CreatedAtTime { get; set; } = DateTime.UtcNow;
+
         public virtual ICollection<BillDetail> BillDetails { get; set; } = new List<BillDetail>();
 
         public virtual AddressList IdAdrsNavigation { get; set; } = null!;

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useLogin } from '../hooks/useAuth'
+import { GoogleLogin } from '@react-oauth/google'
+import { useLogin, useGoogleLogin } from '../hooks/useAuth'
 import Header  from '../components/layout/Header'
 import Footer  from '../components/layout/Footer'
 import Sidebar from '../components/Sidebar'
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [form,   setForm]   = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const { mutate: login, isPending, error } = useLogin()
+  const { mutate: googleLogin, isPending: isGooglePending, error: googleError } = useGoogleLogin()
 
   const emailRef    = useRef(null)
   const passwordRef = useRef(null)
@@ -53,6 +55,7 @@ export default function LoginPage() {
   }
 
   const serverError = error?.response?.data?.message ?? (error ? 'Email hoặc mật khẩu không đúng.' : null)
+  const googleServerError = googleError?.response?.data?.error ?? (googleError ? 'Đăng nhập Google thất bại.' : null)
 
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -135,6 +138,27 @@ export default function LoginPage() {
                 </div>
 
               </form>
+
+              {/* ── Google SSO ── */}
+              <div className="mt-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <hr className="flex-grow-1" />
+                  <span className="text-muted small">Hoặc</span>
+                  <hr className="flex-grow-1" />
+                </div>
+                {googleServerError && (
+                  <div className="alert alert-danger py-2 small mb-3">{googleServerError}</div>
+                )}
+                <div className="d-flex justify-content-center">
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => googleLogin(credentialResponse.credential)}
+                    onError={() => {}}
+                    text="signin_with"
+                    locale="vi"
+                    disabled={isGooglePending}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
