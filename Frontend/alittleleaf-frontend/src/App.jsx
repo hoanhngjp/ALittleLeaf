@@ -26,6 +26,7 @@ import AdminOrderDetailPage    from './pages/admin/AdminOrderDetailPage'
 import AdminUsersPage          from './pages/admin/AdminUsersPage'
 import AdminUserFormPage       from './pages/admin/AdminUserFormPage'
 import GhnSimulatorPage        from './pages/admin/GhnSimulatorPage'
+import AdminBannersPage        from './pages/admin/AdminBannersPage'
 
 const queryClient = new QueryClient()
 
@@ -90,6 +91,7 @@ export default function App() {
               <Route path="/admin/users"              element={<AdminUsersPage />} />
               <Route path="/admin/users/:id"          element={<AdminUserFormPage />} />
               <Route path="/admin/ghn-simulator"      element={<GhnSimulatorPage />} />
+              <Route path="/admin/banners"            element={<AdminBannersPage />} />
             </Route>
           </Route>
 

@@ -13,6 +13,8 @@ using ALittleLeaf.Api.Services.Product;
 using ALittleLeaf.Api.Services.VNPay;
 using ALittleLeaf.Api.Repositories.Admin;
 using ALittleLeaf.Api.Services.Admin;
+using ALittleLeaf.Api.Repositories.Banner;
+using ALittleLeaf.Api.Services.Banner;
 using ALittleLeaf.Api.Services.Shipping;
 using ALittleLeaf.Api.Services.Background;
 using ALittleLeaf.Api.Options;
@@ -124,6 +126,10 @@ builder.Services.AddScoped<IVnPayService, VnPayService>();
 // ── Admin (Phase 7) ────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+
+// ── Banner (Phase 18) ──────────────────────────────────────────────────────
+builder.Services.AddScoped<IBannerRepository, BannerRepository>();
+builder.Services.AddScoped<IBannerService, BannerService>();
 
 // GHN Logistics
 builder.Services.AddMemoryCache();

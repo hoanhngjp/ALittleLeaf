@@ -19,5 +19,10 @@ namespace ALittleLeaf.Api.Services.Cloudinary
         /// <param name="publicId">The Cloudinary public ID of the image to delete.</param>
         /// <returns>True if deletion succeeded, false otherwise.</returns>
         Task<bool> DeleteImageAsync(string publicId);
+
+        /// <summary>
+        /// Uploads an image and returns both the secure URL and the Cloudinary public_id.
+        /// </summary>
+        Task<(string Url, string PublicId)> UploadImageWithPublicIdAsync(IFormFile file, string? folder = null);
     }
 }

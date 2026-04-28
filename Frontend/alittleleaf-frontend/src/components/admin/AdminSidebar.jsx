@@ -39,6 +39,12 @@ const NAV_ITEMS = [
     ],
   },
   {
+    id: 'banners',
+    label: 'Quản lý Banner',
+    icon: 'fas fa-images',
+    to: '/admin/banners',
+  },
+  {
     id: 'ghn-simulator',
     label: 'GHN Webhook Test',
     icon: 'fas fa-truck',

@@ -30,6 +30,7 @@ namespace ALittleLeaf.Api.Data
         public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
         public virtual DbSet<Cart> Carts { get; set; }
         public virtual DbSet<CartItem> CartItems { get; set; }
+        public virtual DbSet<Banner> Banners { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -354,6 +355,87 @@ namespace ALittleLeaf.Api.Data
                     .HasForeignKey(ci => ci.ProductId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_CartItem_Product_ProductId");
+            });
+
+            // ── Banner (Phase 18) ─────────────────────────────────────────────
+            modelBuilder.Entity<Banner>(entity =>
+            {
+                entity.HasKey(e => e.BannerId);
+                entity.ToTable("Banner");
+
+                entity.Property(e => e.BannerId).HasColumnName("banner_id");
+                entity.Property(e => e.ImageUrl)
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnName("image_url");
+                entity.Property(e => e.PublicId)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasColumnName("public_id");
+                entity.Property(e => e.TargetUrl)
+                    .HasMaxLength(500)
+                    .HasColumnName("target_url");
+                entity.Property(e => e.DisplayOrder)
+                    .HasDefaultValue(0)
+                    .HasColumnName("display_order");
+                entity.Property(e => e.IsActive)
+                    .HasDefaultValue(true)
+                    .HasColumnName("is_active");
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnType("datetime")
+                    .HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnType("datetime")
+                    .HasColumnName("updated_at");
+
+                // Seed the 4 existing Cloudinary slider images.
+                // URLs include f_auto,q_auto (R2) so they are served optimised from day one.
+                // PublicIds are extracted from the Cloudinary URL path (folder/filename without ext).
+                var seedTime = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                entity.HasData(
+                    new Banner
+                    {
+                        BannerId     = 1,
+                        ImageUrl     = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268220/slider1_kzfyxn.webp",
+                        PublicId     = "slider1_kzfyxn",
+                        DisplayOrder = 1,
+                        IsActive     = true,
+                        CreatedAt    = seedTime,
+                        UpdatedAt    = seedTime
+                    },
+                    new Banner
+                    {
+                        BannerId     = 2,
+                        ImageUrl     = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268221/slider2_oryoac.webp",
+                        PublicId     = "slider2_oryoac",
+                        DisplayOrder = 2,
+                        IsActive     = true,
+                        CreatedAt    = seedTime,
+                        UpdatedAt    = seedTime
+                    },
+                    new Banner
+                    {
+                        BannerId     = 3,
+                        ImageUrl     = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268221/slider3_gyv5pc.webp",
+                        PublicId     = "slider3_gyv5pc",
+                        DisplayOrder = 3,
+                        IsActive     = true,
+                        CreatedAt    = seedTime,
+                        UpdatedAt    = seedTime
+                    },
+                    new Banner
+                    {
+                        BannerId     = 4,
+                        ImageUrl     = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268222/slider4_mphagw.webp",
+                        PublicId     = "slider4_mphagw",
+                        DisplayOrder = 4,
+                        IsActive     = true,
+                        CreatedAt    = seedTime,
+                        UpdatedAt    = seedTime
+                    }
+                );
             });
 
             OnModelCreatingPartial(modelBuilder);

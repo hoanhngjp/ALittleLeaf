@@ -4,6 +4,7 @@ using ALittleLeaf.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ALittleLeaf.Api.Migrations
 {
     [DbContext(typeof(AlittleLeafDecorContext))]
-    partial class AlittleLeafDecorContextModelSnapshot : ModelSnapshot
+    [Migration("20260428183306_AddBannerEntity")]
+    partial class AddBannerEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -148,48 +151,6 @@ namespace ALittleLeaf.Api.Migrations
                     b.HasKey("BannerId");
 
                     b.ToTable("Banner", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            BannerId = 1,
-                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            ImageUrl = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268220/slider1_kzfyxn.webp",
-                            IsActive = true,
-                            PublicId = "slider1_kzfyxn",
-                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            BannerId = 2,
-                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            ImageUrl = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268221/slider2_oryoac.webp",
-                            IsActive = true,
-                            PublicId = "slider2_oryoac",
-                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            BannerId = 3,
-                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            ImageUrl = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268221/slider3_gyv5pc.webp",
-                            IsActive = true,
-                            PublicId = "slider3_gyv5pc",
-                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            BannerId = 4,
-                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            ImageUrl = "https://res.cloudinary.com/dd9umsxtf/image/upload/f_auto,q_auto/v1776268222/slider4_mphagw.webp",
-                            IsActive = true,
-                            PublicId = "slider4_mphagw",
-                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("ALittleLeaf.Api.Models.Bill", b =>

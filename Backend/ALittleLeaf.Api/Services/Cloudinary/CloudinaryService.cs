@@ -63,6 +63,36 @@ namespace ALittleLeaf.Api.Services.Cloudinary
         }
 
         /// <inheritdoc />
+        public async Task<(string Url, string PublicId)> UploadImageWithPublicIdAsync(IFormFile file, string? folder = null)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File is empty or null.", nameof(file));
+
+            await using var stream = file.OpenReadStream();
+
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = folder ?? "alittleleaf",
+                Overwrite = false,
+                UniqueFilename = true,
+            };
+
+            var result = await _cloudinary.UploadAsync(uploadParams);
+
+            if (result.Error != null)
+            {
+                _logger.LogError("Cloudinary upload failed: {Error}", result.Error.Message);
+                throw new InvalidOperationException($"Cloudinary upload failed: {result.Error.Message}");
+            }
+
+            _logger.LogInformation("Cloudinary upload succeeded. PublicId={PublicId} Url={Url}",
+                result.PublicId, result.SecureUrl);
+
+            return (result.SecureUrl.ToString(), result.PublicId);
+        }
+
+        /// <inheritdoc />
         public async Task<bool> DeleteImageAsync(string publicId)
         {
             if (string.IsNullOrWhiteSpace(publicId))

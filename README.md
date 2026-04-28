@@ -81,6 +81,7 @@ When a user selects VNPay, an order is created and stock is reserved immediately
 - **GHN Webhook Simulator** — built-in admin UI tool to fire mock GHN webhook events locally; no `ngrok` or public URL required for end-to-end state-transition testing
 - Product CRUD with **Cloudinary** image upload and management
 - User management with role assignment and account activation toggle
+- **Dynamic Banner CMS** — full-lifecycle management of homepage slider banners: upload (multipart `IFormFile`), reorder (inline `DisplayOrder`), toggle visibility, and delete (removes the asset from Cloudinary atomically). Strict server-side validation rejects files over 5 MB or outside `image/jpeg | image/png | image/webp`. Every uploaded URL is rewritten to include Cloudinary's `f_auto,q_auto` transformation for automatic format and quality optimisation at the CDN edge. The public `GET /api/banners` endpoint is capped at 5 records at the repository layer (`.Take(5)`) so the homepage payload is always bounded regardless of how many banners are active. The React slider falls back to a built-in static array if the API returns an empty list, ensuring the homepage hero section is never blank.
 
 ---
 
