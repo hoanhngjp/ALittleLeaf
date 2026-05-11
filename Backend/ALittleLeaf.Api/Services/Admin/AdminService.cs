@@ -2,6 +2,7 @@ using ALittleLeaf.Api.DTOs.Admin;
 using ALittleLeaf.Api.Models;
 using ALittleLeaf.Api.Repositories.Admin;
 using ALittleLeaf.Api.Services.Cloudinary;
+using ALittleLeaf.Api.Services.Notification;
 using ALittleLeaf.Api.Services.Shipping;
 using Microsoft.AspNetCore.Identity;
 
@@ -9,15 +10,17 @@ namespace ALittleLeaf.Api.Services.Admin
 {
     public class AdminService : IAdminService
     {
-        private readonly IAdminRepository   _adminRepo;
-        private readonly ICloudinaryService _cloudinary;
-        private readonly IGhnService        _ghn;
+        private readonly IAdminRepository    _adminRepo;
+        private readonly ICloudinaryService  _cloudinary;
+        private readonly IGhnService         _ghn;
+        private readonly INotificationService _notifications;
 
-        public AdminService(IAdminRepository adminRepo, ICloudinaryService cloudinary, IGhnService ghn)
+        public AdminService(IAdminRepository adminRepo, ICloudinaryService cloudinary, IGhnService ghn, INotificationService notifications)
         {
-            _adminRepo  = adminRepo;
-            _cloudinary = cloudinary;
-            _ghn        = ghn;
+            _adminRepo     = adminRepo;
+            _cloudinary    = cloudinary;
+            _ghn           = ghn;
+            _notifications = notifications;
         }
 
         // ── Mapping helpers ───────────────────────────────────────────────────
@@ -370,6 +373,10 @@ namespace ALittleLeaf.Api.Services.Admin
 
             await _adminRepo.UpdateOrderAsync(bill);
             await _adminRepo.SaveChangesAsync();
+
+            if (dto.OrderStatus != null)
+                _ = _notifications.SendOrderNotificationAsync(bill.IdUser, bill.BillId, dto.OrderStatus);
+
             return MapOrder(bill);
         }
 
@@ -387,6 +394,9 @@ namespace ALittleLeaf.Api.Services.Admin
 
             await _adminRepo.UpdateOrderAsync(bill);
             await _adminRepo.SaveChangesAsync();
+
+            _ = _notifications.SendOrderNotificationAsync(bill.IdUser, bill.BillId, "CONFIRMED");
+
             return MapOrder(bill);
         }
 
@@ -413,6 +423,9 @@ namespace ALittleLeaf.Api.Services.Admin
 
             await _adminRepo.UpdateOrderAsync(bill);
             await _adminRepo.SaveChangesAsync();
+
+            _ = _notifications.SendOrderNotificationAsync(bill.IdUser, bill.BillId, "SHIPPING");
+
             return ghnCode;
         }
 

@@ -3,6 +3,7 @@ import Header          from './Header'
 import Footer          from './Footer'
 import MobileSearchBar from './MobileSearchBar'
 import Sidebar         from '../Sidebar'
+import { useNotificationHub } from '../../hooks/useNotifications'
 
 /**
  * MainLayout wraps all customer-facing pages.
@@ -15,6 +16,8 @@ import Sidebar         from '../Sidebar'
  * On md+ the search bar is hidden so only the 70px header offset applies.
  */
 export default function MainLayout() {
+  useNotificationHub()
+
   return (
     <div className="d-flex flex-column min-vh-100">
       <Header />

@@ -35,6 +35,8 @@ namespace ALittleLeaf.Api.Models
         public virtual ICollection<Bill> Bills { get; set; } = new List<Bill>();
 
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+        public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 
 }

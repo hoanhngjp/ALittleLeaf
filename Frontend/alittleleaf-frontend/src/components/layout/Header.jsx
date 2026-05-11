@@ -4,6 +4,7 @@ import { useAuthStore }    from '../../store/useAuthStore'
 import { useCartStore }    from '../../store/useCartStore'
 import { useSidebarStore } from '../../store/useSidebarStore'
 import HeaderCategory from '../HeaderCategory'
+import NotificationDropdown from './NotificationDropdown'
 
 const LOGO_URL = 'https://res.cloudinary.com/dd9umsxtf/image/upload/v1776265291/logo_vx5wwh.webp'
 
@@ -78,6 +79,13 @@ export default function Header() {
               <i className="fa-solid fa-magnifying-glass" />
             </button>
           </li>
+
+          {/* Notification bell — visible when logged in, all screen sizes */}
+          {user && (
+            <li style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <NotificationDropdown iconStyle={iconBtnStyle} />
+            </li>
+          )}
 
           {/* Cart — opens cart sidebar (with count badge + shake animation) */}
           <li>

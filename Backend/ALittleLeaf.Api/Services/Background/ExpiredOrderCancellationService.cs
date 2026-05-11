@@ -1,4 +1,5 @@
 using ALittleLeaf.Api.Repositories.Order;
+using ALittleLeaf.Api.Services.Notification;
 
 namespace ALittleLeaf.Api.Services.Background
 {
@@ -33,8 +34,9 @@ namespace ALittleLeaf.Api.Services.Background
 
         private async Task CancelExpiredOrdersAsync()
         {
-            using var scope      = _scopeFactory.CreateScope();
-            var orderRepo        = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+            using var scope        = _scopeFactory.CreateScope();
+            var orderRepo          = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+            var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
             var cutoff       = DateTime.UtcNow.Subtract(OrderTimeout);
             var expiredBills = await orderRepo.GetExpiredPendingVnpayOrdersAsync(cutoff);
@@ -58,6 +60,9 @@ namespace ALittleLeaf.Api.Services.Background
 
             await orderRepo.SaveChangesAsync();
             _logger.LogInformation("Auto-cancelled {Count} expired VNPay orders.", expiredBills.Count);
+
+            foreach (var bill in expiredBills)
+                _ = notificationService.SendOrderNotificationAsync(bill.IdUser, bill.BillId, "CANCELLED");
         }
     }
 }

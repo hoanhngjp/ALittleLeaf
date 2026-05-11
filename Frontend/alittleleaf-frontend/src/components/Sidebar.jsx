@@ -6,6 +6,7 @@ import { useCartStore }      from '../store/useCartStore'
 import { useAuthStore }      from '../store/useAuthStore'
 import { useCartQuery, useRemoveCartItem } from '../hooks/useCart'
 import { useCategories }     from '../hooks/useCategories'
+import { useNotificationStore } from '../store/useNotificationStore'
 import apiClient             from '../lib/apiClient'
 
 // ── Search panel ──────────────────────────────────────────────────────────────
@@ -211,6 +212,7 @@ function CartPanel() {
 function MenuPanel() {
   const close                   = useSidebarStore((s) => s.close)
   const user                    = useAuthStore((s) => s.user)
+  const unreadCount             = useNotificationStore((s) => s.unreadCount)
   const { data: categories = [] } = useCategories()
   const [openCatId, setOpenCatId] = useState(null)
   const [openFooter, setOpenFooter] = useState(null)
@@ -320,6 +322,35 @@ function MenuPanel() {
               {user ? 'Tài khoản' : 'Đăng nhập'}
             </Link>
           </div>
+
+          {/* Notifications link — only when logged in */}
+          {user && (
+            <div className="mobile-nav-item">
+              <Link
+                to="/profile/orders"
+                className="mobile-nav-link"
+                onClick={close}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <span>
+                  <i className="fa-regular fa-bell" style={{ marginRight: '10px' }} />
+                  Thông báo
+                </span>
+                {unreadCount > 0 && (
+                  <span style={{
+                    background: '#dc3545',
+                    color: '#fff',
+                    borderRadius: 10,
+                    padding: '1px 7px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            </div>
+          )}
 
           {/* ── Footer sections (mobile only) ─────────────────────────── */}
           <div className="mobile-nav-divider" />

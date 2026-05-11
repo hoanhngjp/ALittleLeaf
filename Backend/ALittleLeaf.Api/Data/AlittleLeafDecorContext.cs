@@ -32,6 +32,7 @@ namespace ALittleLeaf.Api.Data
         public virtual DbSet<CartItem> CartItems { get; set; }
         public virtual DbSet<Banner> Banners { get; set; }
         public virtual DbSet<Review> Reviews { get; set; }
+        public virtual DbSet<Notification> Notifications { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -468,6 +469,33 @@ namespace ALittleLeaf.Api.Data
                     .HasForeignKey(r => r.ProductId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_Review_Product_ProductId");
+            });
+
+            // ── Notification (Phase 21) ───────────────────────────────────────
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(e => e.NotificationId);
+                entity.ToTable("Notification");
+
+                entity.Property(e => e.NotificationId).HasColumnName("notification_id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.Title).IsRequired().HasMaxLength(255).HasColumnName("title");
+                entity.Property(e => e.Message).IsRequired().HasColumnName("message");
+                entity.Property(e => e.Type).IsRequired().HasMaxLength(50).HasColumnName("type");
+                entity.Property(e => e.RelatedOrderId).HasColumnName("related_order_id");
+                entity.Property(e => e.IsRead).HasDefaultValue(false).HasColumnName("is_read");
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnType("datetime")
+                    .HasColumnName("created_at");
+
+                entity.HasIndex(e => e.UserId).HasDatabaseName("IX_Notification_UserId");
+
+                entity.HasOne(n => n.UserNavigation)
+                    .WithMany(u => u.Notifications)
+                    .HasForeignKey(n => n.UserId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_Notification_User_UserId");
             });
 
             OnModelCreatingPartial(modelBuilder);

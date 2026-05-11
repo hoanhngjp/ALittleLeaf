@@ -17,6 +17,9 @@ using ALittleLeaf.Api.Repositories.Banner;
 using ALittleLeaf.Api.Services.Banner;
 using ALittleLeaf.Api.Repositories.Review;
 using ALittleLeaf.Api.Services.Review;
+using ALittleLeaf.Api.Repositories.Notification;
+using ALittleLeaf.Api.Services.Notification;
+using ALittleLeaf.Api.Hubs;
 using ALittleLeaf.Api.Services.Shipping;
 using ALittleLeaf.Api.Services.Background;
 using ALittleLeaf.Api.Options;
@@ -53,6 +56,18 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    // Allow SignalR to pass JWT via query string ?access_token=
+    options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                context.Token = accessToken;
+            return Task.CompletedTask;
+        }
+    };
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -137,6 +152,11 @@ builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
+// ── Notifications / SignalR (Phase 21) ────────────────────────────────────
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSignalR();
+
 // GHN Logistics
 builder.Services.AddMemoryCache();
 builder.Services.Configure<GhnOptions>(builder.Configuration.GetSection(GhnOptions.Section));
@@ -209,6 +229,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 // ── Auto Migration cho Docker ──────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
