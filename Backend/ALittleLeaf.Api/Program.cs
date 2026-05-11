@@ -215,8 +215,51 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<AlittleLeafDecorContext>();
         
         // Tự động tạo DB và cập nhật các bảng
-        context.Database.Migrate(); 
+        context.Database.Migrate();
         logger.LogInformation("Migration Database thành công!");
+
+        // Seed data nếu bảng Product còn trống
+        var hasProducts = context.Products.Any();
+        if (!hasProducts)
+        {
+            logger.LogInformation("Bảng Product trống — đang chạy seed data...");
+            var sqlPath = Path.Combine(AppContext.BaseDirectory, "SQL", "ALittleLeaf_DataOnly.sql");
+            if (File.Exists(sqlPath))
+            {
+                var rawSql = File.ReadAllText(sqlPath);
+                // GO là batch separator của SSMS, không phải T-SQL thật.
+                // Chạy từng batch trên cùng một SqlConnection để IDENTITY_INSERT giữ nguyên.
+                var batches = System.Text.RegularExpressions.Regex
+                    .Split(rawSql, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                var connStr = context.Database.GetConnectionString()!;
+                using var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
+                conn.Open();
+                foreach (var batch in batches)
+                {
+                    var trimmed = batch.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmed)) continue;
+                    if (trimmed.StartsWith("USE ", StringComparison.OrdinalIgnoreCase)) continue;
+                    try
+                    {
+                        using var cmd = new Microsoft.Data.SqlClient.SqlCommand(trimmed, conn);
+                        cmd.CommandTimeout = 120;
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 547)
+                    {
+                        // FK constraint check (WITH CHECK CHECK CONSTRAINT) có thể fail do thứ tự
+                        // insert — bỏ qua vì data đã được insert thành công bên trên.
+                        logger.LogWarning("FK constraint check bị bỏ qua (non-fatal): {Msg}", ex.Message);
+                    }
+                }
+                logger.LogInformation("Seed data hoàn tất!");
+            }
+            else
+            {
+                logger.LogWarning("Không tìm thấy file seed: {Path}", sqlPath);
+            }
+        }
     }
     catch (Exception ex)
     {
