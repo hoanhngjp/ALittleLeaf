@@ -45,6 +45,12 @@ const NAV_ITEMS = [
     to: '/admin/banners',
   },
   {
+    id: 'reviews',
+    label: 'Quản lý đánh giá',
+    icon: 'fas fa-star',
+    to: '/admin/reviews',
+  },
+  {
     id: 'ghn-simulator',
     label: 'GHN Webhook Test',
     icon: 'fas fa-truck',

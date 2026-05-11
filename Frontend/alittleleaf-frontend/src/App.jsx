@@ -27,6 +27,7 @@ import AdminUsersPage          from './pages/admin/AdminUsersPage'
 import AdminUserFormPage       from './pages/admin/AdminUserFormPage'
 import GhnSimulatorPage        from './pages/admin/GhnSimulatorPage'
 import AdminBannersPage        from './pages/admin/AdminBannersPage'
+import AdminReviewsPage        from './pages/admin/AdminReviewsPage'
 
 const queryClient = new QueryClient()
 
@@ -92,6 +93,7 @@ export default function App() {
               <Route path="/admin/users/:id"          element={<AdminUserFormPage />} />
               <Route path="/admin/ghn-simulator"      element={<GhnSimulatorPage />} />
               <Route path="/admin/banners"            element={<AdminBannersPage />} />
+              <Route path="/admin/reviews"            element={<AdminReviewsPage />} />
             </Route>
           </Route>
 

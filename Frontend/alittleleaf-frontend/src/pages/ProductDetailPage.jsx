@@ -4,6 +4,9 @@ import { useProductDetail, useRelatedProducts } from '../hooks/useProductDetail'
 import { useProducts } from '../hooks/useProducts'
 import { useAddToCart } from '../hooks/useCart'
 import { useAuthStore } from '../store/useAuthStore'
+import { useProductRating } from '../hooks/useReviews'
+import StarRating from '../components/product/StarRating'
+import ReviewSection from '../components/product/ReviewSection'
 
 const RELATED_COUNT = 8
 
@@ -172,6 +175,7 @@ export default function ProductDetailPage() {
   const [addedMsg, setAddedMsg] = useState(null)
 
   const { data: product, isLoading, isError } = useProductDetail(id)
+  const { data: ratingData } = useProductRating(id ? Number(id) : null)
   const addToCart = useAddToCart()
 
   const handleMinus = () => setQuantity((q) => Math.max(1, q - 1))
@@ -272,6 +276,14 @@ export default function ProductDetailPage() {
                   <div className="product-title">
                     <h1>{product.productName}</h1>
                     <span id="pro-sku">SKU: {product.productSku ?? `PROD-${product.productId}`}</span>
+                    {ratingData && ratingData.reviewCount > 0 && (
+                      <div className="d-flex align-items-center gap-2 mt-1">
+                        <StarRating rating={ratingData.averageRating ?? 0} size="0.9rem" />
+                        <span className="text-muted" style={{ fontSize: 13 }}>
+                          {ratingData.averageRating?.toFixed(1)} ({ratingData.reviewCount} đánh giá)
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {addedMsg && (
@@ -350,6 +362,15 @@ export default function ProductDetailPage() {
 
                 </div>{/* end product-info-mobile */}
               </div>
+            </div>
+
+            {/* Reviews */}
+            <div className="review-section-wrap">
+              <ReviewSection
+                productId={product.productId}
+                averageRating={ratingData?.averageRating}
+                reviewCount={ratingData?.reviewCount ?? 0}
+              />
             </div>
 
             {/* Related products */}

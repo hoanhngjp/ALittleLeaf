@@ -1706,6 +1706,17 @@ a.current {
 }
 
 /* ── Related products ──────────────────────────────────────────────────────── */
+/* Review section — aligns with gallery's 30px left padding on desktop, 16px on mobile */
+.review-section-wrap {
+  padding: 0 16px;
+}
+
+@media (min-width: 768px) {
+  .review-section-wrap {
+    padding: 0 30px;
+  }
+}
+
 .listProduct-related { padding: 20px 0; }
 
 .listProduct-related .heading-title { text-align: center; }

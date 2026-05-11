@@ -31,6 +31,7 @@ namespace ALittleLeaf.Api.Data
         public virtual DbSet<Cart> Carts { get; set; }
         public virtual DbSet<CartItem> CartItems { get; set; }
         public virtual DbSet<Banner> Banners { get; set; }
+        public virtual DbSet<Review> Reviews { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -436,6 +437,37 @@ namespace ALittleLeaf.Api.Data
                         UpdatedAt    = seedTime
                     }
                 );
+            });
+
+            // ── Review (Phase 19) ─────────────────────────────────────────────
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.HasKey(e => e.ReviewId);
+                entity.ToTable("Review");
+
+                entity.Property(e => e.ReviewId).HasColumnName("review_id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.ProductId).HasColumnName("product_id");
+                entity.Property(e => e.Rating).HasColumnName("rating");
+                entity.Property(e => e.Comment).HasMaxLength(500).HasColumnName("comment");
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnType("datetime")
+                    .HasColumnName("created_at");
+
+                entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+
+                entity.HasOne(r => r.UserNavigation)
+                    .WithMany(u => u.Reviews)
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_Review_User_UserId");
+
+                entity.HasOne(r => r.ProductNavigation)
+                    .WithMany(p => p.Reviews)
+                    .HasForeignKey(r => r.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_Review_Product_ProductId");
             });
 
             OnModelCreatingPartial(modelBuilder);

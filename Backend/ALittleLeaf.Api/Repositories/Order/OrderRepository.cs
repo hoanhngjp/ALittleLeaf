@@ -104,6 +104,12 @@ namespace ALittleLeaf.Api.Repositories.Order
                                 && b.CreatedAtTime < cutoffTime)
                        .ToListAsync();
 
+        public Task<bool> HasUserPurchasedProductAsync(long userId, int productId)
+            => _context.BillDetails
+                       .AnyAsync(bd => bd.IdProduct == productId
+                                    && bd.IdBillNavigation!.IdUser == userId
+                                    && bd.IdBillNavigation.OrderStatus == "COMPLETED");
+
         // ── Persistence ───────────────────────────────────────────────────────
 
         public Task SaveChangesAsync() => _context.SaveChangesAsync();

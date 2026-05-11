@@ -26,6 +26,9 @@ namespace ALittleLeaf.Api.Repositories.Order
         /// <summary>Returns VNPay bills that are still PENDING and older than <paramref name="cutoffTime"/>.</summary>
         Task<List<Bill>> GetExpiredPendingVnpayOrdersAsync(DateTime cutoffTime);
 
+        /// <summary>Returns true if the user has at least one COMPLETED order containing the product.</summary>
+        Task<bool> HasUserPurchasedProductAsync(long userId, int productId);
+
         Task SaveChangesAsync();
     }
 }

@@ -33,6 +33,7 @@ namespace ALittleLeaf.Api.Models
 
         public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
+        public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }
 

@@ -33,6 +33,8 @@ namespace ALittleLeaf.Api.Models
         public virtual ICollection<AddressList> AddressLists { get; set; } = new List<AddressList>();
 
         public virtual ICollection<Bill> Bills { get; set; } = new List<Bill>();
+
+        public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 
 }
